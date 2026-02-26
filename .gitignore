@@ -46,10 +46,3 @@ node_modules/
 tmp/
 *.tmp
 *.log
-
-# Node
-node_modules/
-.turbo/
-
-# Claude Code local settings
-.claude/settings.local.json
