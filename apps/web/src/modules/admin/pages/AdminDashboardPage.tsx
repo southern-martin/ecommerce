@@ -1,6 +1,10 @@
+import { lazy, Suspense } from 'react';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { DashboardStats } from '../components/DashboardStats';
 import { useAdminDashboard } from '../hooks/useAdminDashboard';
+
+const RevenueOverviewChart = lazy(() => import('../components/RevenueOverviewChart'));
+const RecentActivityFeed = lazy(() => import('../components/RecentActivityFeed'));
 
 export default function AdminDashboardPage() {
   const { data: stats, isLoading } = useAdminDashboard();
@@ -23,11 +27,13 @@ export default function AdminDashboardPage() {
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
       {stats && <DashboardStats stats={stats} />}
 
-      <div className="rounded-lg border p-6">
-        <h2 className="mb-4 text-lg font-semibold">Activity Overview</h2>
-        <div className="flex h-64 items-center justify-center text-muted-foreground">
-          Charts and analytics will be rendered here.
-        </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Suspense fallback={<Skeleton className="h-[380px]" />}>
+          <RevenueOverviewChart />
+        </Suspense>
+        <Suspense fallback={<Skeleton className="h-[380px]" />}>
+          <RecentActivityFeed />
+        </Suspense>
       </div>
     </div>
   );
