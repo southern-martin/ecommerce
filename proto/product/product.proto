@@ -1,0 +1,265 @@
+syntax = "proto3";
+package product;
+option go_package = "github.com/southern-martin/ecommerce/proto/gen/product";
+
+import "common/common.proto";
+import "google/protobuf/timestamp.proto";
+
+service ProductService {
+    rpc HealthCheck(common.Empty) returns (common.Empty);
+    rpc CreateProduct(CreateProductRequest) returns (ProductResponse);
+    rpc GetProduct(GetProductRequest) returns (ProductResponse);
+    rpc UpdateProduct(UpdateProductRequest) returns (ProductResponse);
+    rpc DeleteProduct(DeleteProductRequest) returns (common.Empty);
+    rpc ListProducts(ListProductsRequest) returns (ListProductsResponse);
+    rpc ListProductsBySeller(ListProductsBySellerRequest) returns (ListProductsResponse);
+    rpc ListProductsByCategory(ListProductsByCategoryRequest) returns (ListProductsResponse);
+    rpc CreateCategory(CreateCategoryRequest) returns (CategoryResponse);
+    rpc GetCategory(GetCategoryRequest) returns (CategoryResponse);
+    rpc UpdateCategory(UpdateCategoryRequest) returns (CategoryResponse);
+    rpc DeleteCategory(DeleteCategoryRequest) returns (common.Empty);
+    rpc ListCategories(ListCategoriesRequest) returns (ListCategoriesResponse);
+    rpc CreateVariant(CreateVariantRequest) returns (VariantResponse);
+    rpc UpdateVariant(UpdateVariantRequest) returns (VariantResponse);
+    rpc DeleteVariant(DeleteVariantRequest) returns (common.Empty);
+    rpc UpdateStock(UpdateStockRequest) returns (VariantResponse);
+    rpc GetProductStock(GetProductStockRequest) returns (StockResponse);
+}
+
+// Product Messages
+
+message Product {
+    string id = 1;
+    string seller_id = 2;
+    string name = 3;
+    string slug = 4;
+    string description = 5;
+    string short_description = 6;
+    string category_id = 7;
+    string brand = 8;
+    repeated string tags = 9;
+    repeated string images = 10;
+    string thumbnail = 11;
+    int64 base_price = 12;
+    string currency = 13;
+    string status = 14;
+    bool is_featured = 15;
+    double weight = 16;
+    string weight_unit = 17;
+    repeated Variant variants = 18;
+    double rating = 19;
+    int64 review_count = 20;
+    int64 sold_count = 21;
+    map<string, string> attributes = 22;
+    google.protobuf.Timestamp created_at = 23;
+    google.protobuf.Timestamp updated_at = 24;
+}
+
+message Variant {
+    string id = 1;
+    string product_id = 2;
+    string sku = 3;
+    string name = 4;
+    int64 price = 5;
+    int32 stock = 6;
+    int32 reserved_stock = 7;
+    map<string, string> attributes = 8;
+    repeated string images = 9;
+    bool is_active = 10;
+    google.protobuf.Timestamp created_at = 11;
+    google.protobuf.Timestamp updated_at = 12;
+}
+
+message Category {
+    string id = 1;
+    string name = 2;
+    string slug = 3;
+    string description = 4;
+    string parent_id = 5;
+    string image_url = 6;
+    int32 sort_order = 7;
+    bool is_active = 8;
+    repeated Category children = 9;
+    google.protobuf.Timestamp created_at = 10;
+    google.protobuf.Timestamp updated_at = 11;
+}
+
+// Request / Response Messages
+
+message CreateProductRequest {
+    string seller_id = 1;
+    string name = 2;
+    string description = 3;
+    string short_description = 4;
+    string category_id = 5;
+    string brand = 6;
+    repeated string tags = 7;
+    repeated string images = 8;
+    string thumbnail = 9;
+    int64 base_price = 10;
+    string currency = 11;
+    double weight = 12;
+    string weight_unit = 13;
+    map<string, string> attributes = 14;
+}
+
+message GetProductRequest {
+    string id = 1;
+}
+
+message UpdateProductRequest {
+    string id = 1;
+    string seller_id = 2;
+    string name = 3;
+    string description = 4;
+    string short_description = 5;
+    string category_id = 6;
+    string brand = 7;
+    repeated string tags = 8;
+    repeated string images = 9;
+    string thumbnail = 10;
+    int64 base_price = 11;
+    string status = 12;
+    bool is_featured = 13;
+    double weight = 14;
+    string weight_unit = 15;
+    map<string, string> attributes = 16;
+}
+
+message DeleteProductRequest {
+    string id = 1;
+    string seller_id = 2;
+}
+
+message ProductResponse {
+    Product product = 1;
+}
+
+message ListProductsRequest {
+    common.PaginationRequest pagination = 1;
+    string sort_by = 2;
+    string sort_order = 3;
+    string status = 4;
+    int64 min_price = 5;
+    int64 max_price = 6;
+}
+
+message ListProductsBySellerRequest {
+    string seller_id = 1;
+    common.PaginationRequest pagination = 2;
+    string status = 3;
+}
+
+message ListProductsByCategoryRequest {
+    string category_id = 1;
+    common.PaginationRequest pagination = 2;
+    string sort_by = 3;
+    string sort_order = 4;
+}
+
+message ListProductsResponse {
+    repeated Product products = 1;
+    common.PaginationResponse pagination = 2;
+}
+
+// Category Request / Response
+
+message CreateCategoryRequest {
+    string name = 1;
+    string description = 2;
+    string parent_id = 3;
+    string image_url = 4;
+    int32 sort_order = 5;
+}
+
+message GetCategoryRequest {
+    string id = 1;
+}
+
+message UpdateCategoryRequest {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    string parent_id = 4;
+    string image_url = 5;
+    int32 sort_order = 6;
+    bool is_active = 7;
+}
+
+message DeleteCategoryRequest {
+    string id = 1;
+}
+
+message CategoryResponse {
+    Category category = 1;
+}
+
+message ListCategoriesRequest {
+    string parent_id = 1;
+    bool include_children = 2;
+}
+
+message ListCategoriesResponse {
+    repeated Category categories = 1;
+}
+
+// Variant Request / Response
+
+message CreateVariantRequest {
+    string product_id = 1;
+    string seller_id = 2;
+    string sku = 3;
+    string name = 4;
+    int64 price = 5;
+    int32 stock = 6;
+    map<string, string> attributes = 7;
+    repeated string images = 8;
+}
+
+message UpdateVariantRequest {
+    string id = 1;
+    string product_id = 2;
+    string seller_id = 3;
+    string sku = 4;
+    string name = 5;
+    int64 price = 6;
+    map<string, string> attributes = 7;
+    repeated string images = 8;
+    bool is_active = 9;
+}
+
+message DeleteVariantRequest {
+    string id = 1;
+    string product_id = 2;
+    string seller_id = 3;
+}
+
+message VariantResponse {
+    Variant variant = 1;
+}
+
+// Stock Messages
+
+message UpdateStockRequest {
+    string variant_id = 1;
+    string seller_id = 2;
+    int32 quantity = 3;
+    string operation = 4;
+    string reason = 5;
+}
+
+message GetProductStockRequest {
+    string product_id = 1;
+}
+
+message StockInfo {
+    string variant_id = 1;
+    string sku = 2;
+    int32 stock = 3;
+    int32 reserved_stock = 4;
+    int32 available_stock = 5;
+}
+
+message StockResponse {
+    repeated StockInfo stocks = 1;
+}

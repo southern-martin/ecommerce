@@ -1,0 +1,59 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: catalog-service
+    url: http://catalog-api:8080
+    routes:
+      - name: catalog-api-route
+        paths:
+          - /api/catalog
+        strip_path: true
+        methods:
+          - GET
+          - POST
+          - PUT
+          - OPTIONS
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - "*"
+      methods:
+        - GET
+        - HEAD
+        - PUT
+        - POST
+        - OPTIONS
+      headers:
+        - Accept
+        - Accept-Version
+        - Content-Length
+        - Content-MD5
+        - Content-Type
+        - Date
+        - Authorization
+        - X-Correlation-ID
+      exposed_headers:
+        - X-Correlation-ID
+      credentials: false
+      max_age: 3600
+
+  - name: rate-limiting
+    config:
+      minute: 300
+      policy: local
+
+  - name: correlation-id
+    config:
+      header_name: X-Correlation-ID
+      generator: uuid
+      echo_downstream: true
+
+  - name: request-size-limiting
+    config:
+      allowed_payload_size: 2
+      size_unit: megabytes
+
+  - name: prometheus

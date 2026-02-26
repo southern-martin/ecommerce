@@ -1,0 +1,9 @@
+syntax = "proto3";
+package chat;
+option go_package = "github.com/southern-martin/ecommerce/proto/gen/chat";
+
+import "common/common.proto";
+
+service ChatService {
+    rpc HealthCheck(common.Empty) returns (common.Empty);
+}

@@ -1,0 +1,10 @@
+.git
+.gitignore
+.gocache
+.gomodcache
+*.md
+docs
+tmp
+dist
+bin
+coverage.out

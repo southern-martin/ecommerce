@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 15s
+scrape_configs:
+  - job_name: otel-collector
+    static_configs:
+      - targets: ['otel-collector:8889']
+  - job_name: go-services
+    static_configs:
+      - targets: ['auth:8090', 'user:8091', 'product:8081', 'cart:8082', 'order:8083', 'payment:8084', 'tax:8085', 'shipping:8086', 'return:8087', 'search:8088', 'review:8089', 'media:8092', 'notification:8093', 'cms:8094', 'promotion:8095', 'loyalty:8096', 'affiliate:8097', 'chat:8098', 'ai:8099']

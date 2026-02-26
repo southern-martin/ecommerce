@@ -1,0 +1,39 @@
+name: ecommerce_mobile
+repository: https://github.com/southern-martin/ecommerce
+
+packages:
+  - packages/**
+  - buyer_app
+  - seller_app
+
+command:
+  bootstrap:
+    usePubspecOverrides: true
+
+scripts:
+  analyze:
+    exec: dart analyze .
+    description: Run dart analyze in all packages
+
+  test:
+    exec: flutter test
+    description: Run tests in all packages
+
+  format:
+    exec: dart format .
+    description: Format all Dart files
+
+  clean:
+    exec: flutter clean
+    description: Clean all packages
+
+  build:runner:
+    exec: dart run build_runner build --delete-conflicting-outputs
+    description: Run build_runner in all packages
+    packageFilters:
+      dependsOn: build_runner
+
+  gen:
+    description: Generate all code
+    steps:
+      - build:runner

@@ -1,0 +1,64 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ecommerce
+
+namePrefix: staging-
+
+commonLabels:
+  environment: staging
+
+resources:
+  - ../../base
+
+patches:
+  # Scale all deployments to 2 replicas with medium resources
+  - target:
+      kind: Deployment
+      namespace: ecommerce
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 2
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 100m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 128Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: 500m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 512Mi
+
+  # HPA: min 2, max 5
+  - target:
+      kind: HorizontalPodAutoscaler
+      namespace: ecommerce
+    patch: |
+      - op: replace
+        path: /spec/minReplicas
+        value: 2
+      - op: replace
+        path: /spec/maxReplicas
+        value: 5
+
+  # Override ingress host for staging
+  - target:
+      kind: Ingress
+      name: ecommerce-ingress
+    patch: |
+      - op: replace
+        path: /spec/rules/0/host
+        value: api.staging.ecommerce.example.com
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: api.staging.ecommerce.example.com
+
+configMapGenerator:
+  - name: ecommerce-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info

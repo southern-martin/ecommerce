@@ -1,0 +1,9 @@
+syntax = "proto3";
+package shipping;
+option go_package = "github.com/southern-martin/ecommerce/proto/gen/shipping";
+
+import "common/common.proto";
+
+service ShippingService {
+    rpc HealthCheck(common.Empty) returns (common.Empty);
+}

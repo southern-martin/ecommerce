@@ -1,0 +1,9 @@
+syntax = "proto3";
+package loyalty;
+option go_package = "github.com/southern-martin/ecommerce/proto/gen/loyalty";
+
+import "common/common.proto";
+
+service LoyaltyService {
+    rpc HealthCheck(common.Empty) returns (common.Empty);
+}

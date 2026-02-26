@@ -1,0 +1,9 @@
+syntax = "proto3";
+package promotion;
+option go_package = "github.com/southern-martin/ecommerce/proto/gen/promotion";
+
+import "common/common.proto";
+
+service PromotionService {
+    rpc HealthCheck(common.Empty) returns (common.Empty);
+}

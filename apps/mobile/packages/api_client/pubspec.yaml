@@ -1,0 +1,20 @@
+name: ecommerce_api_client
+description: HTTP API client with Dio, JWT auth, error mapping, and retry logic for the ecommerce mobile app.
+version: 1.0.0
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dio: ^5.4.0
+  ecommerce_core:
+    path: ../core
+  pretty_dio_logger: ^1.3.1
+  connectivity_plus: ^5.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

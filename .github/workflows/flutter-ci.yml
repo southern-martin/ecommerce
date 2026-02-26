@@ -1,0 +1,162 @@
+name: Flutter Mobile CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/mobile/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+
+env:
+  FLUTTER_VERSION: '3.22.x'
+
+jobs:
+  test:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install Melos
+        run: dart pub global activate melos
+
+      - name: Bootstrap packages
+        run: melos bootstrap
+
+      - name: Analyze
+        run: melos run analyze
+
+      - name: Run tests
+        run: melos run test
+
+  build-android:
+    name: Build Android
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    strategy:
+      matrix:
+        app: [buyer_app, seller_app]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install Melos
+        run: dart pub global activate melos
+
+      - name: Bootstrap packages
+        run: melos bootstrap
+
+      - name: Decode Android keystore
+        if: matrix.app == 'buyer_app'
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > apps/mobile/${{ matrix.app }}/android/app/keystore.jks
+        working-directory: .
+
+      - name: Build APK
+        working-directory: apps/mobile/${{ matrix.app }}
+        run: flutter build apk --release
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Build App Bundle
+        working-directory: apps/mobile/${{ matrix.app }}
+        run: flutter build appbundle --release
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ matrix.app }}-apk
+          path: apps/mobile/${{ matrix.app }}/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ matrix.app }}-aab
+          path: apps/mobile/${{ matrix.app }}/build/app/outputs/bundle/release/app-release.aab
+          retention-days: 14
+
+  build-ios:
+    name: Build iOS
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    strategy:
+      matrix:
+        app: [buyer_app, seller_app]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install Melos
+        run: dart pub global activate melos
+
+      - name: Bootstrap packages
+        run: melos bootstrap
+
+      - name: Install CocoaPods
+        working-directory: apps/mobile/${{ matrix.app }}/ios
+        run: pod install
+
+      - name: Build iOS
+        working-directory: apps/mobile/${{ matrix.app }}
+        run: flutter build ipa --release --no-codesign
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-${{ matrix.app }}-ipa
+          path: apps/mobile/${{ matrix.app }}/build/ios/ipa/*.ipa
+          retention-days: 14
+          if-no-files-found: warn

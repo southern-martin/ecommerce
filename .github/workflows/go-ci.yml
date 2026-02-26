@@ -1,0 +1,227 @@
+name: Go Services CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'services/**'
+      - 'pkg/**'
+      - 'proto/**'
+      - 'go.work'
+      - 'go.work.sum'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/**'
+      - 'pkg/**'
+      - 'proto/**'
+      - 'go.work'
+      - 'go.work.sum'
+
+env:
+  GO_VERSION: '1.22'
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+
+jobs:
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      nats:
+        image: nats:2.10-alpine
+        ports:
+          - 4222:4222
+        options: >-
+          --health-cmd "true"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: '5432'
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      REDIS_URL: redis://localhost:6379
+      NATS_URL: nats://localhost:4222
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - auth
+          - user
+          - product
+          - cart
+          - order
+          - payment
+          - tax
+          - shipping
+          - return
+          - search
+          - review
+          - media
+          - notification
+          - cms
+          - promotion
+          - loyalty
+          - affiliate
+          - chat
+          - ai
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: services/${{ matrix.service }}/go.sum
+
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.57.2
+
+      - name: Lint ${{ matrix.service }}
+        working-directory: services/${{ matrix.service }}
+        run: golangci-lint run ./...
+
+      - name: Test ${{ matrix.service }}
+        working-directory: services/${{ matrix.service }}
+        run: |
+          go test ./... -race -coverprofile=coverage.out -covermode=atomic -v
+        env:
+          DB_NAME: test
+
+      - name: Build ${{ matrix.service }}
+        working-directory: services/${{ matrix.service }}
+        run: go build -o /dev/null ./cmd/...
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.service }}
+          path: services/${{ matrix.service }}/coverage.out
+          retention-days: 7
+
+  lint-and-test-pkg:
+    name: Lint & Test Shared Packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.57.2
+
+      - name: Lint shared packages
+        working-directory: pkg
+        run: golangci-lint run ./...
+
+      - name: Test shared packages
+        working-directory: pkg
+        run: go test ./... -race -coverprofile=coverage.out -covermode=atomic -v
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-pkg
+          path: pkg/coverage.out
+          retention-days: 7
+
+  build-images:
+    name: Build & Push Docker Images
+    needs: [lint-and-test, lint-and-test-pkg]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - auth
+          - user
+          - product
+          - cart
+          - order
+          - payment
+          - tax
+          - shipping
+          - return
+          - search
+          - review
+          - media
+          - notification
+          - cms
+          - promotion
+          - loyalty
+          - affiliate
+          - chat
+          - ai
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=raw,value=latest
+
+      - name: Build and push ${{ matrix.service }}
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: services/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

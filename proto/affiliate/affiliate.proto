@@ -1,0 +1,9 @@
+syntax = "proto3";
+package affiliate;
+option go_package = "github.com/southern-martin/ecommerce/proto/gen/affiliate";
+
+import "common/common.proto";
+
+service AffiliateService {
+    rpc HealthCheck(common.Empty) returns (common.Empty);
+}

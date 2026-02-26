@@ -1,0 +1,24 @@
+go 1.25.0
+
+use (
+	./pkg
+	./services/auth
+	./services/user
+	./services/product
+	./services/cart
+	./services/order
+	./services/payment
+	./services/tax
+	./services/shipping
+	./services/return
+	./services/search
+	./services/review
+	./services/media
+	./services/notification
+	./services/cms
+	./services/promotion
+	./services/loyalty
+	./services/affiliate
+	./services/chat
+	./services/ai
+)

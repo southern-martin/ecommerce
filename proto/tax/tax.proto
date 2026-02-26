@@ -1,0 +1,9 @@
+syntax = "proto3";
+package tax;
+option go_package = "github.com/southern-martin/ecommerce/proto/gen/tax";
+
+import "common/common.proto";
+
+service TaxService {
+    rpc HealthCheck(common.Empty) returns (common.Empty);
+}

@@ -1,0 +1,9 @@
+syntax = "proto3";
+package cart;
+option go_package = "github.com/southern-martin/ecommerce/proto/gen/cart";
+
+import "common/common.proto";
+
+service CartService {
+    rpc HealthCheck(common.Empty) returns (common.Empty);
+}

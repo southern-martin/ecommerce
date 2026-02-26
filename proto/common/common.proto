@@ -1,0 +1,17 @@
+syntax = "proto3";
+package common;
+option go_package = "github.com/southern-martin/ecommerce/proto/gen/common";
+
+message Empty {}
+
+message PaginationRequest {
+    int32 page = 1;
+    int32 page_size = 2;
+}
+
+message PaginationResponse {
+    int64 total = 1;
+    int32 page = 2;
+    int32 page_size = 3;
+    int32 total_pages = 4;
+}

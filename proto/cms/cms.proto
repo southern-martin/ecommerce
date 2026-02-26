@@ -1,0 +1,9 @@
+syntax = "proto3";
+package cms;
+option go_package = "github.com/southern-martin/ecommerce/proto/gen/cms";
+
+import "common/common.proto";
+
+service CMSService {
+    rpc HealthCheck(common.Empty) returns (common.Empty);
+}

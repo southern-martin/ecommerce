@@ -1,0 +1,265 @@
+openapi: 3.0.3
+info:
+  title: Catalog Service API
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+  /categories:
+    post:
+      summary: Create category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCategoryRequest"
+      responses:
+        "201":
+          description: Created
+  /categories/tree:
+    get:
+      summary: Get category tree
+      responses:
+        "200":
+          description: OK
+  /categories/{categoryID}/children:
+    get:
+      summary: List direct child categories
+      parameters:
+        - $ref: "#/components/parameters/CategoryID"
+      responses:
+        "200":
+          description: OK
+  /categories/{categoryID}/products:
+    get:
+      summary: List products by category
+      parameters:
+        - $ref: "#/components/parameters/CategoryID"
+      responses:
+        "200":
+          description: OK
+  /categories/{categoryID}/attributes:
+    post:
+      summary: Create category attribute
+      parameters:
+        - $ref: "#/components/parameters/CategoryID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCategoryAttributeRequest"
+      responses:
+        "201":
+          description: Created
+    get:
+      summary: List category attributes with options
+      parameters:
+        - $ref: "#/components/parameters/CategoryID"
+      responses:
+        "200":
+          description: OK
+  /attributes/{attributeID}/options:
+    post:
+      summary: Add option to attribute
+      parameters:
+        - $ref: "#/components/parameters/AttributeID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAttributeOptionRequest"
+      responses:
+        "201":
+          description: Created
+  /products:
+    post:
+      summary: Create product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductRequest"
+      responses:
+        "201":
+          description: Created
+  /products/{productID}:
+    get:
+      summary: Get product
+      parameters:
+        - $ref: "#/components/parameters/ProductID"
+      responses:
+        "200":
+          description: OK
+  /products/{productID}/attributes:
+    put:
+      summary: Upsert non-variant product attribute values
+      parameters:
+        - $ref: "#/components/parameters/ProductID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetProductAttributesRequest"
+      responses:
+        "204":
+          description: No Content
+    get:
+      summary: List product attribute values
+      parameters:
+        - $ref: "#/components/parameters/ProductID"
+      responses:
+        "200":
+          description: OK
+  /products/{productID}/variants/generate:
+    post:
+      summary: Generate and persist variant matrix
+      parameters:
+        - $ref: "#/components/parameters/ProductID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateVariantsRequest"
+      responses:
+        "201":
+          description: Created
+  /products/{productID}/variants:
+    get:
+      summary: List product variants
+      parameters:
+        - $ref: "#/components/parameters/ProductID"
+      responses:
+        "200":
+          description: OK
+components:
+  parameters:
+    CategoryID:
+      in: path
+      name: categoryID
+      required: true
+      schema:
+        type: string
+        format: uuid
+    AttributeID:
+      in: path
+      name: attributeID
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ProductID:
+      in: path
+      name: productID
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    CreateCategoryRequest:
+      type: object
+      required: [name, slug]
+      properties:
+        name: { type: string }
+        slug: { type: string }
+        parent_id:
+          type: string
+          format: uuid
+          nullable: true
+        sort_order: { type: integer }
+        is_active: { type: boolean }
+    CreateCategoryAttributeRequest:
+      type: object
+      required: [name, code, type]
+      properties:
+        name: { type: string }
+        code: { type: string }
+        type:
+          type: string
+          enum: [select, text, number, bool]
+        required: { type: boolean }
+        is_variant_axis: { type: boolean }
+        is_filterable: { type: boolean }
+        sort_order: { type: integer }
+    CreateAttributeOptionRequest:
+      type: object
+      required: [value, label]
+      properties:
+        value: { type: string }
+        label: { type: string }
+        sort_order: { type: integer }
+    CreateProductRequest:
+      type: object
+      required: [name, slug, primary_category_id]
+      properties:
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string }
+        primary_category_id:
+          type: string
+          format: uuid
+        additional_category_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        base_price_minor:
+          type: integer
+          format: int64
+    SetProductAttributesRequest:
+      type: object
+      required: [values]
+      properties:
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductAttributeValue"
+    ProductAttributeValue:
+      type: object
+      required: [attribute_id]
+      properties:
+        attribute_id:
+          type: string
+          format: uuid
+        option_id:
+          type: string
+          format: uuid
+        value_text: { type: string }
+        value_number: { type: number }
+        value_boolean: { type: boolean }
+        value_json: { type: object }
+    GenerateVariantsRequest:
+      type: object
+      required: [axes]
+      properties:
+        axes:
+          type: array
+          items:
+            type: object
+            required: [attribute_id, option_ids]
+            properties:
+              attribute_id:
+                type: string
+                format: uuid
+              option_ids:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+        base_price_minor:
+          type: integer
+          format: int64
+        initial_stock_qty:
+          type: integer
+          format: int64

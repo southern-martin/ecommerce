@@ -1,0 +1,9 @@
+syntax = "proto3";
+package media;
+option go_package = "github.com/southern-martin/ecommerce/proto/gen/media";
+
+import "common/common.proto";
+
+service MediaService {
+    rpc HealthCheck(common.Empty) returns (common.Empty);
+}

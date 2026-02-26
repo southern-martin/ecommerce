@@ -1,0 +1,63 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ecommerce
+
+namePrefix: dev-
+
+commonLabels:
+  environment: dev
+
+resources:
+  - ../../base
+
+patches:
+  # Scale all deployments to 1 replica with low resources
+  - target:
+      kind: Deployment
+      namespace: ecommerce
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 50m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 64Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: 250m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 256Mi
+
+  # Disable HPA in dev
+  - target:
+      kind: HorizontalPodAutoscaler
+      namespace: ecommerce
+    patch: |
+      $patch: delete
+      apiVersion: autoscaling/v2
+      kind: HorizontalPodAutoscaler
+      metadata:
+        name: placeholder
+
+  # Override ingress host for dev
+  - target:
+      kind: Ingress
+      name: ecommerce-ingress
+    patch: |
+      - op: replace
+        path: /spec/rules/0/host
+        value: api.dev.ecommerce.example.com
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: api.dev.ecommerce.example.com
+
+configMapGenerator:
+  - name: ecommerce-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=debug

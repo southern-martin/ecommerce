@@ -1,0 +1,9 @@
+syntax = "proto3";
+package returns;
+option go_package = "github.com/southern-martin/ecommerce/proto/gen/returns";
+
+import "common/common.proto";
+
+service ReturnService {
+    rpc HealthCheck(common.Empty) returns (common.Empty);
+}

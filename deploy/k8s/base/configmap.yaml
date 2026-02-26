@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecommerce-config
+  namespace: ecommerce
+  labels:
+    app.kubernetes.io/part-of: ecommerce
+data:
+  # Database
+  POSTGRES_HOST: "postgres"
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: "ecommerce"
+
+  # Redis
+  REDIS_URL: "redis://redis:6379"
+
+  # NATS
+  NATS_URL: "nats://nats:4222"
+
+  # Elasticsearch
+  ELASTICSEARCH_URL: "http://elasticsearch:9200"
+
+  # MinIO / S3
+  S3_ENDPOINT: "minio:9000"
+  S3_BUCKET: "ecommerce-media"
+  S3_REGION: "us-east-1"
+
+  # Logging
+  LOG_LEVEL: "info"
+
+  # Service ports (HTTP / gRPC)
+  AUTH_HTTP_PORT: "8090"
+  AUTH_GRPC_PORT: "9090"
+  USER_HTTP_PORT: "8091"
+  USER_GRPC_PORT: "9091"
+  PRODUCT_HTTP_PORT: "8081"
+  PRODUCT_GRPC_PORT: "9081"
+  CART_HTTP_PORT: "8082"
+  CART_GRPC_PORT: "9082"
+  ORDER_HTTP_PORT: "8083"
+  ORDER_GRPC_PORT: "9083"
+  PAYMENT_HTTP_PORT: "8084"
+  PAYMENT_GRPC_PORT: "9084"
+  SHIPPING_HTTP_PORT: "8085"
+  SHIPPING_GRPC_PORT: "9085"
+  RETURN_HTTP_PORT: "8086"
+  RETURN_GRPC_PORT: "9086"
+  SEARCH_HTTP_PORT: "8087"
+  SEARCH_GRPC_PORT: "9087"
+  REVIEW_HTTP_PORT: "8088"
+  REVIEW_GRPC_PORT: "9088"
+  MEDIA_HTTP_PORT: "8089"
+  MEDIA_GRPC_PORT: "9089"
+  NOTIFICATION_HTTP_PORT: "8092"
+  NOTIFICATION_GRPC_PORT: "9092"
+  PROMOTION_HTTP_PORT: "8093"
+  PROMOTION_GRPC_PORT: "9093"
+  CHAT_HTTP_PORT: "8094"
+  CHAT_GRPC_PORT: "9094"
+  AI_HTTP_PORT: "8095"
+  AI_GRPC_PORT: "9095"
+  LOYALTY_HTTP_PORT: "8096"
+  LOYALTY_GRPC_PORT: "9096"
+  AFFILIATE_HTTP_PORT: "8097"
+  AFFILIATE_GRPC_PORT: "9097"
+  TAX_HTTP_PORT: "8098"
+  TAX_GRPC_PORT: "9098"
+  CMS_HTTP_PORT: "8099"
+  CMS_GRPC_PORT: "9099"
+
+  # Internal service discovery (gRPC addresses)
+  AUTH_GRPC_ADDR: "auth-service:9090"
+  USER_GRPC_ADDR: "user-service:9091"
+  PRODUCT_GRPC_ADDR: "product-service:9081"
+  CART_GRPC_ADDR: "cart-service:9082"
+  ORDER_GRPC_ADDR: "order-service:9083"
+  PAYMENT_GRPC_ADDR: "payment-service:9084"
+  SHIPPING_GRPC_ADDR: "shipping-service:9085"
+
+  # Payment
+  PLATFORM_COMMISSION_RATE: "0.10"

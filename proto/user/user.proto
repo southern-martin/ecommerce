@@ -1,0 +1,228 @@
+syntax = "proto3";
+package user;
+option go_package = "github.com/southern-martin/ecommerce/proto/gen/user";
+
+import "common/common.proto";
+import "google/protobuf/timestamp.proto";
+
+service UserService {
+    rpc GetProfile(GetProfileRequest) returns (UserProfileResponse);
+    rpc UpdateProfile(UpdateProfileRequest) returns (UserProfileResponse);
+    rpc GetUserByID(GetUserByIDRequest) returns (UserProfileResponse);
+    rpc CreateAddress(CreateAddressRequest) returns (AddressResponse);
+    rpc UpdateAddress(UpdateAddressRequest) returns (AddressResponse);
+    rpc DeleteAddress(DeleteAddressRequest) returns (common.Empty);
+    rpc ListAddresses(ListAddressesRequest) returns (ListAddressesResponse);
+    rpc SetDefaultAddress(SetDefaultAddressRequest) returns (common.Empty);
+    rpc CreateSellerProfile(CreateSellerProfileRequest) returns (SellerProfileResponse);
+    rpc GetSellerProfile(GetSellerProfileRequest) returns (SellerProfileResponse);
+    rpc UpdateSellerProfile(UpdateSellerProfileRequest) returns (SellerProfileResponse);
+    rpc ApproveSellerProfile(ApproveSellerProfileRequest) returns (SellerProfileResponse);
+    rpc FollowSeller(FollowSellerRequest) returns (common.Empty);
+    rpc UnfollowSeller(UnfollowSellerRequest) returns (common.Empty);
+    rpc ListFollowedSellers(ListFollowedSellersRequest) returns (ListSellersResponse);
+    rpc GetSellerFollowerCount(GetSellerFollowerCountRequest) returns (FollowerCountResponse);
+}
+
+// User Profile Messages
+
+message GetProfileRequest {
+    string user_id = 1;
+}
+
+message GetUserByIDRequest {
+    string user_id = 1;
+}
+
+message UserProfile {
+    string id = 1;
+    string email = 2;
+    string first_name = 3;
+    string last_name = 4;
+    string phone = 5;
+    string avatar_url = 6;
+    string role = 7;
+    bool email_verified = 8;
+    bool phone_verified = 9;
+    google.protobuf.Timestamp created_at = 10;
+    google.protobuf.Timestamp updated_at = 11;
+}
+
+message UserProfileResponse {
+    UserProfile profile = 1;
+}
+
+message UpdateProfileRequest {
+    string user_id = 1;
+    string first_name = 2;
+    string last_name = 3;
+    string phone = 4;
+    string avatar_url = 5;
+}
+
+// Address Messages
+
+message Address {
+    string id = 1;
+    string user_id = 2;
+    string label = 3;
+    string recipient_name = 4;
+    string phone = 5;
+    string address_line1 = 6;
+    string address_line2 = 7;
+    string city = 8;
+    string state = 9;
+    string postal_code = 10;
+    string country = 11;
+    bool is_default = 12;
+    double latitude = 13;
+    double longitude = 14;
+    google.protobuf.Timestamp created_at = 15;
+    google.protobuf.Timestamp updated_at = 16;
+}
+
+message CreateAddressRequest {
+    string user_id = 1;
+    string label = 2;
+    string recipient_name = 3;
+    string phone = 4;
+    string address_line1 = 5;
+    string address_line2 = 6;
+    string city = 7;
+    string state = 8;
+    string postal_code = 9;
+    string country = 10;
+    bool is_default = 11;
+    double latitude = 12;
+    double longitude = 13;
+}
+
+message UpdateAddressRequest {
+    string id = 1;
+    string user_id = 2;
+    string label = 3;
+    string recipient_name = 4;
+    string phone = 5;
+    string address_line1 = 6;
+    string address_line2 = 7;
+    string city = 8;
+    string state = 9;
+    string postal_code = 10;
+    string country = 11;
+    bool is_default = 12;
+    double latitude = 13;
+    double longitude = 14;
+}
+
+message DeleteAddressRequest {
+    string id = 1;
+    string user_id = 2;
+}
+
+message AddressResponse {
+    Address address = 1;
+}
+
+message ListAddressesRequest {
+    string user_id = 1;
+}
+
+message ListAddressesResponse {
+    repeated Address addresses = 1;
+}
+
+message SetDefaultAddressRequest {
+    string id = 1;
+    string user_id = 2;
+}
+
+// Seller Profile Messages
+
+message SellerProfile {
+    string id = 1;
+    string user_id = 2;
+    string store_name = 3;
+    string store_description = 4;
+    string store_logo_url = 5;
+    string store_banner_url = 6;
+    string business_type = 7;
+    string tax_id = 8;
+    string bank_account_name = 9;
+    string bank_account_number = 10;
+    string bank_name = 11;
+    string status = 12;
+    double rating = 13;
+    int64 total_sales = 14;
+    int64 follower_count = 15;
+    google.protobuf.Timestamp approved_at = 16;
+    google.protobuf.Timestamp created_at = 17;
+    google.protobuf.Timestamp updated_at = 18;
+}
+
+message CreateSellerProfileRequest {
+    string user_id = 1;
+    string store_name = 2;
+    string store_description = 3;
+    string store_logo_url = 4;
+    string store_banner_url = 5;
+    string business_type = 6;
+    string tax_id = 7;
+    string bank_account_name = 8;
+    string bank_account_number = 9;
+    string bank_name = 10;
+}
+
+message GetSellerProfileRequest {
+    string seller_id = 1;
+}
+
+message UpdateSellerProfileRequest {
+    string seller_id = 1;
+    string user_id = 2;
+    string store_name = 3;
+    string store_description = 4;
+    string store_logo_url = 5;
+    string store_banner_url = 6;
+}
+
+message ApproveSellerProfileRequest {
+    string seller_id = 1;
+    string admin_id = 2;
+    bool approved = 3;
+    string rejection_reason = 4;
+}
+
+message SellerProfileResponse {
+    SellerProfile seller = 1;
+}
+
+// Follow Messages
+
+message FollowSellerRequest {
+    string user_id = 1;
+    string seller_id = 2;
+}
+
+message UnfollowSellerRequest {
+    string user_id = 1;
+    string seller_id = 2;
+}
+
+message ListFollowedSellersRequest {
+    string user_id = 1;
+    common.PaginationRequest pagination = 2;
+}
+
+message ListSellersResponse {
+    repeated SellerProfile sellers = 1;
+    common.PaginationResponse pagination = 2;
+}
+
+message GetSellerFollowerCountRequest {
+    string seller_id = 1;
+}
+
+message FollowerCountResponse {
+    string seller_id = 1;
+    int64 follower_count = 2;
+}

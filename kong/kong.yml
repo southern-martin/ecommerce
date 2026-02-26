@@ -1,0 +1,153 @@
+_format_version: "3.0"
+
+# ─────────────────────────────────────────────────────────────
+# Global Plugins
+# ─────────────────────────────────────────────────────────────
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - http://localhost:3000
+        - http://localhost:5173
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      headers:
+        - Authorization
+        - Content-Type
+        - X-Request-ID
+      credentials: true
+      max_age: 3600
+
+  - name: rate-limiting
+    config:
+      minute: 120
+      hour: 5000
+      policy: local
+
+  - name: correlation-id
+    config:
+      header_name: X-Request-ID
+      generator: uuid#counter
+      echo_downstream: true
+
+  - name: request-size-limiting
+    config:
+      allowed_payload_size: 10
+
+  - name: file-log
+    config:
+      path: /dev/stdout
+
+# ─────────────────────────────────────────────────────────────
+# Consumers
+# ─────────────────────────────────────────────────────────────
+
+consumers:
+  - username: ecommerce-app
+    jwt_secrets:
+      - key: ecommerce-jwt
+        algorithm: HS256
+        secret: change-this-to-a-256-bit-secret-in-production
+
+# ─────────────────────────────────────────────────────────────
+# Services & Routes
+# ─────────────────────────────────────────────────────────────
+
+services:
+  # ── Auth Service ──────────────────────────────────────────
+  - name: auth-service
+    url: http://auth:8090
+    routes:
+      - name: auth-register
+        paths:
+          - /api/v1/auth/register
+        methods:
+          - POST
+        strip_path: false
+
+      - name: auth-login
+        paths:
+          - /api/v1/auth/login
+        methods:
+          - POST
+        strip_path: false
+
+      - name: auth-refresh
+        paths:
+          - /api/v1/auth/refresh
+        methods:
+          - POST
+        strip_path: false
+
+      - name: auth-forgot-password
+        paths:
+          - /api/v1/auth/forgot-password
+        methods:
+          - POST
+        strip_path: false
+
+      - name: auth-reset-password
+        paths:
+          - /api/v1/auth/reset-password
+        methods:
+          - POST
+        strip_path: false
+
+      - name: auth-oauth
+        paths:
+          - /api/v1/auth/oauth
+        methods:
+          - GET
+          - POST
+        strip_path: false
+
+      - name: auth-logout
+        paths:
+          - /api/v1/auth/logout
+        methods:
+          - POST
+        strip_path: false
+        plugins:
+          - name: jwt
+
+  # ── User Service ──────────────────────────────────────────
+  - name: user-service
+    url: http://user:8091
+    routes:
+      - name: user-profile
+        paths:
+          - /api/v1/users
+        strip_path: false
+        plugins:
+          - name: jwt
+
+      - name: user-addresses
+        paths:
+          - /api/v1/users/me/addresses
+        strip_path: false
+        plugins:
+          - name: jwt
+
+      - name: sellers
+        paths:
+          - /api/v1/sellers
+        strip_path: false
+        plugins:
+          - name: jwt
+
+      - name: admin-sellers
+        paths:
+          - /api/v1/admin/sellers
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow:
+                - admin

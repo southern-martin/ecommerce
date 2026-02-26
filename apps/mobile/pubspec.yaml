@@ -1,0 +1,5 @@
+name: ecommerce_mobile_workspace
+description: Ecommerce Flutter mobile apps monorepo workspace
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"

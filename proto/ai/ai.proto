@@ -1,0 +1,9 @@
+syntax = "proto3";
+package ai;
+option go_package = "github.com/southern-martin/ecommerce/proto/gen/ai";
+
+import "common/common.proto";
+
+service AIService {
+    rpc HealthCheck(common.Empty) returns (common.Empty);
+}

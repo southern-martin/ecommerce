@@ -1,0 +1,199 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ecommerce-ingress
+  namespace: ecommerce
+  labels:
+    app.kubernetes.io/part-of: ecommerce
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.ecommerce.example.com
+      secretName: ecommerce-tls
+  rules:
+    - host: api.ecommerce.example.com
+      http:
+        paths:
+          # Auth Service
+          - path: /api/v1/auth(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: auth-service
+                port:
+                  number: 8090
+
+          # User Service
+          - path: /api/v1/users(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 8091
+
+          # Product Service
+          - path: /api/v1/products(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: product-service
+                port:
+                  number: 8081
+
+          # Cart Service
+          - path: /api/v1/cart(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: cart-service
+                port:
+                  number: 8082
+
+          # Order Service
+          - path: /api/v1/orders(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: order-service
+                port:
+                  number: 8083
+
+          # Payment Service
+          - path: /api/v1/payments(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: payment-service
+                port:
+                  number: 8084
+
+          # Shipping Service
+          - path: /api/v1/shipping(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: shipping-service
+                port:
+                  number: 8085
+
+          # Return Service
+          - path: /api/v1/returns(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: return-service
+                port:
+                  number: 8086
+
+          # Search Service
+          - path: /api/v1/search(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: search-service
+                port:
+                  number: 8087
+
+          # Review Service
+          - path: /api/v1/reviews(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: review-service
+                port:
+                  number: 8088
+
+          # Media Service
+          - path: /api/v1/media(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: media-service
+                port:
+                  number: 8089
+
+          # Notification Service
+          - path: /api/v1/notifications(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: notification-service
+                port:
+                  number: 8092
+
+          # Promotion Service
+          - path: /api/v1/promotions(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: promotion-service
+                port:
+                  number: 8093
+
+          # Chat Service
+          - path: /api/v1/chat(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: chat-service
+                port:
+                  number: 8094
+
+          # AI Service
+          - path: /api/v1/ai(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ai-service
+                port:
+                  number: 8095
+
+          # Loyalty Service
+          - path: /api/v1/loyalty(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: loyalty-service
+                port:
+                  number: 8096
+
+          # Affiliate Service
+          - path: /api/v1/affiliates(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: affiliate-service
+                port:
+                  number: 8097
+
+          # Tax Service
+          - path: /api/v1/tax(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tax-service
+                port:
+                  number: 8098
+
+          # CMS Service
+          - path: /api/v1/cms(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: cms-service
+                port:
+                  number: 8099

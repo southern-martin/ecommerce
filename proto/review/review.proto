@@ -1,0 +1,9 @@
+syntax = "proto3";
+package review;
+option go_package = "github.com/southern-martin/ecommerce/proto/gen/review";
+
+import "common/common.proto";
+
+service ReviewService {
+    rpc HealthCheck(common.Empty) returns (common.Empty);
+}

@@ -1,0 +1,9 @@
+syntax = "proto3";
+package search;
+option go_package = "github.com/southern-martin/ecommerce/proto/gen/search";
+
+import "common/common.proto";
+
+service SearchService {
+    rpc HealthCheck(common.Empty) returns (common.Empty);
+}

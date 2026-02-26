@@ -1,0 +1,10 @@
+export { ProductCard } from './components/ProductCard';
+export { ProductGrid } from './components/ProductGrid';
+export { FilterPanel } from './components/FilterPanel';
+export { SortDropdown } from './components/SortDropdown';
+export { useProducts } from './hooks/useProducts';
+export { useProduct } from './hooks/useProduct';
+export { useCategories } from './hooks/useCategories';
+export { productApi } from './services/product.api';
+export { categoryApi } from './services/category.api';
+export type { Product, Category, FilterState, SortOption } from './types/shop.types';

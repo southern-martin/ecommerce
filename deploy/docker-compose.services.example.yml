@@ -1,0 +1,41 @@
+services:
+  # Use the same Dockerfile for every Go service by changing SERVICE_CMD.
+  # Duplicate this block for each microservice and map distinct ports.
+  # Example service commands:
+  # - cmd/identity-api
+  # - cmd/vendor-api
+  # - cmd/catalog-api
+  # - cmd/order-api
+  service-template:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_CMD: cmd/catalog-api
+    image: ecommerce/catalog-api:dev
+    environment:
+      PORT: 8080
+      REPOSITORY_MODE: postgres
+      DATABASE_URL: postgres://ecommerce:ecommerce@postgres:5432/ecommerce?sslmode=disable
+      AUTO_MIGRATE: "true"
+      MIGRATIONS_DIR: /app/db/migrations
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  # Optional Kong profile for local gateway testing
+  kong:
+    image: kong:3.9
+    profiles: ["gateway"]
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_STATUS_LISTEN: 0.0.0.0:8100
+    volumes:
+      - ./deploy/kong/kong.yml:/etc/kong/kong.yml:ro
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8100:8100"
