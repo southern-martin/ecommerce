@@ -209,7 +209,7 @@ services:
 
   # ── Shipping Service ──────────────────────────────────────
   - name: shipping-service
-    url: http://shipping:8085
+    url: http://shipping:8095
     routes:
       - name: shipping-rates
         paths: [/api/v1/shipping/rates]
@@ -249,7 +249,7 @@ services:
 
   # ── Return Service ────────────────────────────────────────
   - name: return-service
-    url: http://return:8086
+    url: http://return:8094
     routes:
       - name: returns
         paths: [/api/v1/returns]
@@ -283,7 +283,7 @@ services:
 
   # ── Search Service ────────────────────────────────────────
   - name: search-service
-    url: http://search:8087
+    url: http://search:8085
     routes:
       - name: search-public
         paths: [/api/v1/search]
@@ -301,7 +301,7 @@ services:
 
   # ── Review Service ────────────────────────────────────────
   - name: review-service
-    url: http://review:8088
+    url: http://review:8086
     routes:
       - name: reviews-read
         paths: [/api/v1/reviews, /api/v1/products]
@@ -339,7 +339,7 @@ services:
 
   # ── Notification Service ──────────────────────────────────
   - name: notification-service
-    url: http://notification:8092
+    url: http://notification:8087
     routes:
       - name: notifications
         paths: [/api/v1/notifications]
@@ -383,7 +383,7 @@ services:
 
   # ── Chat Service ──────────────────────────────────────────
   - name: chat-service
-    url: http://chat:8094
+    url: http://chat:8088
     routes:
       - name: conversations
         paths: [/api/v1/conversations]
@@ -488,7 +488,7 @@ services:
 
   # ── AI Service ────────────────────────────────────────────
   - name: ai-service
-    url: http://ai:8095
+    url: http://ai:8092
     routes:
       - name: ai
         paths: [/api/v1/ai]

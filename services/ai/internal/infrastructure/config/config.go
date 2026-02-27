@@ -40,8 +40,8 @@ func (c PostgresConfig) DSN() string {
 // Load reads configuration from environment variables with sensible defaults.
 func Load() *Config {
 	return &Config{
-		HTTPPort: getEnv("HTTP_PORT", "8095"),
-		GRPCPort: getEnv("GRPC_PORT", "9095"),
+		HTTPPort: getEnv("HTTP_PORT", "8092"),
+		GRPCPort: getEnv("GRPC_PORT", "9092"),
 		LogLevel: getEnv("LOG_LEVEL", "info"),
 		AIPythonServiceURL: getEnv("AI_PYTHON_SERVICE_URL", "http://localhost:8000"),
 		Postgres: PostgresConfig{
