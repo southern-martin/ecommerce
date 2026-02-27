@@ -1,6 +1,8 @@
+import { Truck } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '@/shared/lib/api-client';
+import { PageLayout } from '@/shared/components/layout/PageLayout';
 import { Card } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
 
@@ -19,8 +21,15 @@ export default function ShippingTrackingPage() {
   if (isLoading) return <div className="p-6">Loading tracking info...</div>;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Shipping Tracking</h1>
+    <PageLayout
+      title="Shipping Tracking"
+      icon={Truck}
+      breadcrumbs={[
+        { label: 'Account', href: '/account/profile' },
+        { label: 'Orders', href: '/account/orders' },
+        { label: 'Tracking' },
+      ]}
+    >
       <Card className="p-6">
         {shipment ? (
           <div className="space-y-4">
@@ -45,6 +54,6 @@ export default function ShippingTrackingPage() {
           <p className="text-muted-foreground text-center">No shipping information available for this order.</p>
         )}
       </Card>
-    </div>
+    </PageLayout>
   );
 }

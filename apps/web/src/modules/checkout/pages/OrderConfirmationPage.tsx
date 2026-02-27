@@ -1,21 +1,56 @@
 import { useParams, Link } from 'react-router-dom';
+import { Button } from '@/shared/components/ui/button';
+import { Card, CardContent } from '@/shared/components/ui/card';
+import { CheckCircle, Package, ShoppingBag } from 'lucide-react';
+import { PageLayout } from '@/shared/components/layout/PageLayout';
 
 export default function OrderConfirmationPage() {
   const { orderId } = useParams<{ orderId: string }>();
+
   return (
-    <div className="mx-auto max-w-2xl text-center py-12">
-      <div className="mb-6 text-6xl">🎉</div>
-      <h1 className="text-3xl font-bold mb-4">Order Confirmed!</h1>
-      <p className="text-muted-foreground mb-2">Your order has been placed successfully.</p>
-      <p className="text-sm text-muted-foreground mb-8">Order ID: <span className="font-mono">{orderId}</span></p>
-      <div className="flex gap-4 justify-center">
-        <Link to="/account/orders" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-          View Orders
-        </Link>
-        <Link to="/products" className="inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent">
-          Continue Shopping
-        </Link>
+    <PageLayout
+      breadcrumbs={[
+        { label: 'Orders', href: '/account/orders' },
+        { label: 'Confirmation' },
+      ]}
+    >
+      <div className="mx-auto max-w-lg py-8">
+        <Card className="rounded-2xl border bg-card">
+          <CardContent className="flex flex-col items-center p-8 text-center">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-50">
+              <CheckCircle className="h-12 w-12 text-green-500" />
+            </div>
+
+            <h1 className="mt-6 text-2xl font-bold">Order Confirmed!</h1>
+
+            <p className="mt-2 text-muted-foreground">
+              Your order has been placed successfully.
+            </p>
+
+            <p className="mt-4 text-sm">
+              Order ID:{' '}
+              <span className="rounded-lg bg-muted px-2 py-1 font-mono font-semibold">
+                {orderId}
+              </span>
+            </p>
+
+            <div className="mt-8 flex w-full flex-col gap-3">
+              <Button asChild className="rounded-xl font-semibold" size="lg">
+                <Link to="/account/orders">
+                  <Package className="mr-2 h-4 w-4" />
+                  View Orders
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-xl" size="lg">
+                <Link to="/products">
+                  <ShoppingBag className="mr-2 h-4 w-4" />
+                  Continue Shopping
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </div>
+    </PageLayout>
   );
 }
