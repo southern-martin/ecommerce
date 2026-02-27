@@ -5,10 +5,9 @@ import type { Product } from '../types/shop.types';
 interface ProductGridProps {
   products: Product[];
   isLoading?: boolean;
-  onAddToCart?: (productId: string) => void;
 }
 
-export function ProductGrid({ products, isLoading, onAddToCart }: ProductGridProps) {
+export function ProductGrid({ products, isLoading }: ProductGridProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -42,7 +41,7 @@ export function ProductGrid({ products, isLoading, onAddToCart }: ProductGridPro
   return (
     <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} onAddToCart={onAddToCart} />
+        <ProductCard key={product.id} product={product} />
       ))}
     </div>
   );

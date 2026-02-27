@@ -22,7 +22,7 @@ export function useCart() {
       id: i.id,
       product_id: i.product_id,
       name: i.product_name,
-      slug: i.product_id, // use product_id as fallback slug
+      slug: i.product_slug || i.product_id, // prefer slug, fallback to product_id
       image_url: i.image_url || '',
       price: i.price_cents,
       quantity: i.quantity,
