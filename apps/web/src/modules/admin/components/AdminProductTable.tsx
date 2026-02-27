@@ -18,6 +18,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/shared/components/ui/dialog';
+import { Link } from 'react-router-dom';
 import {
   Edit,
   Trash2,
@@ -28,6 +29,7 @@ import {
   Archive,
   FileText,
   Eye,
+  Settings2,
 } from 'lucide-react';
 import { formatPrice } from '@/shared/lib/utils';
 import type { Product } from '@/modules/shop/types/shop.types';
@@ -76,6 +78,12 @@ export function getProductStatus(product: Product): ProductStatus {
 export function getProductTags(product: Product): string[] {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (product as any)._tags || [];
+}
+
+// Helper to get product type
+export function getProductType(product: Product): string {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (product as any)._product_type || product.product_type || 'simple';
 }
 
 export function AdminProductTable({
@@ -157,18 +165,18 @@ export function AdminProductTable({
           <TableHeader>
             <TableRow>
               <TableHead className="w-[300px]">Product</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Seller</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Tags</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {products.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                   No products match your filters.
                 </TableCell>
               </TableRow>
@@ -176,7 +184,8 @@ export function AdminProductTable({
               products.map((product) => {
                 const primaryImage = product.images?.find((img) => img.is_primary) ?? product.images?.[0];
                 const status = getProductStatus(product);
-                const tags = getProductTags(product);
+                const productType = getProductType(product);
+                const isConfigurable = productType === 'configurable';
                 const statusCfg = STATUS_CONFIG[status];
                 const StatusIcon = statusCfg.icon;
 
@@ -198,10 +207,20 @@ export function AdminProductTable({
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate font-medium">{product.name}</p>
+                          <Link
+                            to={`/seller/products/${product.id}/edit`}
+                            className="truncate font-medium hover:underline"
+                          >
+                            {product.name}
+                          </Link>
                           <p className="truncate text-xs text-muted-foreground">{product.slug}</p>
                         </div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={isConfigurable ? 'default' : 'outline'} className="text-xs">
+                        {isConfigurable ? 'Configurable' : 'Simple'}
+                      </Badge>
                     </TableCell>
                     <TableCell className="font-medium">{formatPrice(product.price)}</TableCell>
                     <TableCell>
@@ -219,24 +238,6 @@ export function AdminProductTable({
                         <StatusIcon className="h-3 w-3" />
                         {statusCfg.label}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {tags.length > 0 ? (
-                          tags.slice(0, 3).map((tag) => (
-                            <Badge key={tag} variant="outline" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-xs text-muted-foreground">{'\u2014'}</span>
-                        )}
-                        {tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{tags.length - 3}
-                          </Badge>
-                        )}
-                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
@@ -289,6 +290,12 @@ export function AdminProductTable({
                             </Button>
                           </>
                         )}
+                        <Button asChild variant="ghost" size="sm" className="h-8">
+                          <Link to={`/seller/products/${product.id}/edit`} title="Manage product details, options, variants & attributes">
+                            <Settings2 className="mr-1 h-4 w-4" />
+                            Manage
+                          </Link>
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -303,7 +310,7 @@ export function AdminProductTable({
                           size="icon"
                           className="h-8 w-8"
                           onClick={() => onEdit(product)}
-                          title="Edit product"
+                          title="Quick edit"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>

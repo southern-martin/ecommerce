@@ -20,8 +20,9 @@ function mapBackendProduct(raw: any): Product {
     category: { id: raw.category_id || '', name: '', slug: '' },
     rating: raw.rating_avg || 0,
     review_count: raw.rating_count || 0,
+    product_type: raw.product_type || 'simple',
     in_stock: raw.status === 'active',
-    stock_quantity: 100,
+    stock_quantity: raw.stock_quantity ?? 0,
     seller: { id: raw.seller_id || '', name: '' },
     created_at: raw.created_at || '',
     // Extra admin fields stored in the Product object
@@ -29,7 +30,8 @@ function mapBackendProduct(raw: any): Product {
     _tags: raw.tags || [],
     _currency: raw.currency || 'USD',
     _has_variants: raw.has_variants || false,
-  } as Product & { _status: string; _tags: string[]; _currency: string; _has_variants: boolean };
+    _product_type: raw.product_type || 'simple',
+  } as Product & { _status: string; _tags: string[]; _currency: string; _has_variants: boolean; _product_type: string };
 }
 
 export interface AdminProductFilter {

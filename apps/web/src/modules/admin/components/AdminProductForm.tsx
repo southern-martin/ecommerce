@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Badge } from '@/shared/components/ui/badge';
-import { Loader2, Plus, X, ImagePlus } from 'lucide-react';
+import { Loader2, Plus, X, ImagePlus, Package, Settings2 } from 'lucide-react';
 import { useCategories } from '../hooks/useAdminProducts';
 
 const adminProductSchema = z.object({
@@ -16,6 +16,8 @@ const adminProductSchema = z.object({
   currency: z.string().optional(),
   category_id: z.string().min(1, 'Category is required'),
   status: z.enum(['draft', 'active', 'inactive', 'archived']).optional(),
+  product_type: z.string().optional(),
+  stock_quantity: z.coerce.number().min(0).optional(),
 });
 
 type AdminProductFormValues = z.infer<typeof adminProductSchema>;
@@ -24,8 +26,10 @@ interface AdminProductFormProps {
   defaultValues?: Partial<AdminProductFormValues> & {
     tags?: string[];
     image_urls?: string[];
+    product_type?: string;
+    stock_quantity?: number;
   };
-  onSubmit: (data: AdminProductFormValues & { tags: string[]; image_urls: string[] }) => void;
+  onSubmit: (data: AdminProductFormValues & { tags: string[]; image_urls: string[]; product_type: string; stock_quantity: number }) => void;
   isPending?: boolean;
   submitLabel?: string;
   isEditing?: boolean;
@@ -47,6 +51,8 @@ export function AdminProductForm({
   const {
     register,
     handleSubmit,
+    control,
+    setValue,
     formState: { errors },
   } = useForm<AdminProductFormValues>({
     resolver: zodResolver(adminProductSchema),
@@ -57,8 +63,12 @@ export function AdminProductForm({
       currency: defaultValues?.currency || 'USD',
       category_id: defaultValues?.category_id || '',
       status: defaultValues?.status || 'draft',
+      product_type: defaultValues?.product_type || 'simple',
+      stock_quantity: defaultValues?.stock_quantity ?? 0,
     },
   });
+
+  const watchedProductType = useWatch({ control, name: 'product_type' }) || 'simple';
 
   const handleAddTag = () => {
     const trimmed = tagInput.trim();
@@ -85,7 +95,13 @@ export function AdminProductForm({
   };
 
   const handleFormSubmit = (data: AdminProductFormValues) => {
-    onSubmit({ ...data, tags, image_urls: imageUrls });
+    onSubmit({
+      ...data,
+      tags,
+      image_urls: imageUrls,
+      product_type: data.product_type || 'simple',
+      stock_quantity: data.product_type === 'simple' ? (data.stock_quantity ?? 0) : 0,
+    });
   };
 
   return (
@@ -166,6 +182,59 @@ export function AdminProductForm({
         </select>
         {errors.category_id && <p className="text-sm text-destructive">{errors.category_id.message}</p>}
       </div>
+
+      {/* Product Type (create only) */}
+      {!isEditing && (
+        <div className="space-y-2">
+          <Label>Product Type</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setValue('product_type', 'simple')}
+              className={`flex items-center gap-2 rounded-lg border-2 p-3 text-left text-sm transition-colors ${
+                watchedProductType === 'simple'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-muted hover:border-muted-foreground/30'
+              }`}
+            >
+              <Package className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="font-medium">Simple</p>
+                <p className="text-xs text-muted-foreground">Direct stock & price</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setValue('product_type', 'configurable')}
+              className={`flex items-center gap-2 rounded-lg border-2 p-3 text-left text-sm transition-colors ${
+                watchedProductType === 'configurable'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-muted hover:border-muted-foreground/30'
+              }`}
+            >
+              <Settings2 className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="font-medium">Configurable</p>
+                <p className="text-xs text-muted-foreground">Options & variants</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Stock Quantity (simple only) */}
+      {watchedProductType === 'simple' && (
+        <div className="space-y-2">
+          <Label htmlFor="stock_quantity">Stock Quantity</Label>
+          <Input id="stock_quantity" type="number" {...register('stock_quantity')} placeholder="0" />
+        </div>
+      )}
+
+      {watchedProductType === 'configurable' && !isEditing && (
+        <div className="rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground">
+          After creating, use the <strong>Manage</strong> button to set up options (Size, Color) and generate variants with individual pricing and stock.
+        </div>
+      )}
 
       {/* Tags */}
       <div className="space-y-2">

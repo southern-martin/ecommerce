@@ -112,6 +112,8 @@ export default function AdminProductsPage() {
       base_price_cents: data.base_price_cents,
       currency: data.currency || 'USD',
       category_id: data.category_id,
+      product_type: data.product_type || 'simple',
+      stock_quantity: data.product_type === 'simple' ? (data.stock_quantity ?? 0) : 0,
       tags: data.tags || [],
       image_urls: data.image_urls || [],
     };
