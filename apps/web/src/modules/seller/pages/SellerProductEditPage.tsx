@@ -1,7 +1,8 @@
 import { useParams } from 'react-router-dom';
-import { Loader2, RefreshCw } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Loader2, RefreshCw, Package, Settings2, Tags } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { ProductForm } from '../components/ProductForm';
 import { ProductOptionManager } from '../components/ProductOptionManager';
@@ -39,21 +40,41 @@ export default function SellerProductEditPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Edit Product: {product.name}</h1>
+      <div className="flex items-center gap-3">
+        <h1 className="text-2xl font-bold">Edit Product: {product.name}</h1>
+        <Badge variant={isConfigurable ? 'default' : 'outline'}>
+          {isConfigurable ? 'Configurable' : 'Simple'}
+        </Badge>
+      </div>
 
       <Tabs defaultValue="basic">
-        <TabsList>
-          <TabsTrigger value="basic">Basic Info</TabsTrigger>
+        <TabsList className={`grid w-full max-w-lg ${isConfigurable ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          <TabsTrigger value="basic" className="flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Basic Info
+          </TabsTrigger>
           {isConfigurable && (
-            <TabsTrigger value="variants">Options & Variants</TabsTrigger>
+            <TabsTrigger value="variants" className="flex items-center gap-2">
+              <Settings2 className="h-4 w-4" />
+              Options & Variants
+            </TabsTrigger>
           )}
-          <TabsTrigger value="attributes">Attributes</TabsTrigger>
+          <TabsTrigger value="attributes" className="flex items-center gap-2">
+            <Tags className="h-4 w-4" />
+            Attributes
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic" className="mt-4">
           <Card>
             <CardHeader>
               <CardTitle>Product Details</CardTitle>
+              <CardDescription>
+                Update the basic information for this product.
+                {isConfigurable
+                  ? ' Price and stock are managed per variant in the Options & Variants tab.'
+                  : ' Set the price and stock quantity directly.'}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <ProductForm
@@ -87,14 +108,30 @@ export default function SellerProductEditPage() {
 
         {isConfigurable && (
           <TabsContent value="variants" className="mt-4 space-y-4">
-            <ProductOptionManager
-              productId={product.id}
-              options={product.options || []}
-            />
+            <Card>
+              <CardHeader>
+                <CardTitle>Product Options</CardTitle>
+                <CardDescription>
+                  Define options like Size, Color, or Material. Each option can have multiple values.
+                  After adding options, generate variants to create all possible combinations.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ProductOptionManager
+                  productId={product.id}
+                  options={product.options || []}
+                />
+              </CardContent>
+            </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base">Variants</CardTitle>
+                <div>
+                  <CardTitle className="text-base">Variants</CardTitle>
+                  <CardDescription className="mt-1">
+                    Each variant has its own price, stock, and SKU. Generate variants from options above.
+                  </CardDescription>
+                </div>
                 <Button
                   size="sm"
                   onClick={() => generateVariants.mutate(product.id)}
@@ -115,10 +152,22 @@ export default function SellerProductEditPage() {
         )}
 
         <TabsContent value="attributes" className="mt-4">
-          <ProductAttributeForm
-            productId={product.id}
-            categoryId={product.category_id}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Attributes</CardTitle>
+              <CardDescription>
+                Set specification attributes for this product (e.g., Brand, Material, Weight).
+                Available attributes depend on the product&apos;s category.
+                {!product.category_id && ' Assign a category first in the Basic Info tab.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProductAttributeForm
+                productId={product.id}
+                categoryId={product.category_id}
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
