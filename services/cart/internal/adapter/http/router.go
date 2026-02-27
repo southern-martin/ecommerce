@@ -2,6 +2,9 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+
+	"github.com/southern-martin/ecommerce/pkg/metrics"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
 )
 
 // NewRouter creates a new Gin router with all cart routes registered.
@@ -10,6 +13,9 @@ func NewRouter(handler *CartHandler) *gin.Engine {
 
 	router := gin.New()
 	router.Use(gin.Recovery())
+	router.Use(tracing.GinMiddleware("cart-service"))
+	router.Use(metrics.GinMiddleware("cart-service"))
+	router.GET("/metrics", metrics.Handler())
 
 	// Health check
 	router.GET("/health", handler.Health)
