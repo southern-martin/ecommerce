@@ -181,6 +181,7 @@ export default function ProductDetailPage() {
                     id: `${product.id}-${selectedVariant || 'default'}`,
                     product_id: product.id,
                     product_name: product.name,
+                    product_slug: product.slug,
                     price_cents: product.price,
                     quantity,
                     image_url: (product.images || [])[0]?.url,

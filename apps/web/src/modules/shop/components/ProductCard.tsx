@@ -2,19 +2,33 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button';
 import { Star, ShoppingCart, Heart, Eye } from 'lucide-react';
 import { formatPrice } from '@/shared/lib/utils';
+import { useCartStore } from '@/shared/stores/cart.store';
 import type { Product } from '../types/shop.types';
 
 interface ProductCardProps {
   product: Product;
-  onAddToCart?: (productId: string) => void;
 }
 
-export function ProductCard({ product, onAddToCart }: ProductCardProps) {
+export function ProductCard({ product }: ProductCardProps) {
+  const addItem = useCartStore((s) => s.addItem);
   const images = product.images || [];
   const primaryImage = images.find((img) => img.is_primary) ?? images[0];
   const discount = product.compare_at_price && product.compare_at_price > product.price
     ? Math.round((1 - product.price / product.compare_at_price) * 100)
     : 0;
+
+  const handleAddToCart = () => {
+    addItem({
+      id: `${product.id}-default`,
+      product_id: product.id,
+      product_name: product.name,
+      product_slug: product.slug,
+      price_cents: product.price,
+      quantity: 1,
+      image_url: primaryImage?.url,
+      seller_id: product.seller?.id,
+    });
+  };
 
   return (
     <div className="group relative overflow-hidden rounded-2xl border bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
@@ -100,7 +114,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         <Button
           size="sm"
           className="mt-3 w-full rounded-xl font-medium"
-          onClick={() => onAddToCart?.(product.id)}
+          onClick={handleAddToCart}
           disabled={!product.in_stock}
         >
           <ShoppingCart className="mr-2 h-4 w-4" />
