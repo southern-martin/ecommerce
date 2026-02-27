@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ecommerce_core/ecommerce_core.dart';
 
+import '../../data/auth_repository.dart';
+import '../../../../core/di/injection.dart';
 import '../widgets/oauth_buttons.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -11,6 +14,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final AuthRepository _authRepo = getIt<AuthRepository>();
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -45,8 +49,16 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Call auth repository register
-      await Future.delayed(const Duration(seconds: 1));
+      final result = await _authRepo.register(
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+      final storage = getIt<SecureStorage>();
+      await storage.setAccessToken(result.tokens.accessToken);
+      await storage.setRefreshToken(result.tokens.refreshToken);
+      await storage.setUserId(result.user.id);
 
       if (mounted) {
         context.go('/');

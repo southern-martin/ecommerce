@@ -1,3 +1,6 @@
+import 'package:ecommerce_api_client/ecommerce_api_client.dart';
+import 'package:ecommerce_core/ecommerce_core.dart';
+
 /// Represents an item within a seller order.
 class OrderItem {
   final String id;
@@ -17,6 +20,18 @@ class OrderItem {
     required this.price,
     required this.total,
   });
+
+  factory OrderItem.fromJson(Map<String, dynamic> json) {
+    return OrderItem(
+      id: json['id'] as String,
+      productId: json['productId'] as String,
+      productName: json['productName'] as String,
+      imageUrl: json['imageUrl'] as String?,
+      quantity: json['quantity'] as int,
+      price: (json['price'] as num).toDouble(),
+      total: (json['total'] as num).toDouble(),
+    );
+  }
 }
 
 /// Represents a customer's shipping address.
@@ -40,6 +55,18 @@ class CustomerInfo {
   });
 
   String get fullAddress => '$address, $city, $state $zipCode';
+
+  factory CustomerInfo.fromJson(Map<String, dynamic> json) {
+    return CustomerInfo(
+      name: json['name'] as String,
+      email: json['email'] as String,
+      phone: json['phone'] as String,
+      address: json['address'] as String,
+      city: json['city'] as String,
+      state: json['state'] as String,
+      zipCode: json['zipCode'] as String,
+    );
+  }
 }
 
 /// Represents a seller order.
@@ -69,6 +96,26 @@ class SellerOrder {
   });
 
   int get itemCount => items.fold(0, (sum, item) => sum + item.quantity);
+
+  factory SellerOrder.fromJson(Map<String, dynamic> json) {
+    return SellerOrder(
+      id: json['id'] as String,
+      orderNumber: json['orderNumber'] as String,
+      customerName: json['customerName'] as String,
+      customerInfo: json['customerInfo'] != null
+          ? CustomerInfo.fromJson(json['customerInfo'] as Map<String, dynamic>)
+          : null,
+      items: (json['items'] as List<dynamic>?)
+              ?.map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      total: (json['total'] as num).toDouble(),
+      status: json['status'] as String,
+      trackingNumber: json['trackingNumber'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+    );
+  }
 }
 
 /// Paginated result wrapper for orders.
@@ -84,6 +131,17 @@ class PaginatedOrders {
     required this.currentPage,
     required this.totalPages,
   });
+
+  factory PaginatedOrders.fromJson(Map<String, dynamic> json) {
+    return PaginatedOrders(
+      orders: (json['data'] as List<dynamic>)
+          .map((e) => SellerOrder.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      totalCount: json['totalCount'] as int,
+      currentPage: json['currentPage'] as int,
+      totalPages: json['totalPages'] as int,
+    );
+  }
 }
 
 /// Order statistics summary.
@@ -103,104 +161,47 @@ class OrderStats {
     required this.deliveredOrders,
     required this.cancelledOrders,
   });
+
+  factory OrderStats.fromJson(Map<String, dynamic> json) {
+    return OrderStats(
+      totalOrders: json['totalOrders'] as int,
+      pendingOrders: json['pendingOrders'] as int,
+      processingOrders: json['processingOrders'] as int,
+      shippedOrders: json['shippedOrders'] as int,
+      deliveredOrders: json['deliveredOrders'] as int,
+      cancelledOrders: json['cancelledOrders'] as int,
+    );
+  }
 }
 
 /// Repository for managing seller orders.
 class SellerOrderRepository {
+  final ApiClient _apiClient;
+
+  SellerOrderRepository({required ApiClient apiClient})
+      : _apiClient = apiClient;
+
   /// Fetches paginated list of seller orders with optional status filter.
   Future<PaginatedOrders> getOrders({
     int page = 1,
     String? status,
   }) async {
-    // TODO: Replace with actual API call to /seller/orders
-    await Future.delayed(const Duration(seconds: 1));
+    final queryParams = <String, dynamic>{'page': page};
+    if (status != null) queryParams['status'] = status;
 
-    final now = DateTime.now();
-    final statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
-    final names = ['Alice Johnson', 'Bob Smith', 'Carol Davis', 'Dan Wilson', 'Eve Brown'];
-
-    final allOrders = List.generate(
-      20,
-      (i) => SellerOrder(
-        id: 'order_${i + 1}',
-        orderNumber: 'ORD-${1001 + i}',
-        customerName: names[i % names.length],
-        items: List.generate(
-          (i % 3) + 1,
-          (j) => OrderItem(
-            id: 'item_${i}_$j',
-            productId: 'prod_${j + 1}',
-            productName: 'Product ${j + 1}',
-            imageUrl: 'https://picsum.photos/200?random=${i * 10 + j}',
-            quantity: (j % 3) + 1,
-            price: 19.99 + (j * 15.0),
-            total: (19.99 + (j * 15.0)) * ((j % 3) + 1),
-          ),
-        ),
-        total: 49.99 + (i * 25.0),
-        status: statuses[i % statuses.length],
-        trackingNumber: i % statuses.length == 2 ? 'TRK${100000 + i}' : null,
-        createdAt: now.subtract(Duration(days: i, hours: i * 3)),
-        updatedAt: now.subtract(Duration(days: i)),
-      ),
+    final response = await _apiClient.get(
+      ApiEndpoints.sellerOrders,
+      queryParameters: queryParams,
     );
-
-    final filtered = status != null
-        ? allOrders.where((o) => o.status == status).toList()
-        : allOrders;
-
-    return PaginatedOrders(
-      orders: filtered,
-      totalCount: filtered.length,
-      currentPage: page,
-      totalPages: 1,
-    );
+    return PaginatedOrders.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Fetches a single order by ID.
   Future<SellerOrder> getOrderById(String id) async {
-    // TODO: Replace with actual API call to /seller/orders/:id
-    await Future.delayed(const Duration(seconds: 1));
-
-    final now = DateTime.now();
-    return SellerOrder(
-      id: id,
-      orderNumber: 'ORD-1001',
-      customerName: 'Alice Johnson',
-      customerInfo: const CustomerInfo(
-        name: 'Alice Johnson',
-        email: 'alice@example.com',
-        phone: '+1 (555) 123-4567',
-        address: '123 Main Street',
-        city: 'Springfield',
-        state: 'IL',
-        zipCode: '62701',
-      ),
-      items: [
-        const OrderItem(
-          id: 'item_1',
-          productId: 'prod_1',
-          productName: 'Wireless Bluetooth Headphones',
-          imageUrl: 'https://picsum.photos/200?random=1',
-          quantity: 1,
-          price: 79.99,
-          total: 79.99,
-        ),
-        const OrderItem(
-          id: 'item_2',
-          productId: 'prod_2',
-          productName: 'Phone Case - Clear',
-          imageUrl: 'https://picsum.photos/200?random=2',
-          quantity: 2,
-          price: 14.99,
-          total: 29.98,
-        ),
-      ],
-      total: 109.97,
-      status: 'pending',
-      createdAt: now.subtract(const Duration(hours: 5)),
-      updatedAt: now.subtract(const Duration(hours: 2)),
+    final response = await _apiClient.get(
+      '${ApiEndpoints.sellerOrders}/$id',
     );
+    return SellerOrder.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Updates the status of an order.
@@ -209,36 +210,21 @@ class SellerOrderRepository {
     String status, {
     String? trackingNumber,
   }) async {
-    // TODO: Replace with actual API call to /seller/orders/:id/status
-    await Future.delayed(const Duration(milliseconds: 800));
+    final body = <String, dynamic>{'status': status};
+    if (trackingNumber != null) body['trackingNumber'] = trackingNumber;
 
-    final order = await getOrderById(id);
-    return SellerOrder(
-      id: order.id,
-      orderNumber: order.orderNumber,
-      customerName: order.customerName,
-      customerInfo: order.customerInfo,
-      items: order.items,
-      total: order.total,
-      status: status,
-      trackingNumber: trackingNumber ?? order.trackingNumber,
-      createdAt: order.createdAt,
-      updatedAt: DateTime.now(),
+    final response = await _apiClient.put(
+      '${ApiEndpoints.sellerOrders}/$id/status',
+      data: body,
     );
+    return SellerOrder.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Fetches order statistics summary.
   Future<OrderStats> getOrderStats() async {
-    // TODO: Replace with actual API call to /seller/orders/stats
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    return const OrderStats(
-      totalOrders: 187,
-      pendingOrders: 12,
-      processingOrders: 8,
-      shippedOrders: 25,
-      deliveredOrders: 135,
-      cancelledOrders: 7,
+    final response = await _apiClient.get(
+      '${ApiEndpoints.sellerOrders}/stats',
     );
+    return OrderStats.fromJson(response.data as Map<String, dynamic>);
   }
 }

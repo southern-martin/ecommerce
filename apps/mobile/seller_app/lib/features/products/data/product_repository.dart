@@ -1,3 +1,7 @@
+import 'package:dio/dio.dart';
+import 'package:ecommerce_api_client/ecommerce_api_client.dart';
+import 'package:ecommerce_core/ecommerce_core.dart';
+
 /// Represents a seller's product.
 class SellerProduct {
   final String id;
@@ -29,6 +33,30 @@ class SellerProduct {
     required this.createdAt,
     required this.updatedAt,
   });
+
+  factory SellerProduct.fromJson(Map<String, dynamic> json) {
+    return SellerProduct(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      price: (json['price'] as num).toDouble(),
+      compareAtPrice: json['compare_at_price'] != null
+          ? (json['compare_at_price'] as num).toDouble()
+          : null,
+      categoryId: json['category_id'] as String,
+      categoryName: json['category_name'] as String,
+      stockQuantity: json['stock_quantity'] as int,
+      status: json['status'] as String,
+      imageUrls: (json['image_urls'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      variants: (json['variants'] as List<dynamic>)
+          .map((e) => ProductVariant.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: DateTime.parse(json['updated_at'] as String),
+    );
+  }
 }
 
 /// A variant of a product (e.g. size, color).
@@ -46,6 +74,16 @@ class ProductVariant {
     required this.priceModifier,
     required this.stock,
   });
+
+  factory ProductVariant.fromJson(Map<String, dynamic> json) {
+    return ProductVariant(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      value: json['value'] as String,
+      priceModifier: (json['price_modifier'] as num).toDouble(),
+      stock: json['stock'] as int,
+    );
+  }
 }
 
 /// Paginated result wrapper.
@@ -61,59 +99,43 @@ class PaginatedProducts {
     required this.currentPage,
     required this.totalPages,
   });
+
+  factory PaginatedProducts.fromJson(Map<String, dynamic> json) {
+    return PaginatedProducts(
+      products: (json['products'] as List<dynamic>)
+          .map((e) => SellerProduct.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      totalCount: json['total_count'] as int,
+      currentPage: json['current_page'] as int,
+      totalPages: json['total_pages'] as int,
+    );
+  }
 }
 
 /// Repository for managing seller products.
 class SellerProductRepository {
+  final ApiClient _apiClient;
+
+  SellerProductRepository({required ApiClient apiClient})
+      : _apiClient = apiClient;
+
   /// Fetches paginated list of seller products with optional status filter.
   Future<PaginatedProducts> getMyProducts({
     int page = 1,
     String? status,
     String? searchQuery,
   }) async {
-    // TODO: Replace with actual API call
-    await Future.delayed(const Duration(seconds: 1));
+    final queryParams = <String, dynamic>{'page': page};
+    if (status != null) queryParams['status'] = status;
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      queryParams['search'] = searchQuery;
+    }
 
-    final now = DateTime.now();
-    final allProducts = List.generate(
-      15,
-      (i) => SellerProduct(
-        id: 'prod_${i + 1}',
-        name: 'Product ${i + 1}',
-        description: 'Description for product ${i + 1}',
-        price: 19.99 + (i * 10),
-        compareAtPrice: i % 3 == 0 ? 29.99 + (i * 10) : null,
-        categoryId: 'cat_${(i % 5) + 1}',
-        categoryName: ['Electronics', 'Clothing', 'Home', 'Sports', 'Books'][i % 5],
-        stockQuantity: i % 4 == 0 ? 0 : 10 + i * 5,
-        status: i % 4 == 0 ? 'out_of_stock' : (i % 3 == 0 ? 'draft' : 'active'),
-        imageUrls: ['https://picsum.photos/200?random=$i'],
-        variants: i % 2 == 0
-            ? [
-                ProductVariant(
-                  id: 'var_${i}_1',
-                  name: 'Size',
-                  value: 'Large',
-                  priceModifier: 5.0,
-                  stock: 10,
-                ),
-              ]
-            : [],
-        createdAt: now.subtract(Duration(days: i * 3)),
-        updatedAt: now.subtract(Duration(days: i)),
-      ),
+    final response = await _apiClient.get(
+      ApiEndpoints.sellerProducts,
+      queryParameters: queryParams,
     );
-
-    final filtered = status != null
-        ? allProducts.where((p) => p.status == status).toList()
-        : allProducts;
-
-    return PaginatedProducts(
-      products: filtered,
-      totalCount: filtered.length,
-      currentPage: page,
-      totalPages: 1,
-    );
+    return PaginatedProducts.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Creates a new product.
@@ -127,22 +149,27 @@ class SellerProductRepository {
     required List<String> imageUrls,
     required List<ProductVariant> variants,
   }) async {
-    await Future.delayed(const Duration(seconds: 1));
-    return SellerProduct(
-      id: 'prod_new_${DateTime.now().millisecondsSinceEpoch}',
-      name: name,
-      description: description,
-      price: price,
-      compareAtPrice: compareAtPrice,
-      categoryId: categoryId,
-      categoryName: 'Category',
-      stockQuantity: stockQuantity,
-      status: 'draft',
-      imageUrls: imageUrls,
-      variants: variants,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+    final response = await _apiClient.post(
+      ApiEndpoints.sellerProducts,
+      data: {
+        'name': name,
+        'description': description,
+        'price': price,
+        if (compareAtPrice != null) 'compare_at_price': compareAtPrice,
+        'category_id': categoryId,
+        'stock_quantity': stockQuantity,
+        'image_urls': imageUrls,
+        'variants': variants
+            .map((v) => {
+                  'name': v.name,
+                  'value': v.value,
+                  'price_modifier': v.priceModifier,
+                  'stock': v.stock,
+                })
+            .toList(),
+      },
     );
+    return SellerProduct.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Updates an existing product by ID.
@@ -157,35 +184,51 @@ class SellerProductRepository {
     required List<String> imageUrls,
     required List<ProductVariant> variants,
   }) async {
-    await Future.delayed(const Duration(seconds: 1));
-    return SellerProduct(
-      id: id,
-      name: name,
-      description: description,
-      price: price,
-      compareAtPrice: compareAtPrice,
-      categoryId: categoryId,
-      categoryName: 'Category',
-      stockQuantity: stockQuantity,
-      status: 'active',
-      imageUrls: imageUrls,
-      variants: variants,
-      createdAt: DateTime.now().subtract(const Duration(days: 30)),
-      updatedAt: DateTime.now(),
+    final response = await _apiClient.put(
+      '${ApiEndpoints.sellerProducts}/$id',
+      data: {
+        'name': name,
+        'description': description,
+        'price': price,
+        if (compareAtPrice != null) 'compare_at_price': compareAtPrice,
+        'category_id': categoryId,
+        'stock_quantity': stockQuantity,
+        'image_urls': imageUrls,
+        'variants': variants
+            .map((v) => {
+                  'id': v.id,
+                  'name': v.name,
+                  'value': v.value,
+                  'price_modifier': v.priceModifier,
+                  'stock': v.stock,
+                })
+            .toList(),
+      },
     );
+    return SellerProduct.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Deletes a product by ID.
   Future<void> deleteProduct(String id) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await _apiClient.delete('${ApiEndpoints.sellerProducts}/$id');
   }
 
   /// Uploads product images and returns their URLs.
   Future<List<String>> uploadImages(List<String> localPaths) async {
-    await Future.delayed(const Duration(seconds: 2));
-    return localPaths
-        .map((path) =>
-            'https://picsum.photos/400?random=${DateTime.now().millisecondsSinceEpoch}')
-        .toList();
+    final formData = FormData.fromMap({
+      'images': await Future.wait(
+        localPaths.map(
+          (path) => MultipartFile.fromFile(path),
+        ),
+      ),
+    });
+
+    final response = await _apiClient.upload(
+      '${ApiEndpoints.sellerProducts}/images',
+      formData: formData,
+    );
+
+    final data = response.data as Map<String, dynamic>;
+    return (data['urls'] as List<dynamic>).map((e) => e as String).toList();
   }
 }

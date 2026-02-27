@@ -1,3 +1,6 @@
+import 'package:ecommerce_api_client/ecommerce_api_client.dart';
+import 'package:ecommerce_core/ecommerce_core.dart';
+
 /// Represents a coupon created by the seller.
 class Coupon {
   final String id;
@@ -30,6 +33,28 @@ class Coupon {
     required this.updatedAt,
   });
 
+  factory Coupon.fromJson(Map<String, dynamic> json) {
+    return Coupon(
+      id: json['id'] as String,
+      code: json['code'] as String,
+      discountType: json['discountType'] as String,
+      discountValue: (json['discountValue'] as num).toDouble(),
+      minimumOrderAmount: json['minimumOrderAmount'] != null
+          ? (json['minimumOrderAmount'] as num).toDouble()
+          : null,
+      maxUses: json['maxUses'] as int?,
+      usedCount: json['usedCount'] as int,
+      expiryDate: json['expiryDate'] != null
+          ? DateTime.parse(json['expiryDate'] as String)
+          : null,
+      productScope: json['productScope'] as String?,
+      categoryScope: json['categoryScope'] as String?,
+      isActive: json['isActive'] as bool,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+    );
+  }
+
   String get discountDisplay {
     if (discountType == 'percentage') {
       return '${discountValue.toStringAsFixed(0)}%';
@@ -58,146 +83,56 @@ class CouponStats {
     required this.totalRedemptions,
     required this.totalDiscountGiven,
   });
+
+  factory CouponStats.fromJson(Map<String, dynamic> json) {
+    return CouponStats(
+      totalCoupons: json['totalCoupons'] as int,
+      activeCoupons: json['activeCoupons'] as int,
+      expiredCoupons: json['expiredCoupons'] as int,
+      totalRedemptions: json['totalRedemptions'] as int,
+      totalDiscountGiven: (json['totalDiscountGiven'] as num).toDouble(),
+    );
+  }
 }
 
 /// Repository for managing seller coupons.
 class CouponRepository {
+  final ApiClient _apiClient;
+
+  CouponRepository({required ApiClient apiClient}) : _apiClient = apiClient;
+
   /// Fetches all coupons for the seller.
   Future<List<Coupon>> getCoupons() async {
-    // TODO: Replace with actual API call to /seller/coupons
-    await Future.delayed(const Duration(seconds: 1));
-
-    final now = DateTime.now();
-    return [
-      Coupon(
-        id: 'coup_1',
-        code: 'SUMMER25',
-        discountType: 'percentage',
-        discountValue: 25,
-        minimumOrderAmount: 50.0,
-        maxUses: 100,
-        usedCount: 43,
-        expiryDate: now.add(const Duration(days: 30)),
-        isActive: true,
-        createdAt: now.subtract(const Duration(days: 15)),
-        updatedAt: now.subtract(const Duration(days: 2)),
-      ),
-      Coupon(
-        id: 'coup_2',
-        code: 'FLAT10',
-        discountType: 'fixed',
-        discountValue: 10.0,
-        minimumOrderAmount: 30.0,
-        maxUses: 200,
-        usedCount: 128,
-        expiryDate: now.add(const Duration(days: 60)),
-        isActive: true,
-        createdAt: now.subtract(const Duration(days: 30)),
-        updatedAt: now.subtract(const Duration(days: 5)),
-      ),
-      Coupon(
-        id: 'coup_3',
-        code: 'WELCOME15',
-        discountType: 'percentage',
-        discountValue: 15,
-        maxUses: 50,
-        usedCount: 50,
-        expiryDate: now.subtract(const Duration(days: 5)),
-        isActive: false,
-        createdAt: now.subtract(const Duration(days: 60)),
-        updatedAt: now.subtract(const Duration(days: 5)),
-      ),
-      Coupon(
-        id: 'coup_4',
-        code: 'FREESHIP',
-        discountType: 'fixed',
-        discountValue: 5.99,
-        maxUses: null,
-        usedCount: 312,
-        expiryDate: null,
-        isActive: true,
-        createdAt: now.subtract(const Duration(days: 90)),
-        updatedAt: now.subtract(const Duration(days: 1)),
-      ),
-      Coupon(
-        id: 'coup_5',
-        code: 'HOLIDAY50',
-        discountType: 'percentage',
-        discountValue: 50,
-        minimumOrderAmount: 100.0,
-        maxUses: 20,
-        usedCount: 20,
-        expiryDate: now.subtract(const Duration(days: 30)),
-        isActive: false,
-        createdAt: now.subtract(const Duration(days: 120)),
-        updatedAt: now.subtract(const Duration(days: 30)),
-      ),
-    ];
+    final response = await _apiClient.get(ApiEndpoints.sellerCoupons);
+    final list = response.data as List<dynamic>;
+    return list
+        .map((e) => Coupon.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// Creates a new coupon.
   Future<Coupon> createCoupon(Map<String, dynamic> data) async {
-    // TODO: Replace with actual API call to /seller/coupons
-    await Future.delayed(const Duration(seconds: 1));
-
-    final now = DateTime.now();
-    return Coupon(
-      id: 'coup_new_${now.millisecondsSinceEpoch}',
-      code: data['code'] as String,
-      discountType: data['discountType'] as String,
-      discountValue: data['discountValue'] as double,
-      minimumOrderAmount: data['minimumOrderAmount'] as double?,
-      maxUses: data['maxUses'] as int?,
-      usedCount: 0,
-      expiryDate: data['expiryDate'] as DateTime?,
-      productScope: data['productScope'] as String?,
-      categoryScope: data['categoryScope'] as String?,
-      isActive: true,
-      createdAt: now,
-      updatedAt: now,
-    );
+    final response =
+        await _apiClient.post(ApiEndpoints.sellerCoupons, data: data);
+    return Coupon.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Updates an existing coupon.
   Future<Coupon> updateCoupon(String id, Map<String, dynamic> data) async {
-    // TODO: Replace with actual API call to /seller/coupons/:id
-    await Future.delayed(const Duration(seconds: 1));
-
-    final now = DateTime.now();
-    return Coupon(
-      id: id,
-      code: data['code'] as String,
-      discountType: data['discountType'] as String,
-      discountValue: data['discountValue'] as double,
-      minimumOrderAmount: data['minimumOrderAmount'] as double?,
-      maxUses: data['maxUses'] as int?,
-      usedCount: 0,
-      expiryDate: data['expiryDate'] as DateTime?,
-      productScope: data['productScope'] as String?,
-      categoryScope: data['categoryScope'] as String?,
-      isActive: true,
-      createdAt: now.subtract(const Duration(days: 10)),
-      updatedAt: now,
-    );
+    final response =
+        await _apiClient.put('${ApiEndpoints.sellerCoupons}/$id', data: data);
+    return Coupon.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Deletes a coupon by ID.
   Future<void> deleteCoupon(String id) async {
-    // TODO: Replace with actual API call to /seller/coupons/:id
-    await Future.delayed(const Duration(milliseconds: 500));
+    await _apiClient.delete('${ApiEndpoints.sellerCoupons}/$id');
   }
 
   /// Fetches coupon statistics.
   Future<CouponStats> getCouponStats() async {
-    // TODO: Replace with actual API call to /seller/coupons/stats
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    return const CouponStats(
-      totalCoupons: 5,
-      activeCoupons: 3,
-      expiredCoupons: 2,
-      totalRedemptions: 553,
-      totalDiscountGiven: 4250.75,
-    );
+    final response =
+        await _apiClient.get('${ApiEndpoints.sellerCoupons}/stats');
+    return CouponStats.fromJson(response.data as Map<String, dynamic>);
   }
 }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ecommerce_core/ecommerce_core.dart';
 
+import '../../data/auth_repository.dart';
+import '../../../../core/di/injection.dart';
 import '../widgets/oauth_buttons.dart';
 
 class LoginPage extends StatefulWidget {
@@ -11,6 +14,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final AuthRepository _authRepo = getIt<AuthRepository>();
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -30,8 +34,14 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Call auth repository login
-      await Future.delayed(const Duration(seconds: 1));
+      final result = await _authRepo.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+      final storage = getIt<SecureStorage>();
+      await storage.setAccessToken(result.tokens.accessToken);
+      await storage.setRefreshToken(result.tokens.refreshToken);
+      await storage.setUserId(result.user.id);
 
       if (mounted) {
         context.go('/');
@@ -241,8 +251,10 @@ class _LoginPageState extends State<LoginPage> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              // TODO: Call forgotPassword
+            onPressed: () async {
+              try {
+                await _authRepo.forgotPassword(emailController.text.trim());
+              } catch (_) {}
               Navigator.pop(context);
               ScaffoldMessenger.of(this.context).showSnackBar(
                 const SnackBar(content: Text('Password reset email sent')),

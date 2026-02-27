@@ -1,7 +1,41 @@
 import 'package:flutter/material.dart';
 
-class OAuthButtons extends StatelessWidget {
-  const OAuthButtons({super.key});
+class OAuthButtons extends StatefulWidget {
+  final VoidCallback? onSuccess;
+
+  const OAuthButtons({super.key, this.onSuccess});
+
+  @override
+  State<OAuthButtons> createState() => _OAuthButtonsState();
+}
+
+class _OAuthButtonsState extends State<OAuthButtons> {
+  bool _isLoading = false;
+
+  Future<void> _handleOAuthLogin(String provider) async {
+    setState(() => _isLoading = true);
+    try {
+      // Native SDK integration required for production:
+      // Google: google_sign_in package → get idToken
+      // Apple: sign_in_with_apple package → get identityToken
+      // For now, show a message that platform setup is needed
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${provider[0].toUpperCase()}${provider.substring(1)} sign-in requires native SDK configuration'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('OAuth failed: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -9,9 +43,7 @@ class OAuthButtons extends StatelessWidget {
       children: [
         Expanded(
           child: OutlinedButton.icon(
-            onPressed: () {
-              _handleOAuthLogin(context, 'google');
-            },
+            onPressed: _isLoading ? null : () => _handleOAuthLogin('google'),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(0, 52),
               shape: RoundedRectangleBorder(
@@ -19,26 +51,14 @@ class OAuthButtons extends StatelessWidget {
               ),
               side: BorderSide(color: Colors.grey.shade300),
             ),
-            icon: Container(
-              width: 24,
-              height: 24,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/icons/google.png'),
-                  fit: BoxFit.contain,
-                ),
-              ),
-              child: const Icon(Icons.g_mobiledata, size: 24),
-            ),
+            icon: const Icon(Icons.g_mobiledata, size: 24),
             label: const Text('Google'),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: OutlinedButton.icon(
-            onPressed: () {
-              _handleOAuthLogin(context, 'apple');
-            },
+            onPressed: _isLoading ? null : () => _handleOAuthLogin('apple'),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(0, 52),
               shape: RoundedRectangleBorder(
@@ -51,13 +71,6 @@ class OAuthButtons extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  void _handleOAuthLogin(BuildContext context, String provider) {
-    // TODO: Implement OAuth login via AuthRepository.oauthLogin
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$provider sign-in coming soon')),
     );
   }
 }

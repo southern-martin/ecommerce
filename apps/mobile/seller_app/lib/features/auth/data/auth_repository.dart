@@ -1,14 +1,19 @@
+import 'package:ecommerce_api_client/ecommerce_api_client.dart';
 import 'package:ecommerce_core/ecommerce_core.dart';
 
 /// Repository handling seller authentication operations.
 ///
-/// Uses [SecureStorage] from ecommerce_core to persist tokens and credentials
-/// securely on the device keychain/keystore.
+/// Uses [ApiClient] for network requests and [SecureStorage] to persist
+/// tokens and credentials securely on the device keychain/keystore.
 class SellerAuthRepository {
+  final ApiClient _apiClient;
   final SecureStorage _secureStorage;
 
-  SellerAuthRepository({required SecureStorage secureStorage})
-      : _secureStorage = secureStorage;
+  SellerAuthRepository({
+    required ApiClient apiClient,
+    required SecureStorage secureStorage,
+  })  : _apiClient = apiClient,
+        _secureStorage = secureStorage;
 
   /// Authenticates a seller with [email] and [password].
   ///
@@ -19,19 +24,21 @@ class SellerAuthRepository {
     required String password,
   }) async {
     try {
-      // TODO: Replace with actual ApiClient call once ecommerce_api_client is wired
-      // final response = await _apiClient.post('/seller/auth/login', body: {
-      //   'email': email,
-      //   'password': password,
-      // });
+      final response = await _apiClient.post(
+        ApiEndpoints.login,
+        data: {
+          'email': email,
+          'password': password,
+        },
+      );
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
-
-      // Simulated token response
-      const accessToken = 'seller_access_token_placeholder';
-      const refreshToken = 'seller_refresh_token_placeholder';
-      final expiry = DateTime.now().add(const Duration(hours: 24));
+      final data = response.data as Map<String, dynamic>;
+      final accessToken = data['access_token'] as String;
+      final refreshToken = data['refresh_token'] as String;
+      final expiresIn = data['expires_in'] as int?;
+      final expiry = DateTime.now().add(
+        Duration(seconds: expiresIn ?? 86400),
+      );
 
       await _secureStorage.setAccessToken(accessToken);
       await _secureStorage.setRefreshToken(refreshToken);
@@ -44,8 +51,14 @@ class SellerAuthRepository {
     }
   }
 
-  /// Logs out the current seller by clearing all stored credentials.
+  /// Logs out the current seller by notifying the server and clearing
+  /// all stored credentials.
   Future<void> logout() async {
+    try {
+      await _apiClient.post(ApiEndpoints.logout);
+    } catch (_) {
+      // Best-effort logout on server; always clear local tokens.
+    }
     await _secureStorage.deleteAccessToken();
     await _secureStorage.deleteRefreshToken();
     await _secureStorage.delete(key: 'seller_email');
@@ -60,18 +73,29 @@ class SellerAuthRepository {
       final currentRefreshToken = await _secureStorage.getRefreshToken();
       if (currentRefreshToken == null) return false;
 
-      // TODO: Replace with actual ApiClient call
-      // final response = await _apiClient.post('/seller/auth/refresh', body: {
-      //   'refresh_token': currentRefreshToken,
-      // });
+      final response = await _apiClient.post(
+        ApiEndpoints.refreshToken,
+        data: {
+          'refresh_token': currentRefreshToken,
+        },
+      );
 
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      const newAccessToken = 'refreshed_seller_access_token';
-      final newExpiry = DateTime.now().add(const Duration(hours: 24));
+      final data = response.data as Map<String, dynamic>;
+      final newAccessToken = data['access_token'] as String;
+      final expiresIn = data['expires_in'] as int?;
+      final newExpiry = DateTime.now().add(
+        Duration(seconds: expiresIn ?? 86400),
+      );
 
       await _secureStorage.setAccessToken(newAccessToken);
       await _secureStorage.setTokenExpiry(newExpiry);
+
+      // Update refresh token if the server rotated it.
+      if (data.containsKey('refresh_token')) {
+        await _secureStorage.setRefreshToken(
+          data['refresh_token'] as String,
+        );
+      }
 
       return true;
     } catch (e) {

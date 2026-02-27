@@ -1,3 +1,5 @@
+import 'package:ecommerce_api_client/ecommerce_api_client.dart';
+
 /// Represents dimensions of a shipment package.
 class ShipmentDimensions {
   final double length;
@@ -12,6 +14,14 @@ class ShipmentDimensions {
 
   @override
   String toString() => '${length}L x ${width}W x ${height}H';
+
+  factory ShipmentDimensions.fromJson(Map<String, dynamic> json) {
+    return ShipmentDimensions(
+      length: (json['length'] as num).toDouble(),
+      width: (json['width'] as num).toDouble(),
+      height: (json['height'] as num).toDouble(),
+    );
+  }
 }
 
 /// Represents a shipment record.
@@ -39,6 +49,24 @@ class Shipment {
     required this.createdAt,
     required this.updatedAt,
   });
+
+  factory Shipment.fromJson(Map<String, dynamic> json) {
+    return Shipment(
+      id: json['id'] as String,
+      orderId: json['orderId'] as String,
+      orderNumber: json['orderNumber'] as String,
+      carrier: json['carrier'] as String,
+      trackingNumber: json['trackingNumber'] as String,
+      status: json['status'] as String,
+      weight: (json['weight'] as num?)?.toDouble(),
+      dimensions: json['dimensions'] != null
+          ? ShipmentDimensions.fromJson(
+              json['dimensions'] as Map<String, dynamic>)
+          : null,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+    );
+  }
 }
 
 /// Paginated result wrapper for shipments.
@@ -54,47 +82,37 @@ class PaginatedShipments {
     required this.currentPage,
     required this.totalPages,
   });
+
+  factory PaginatedShipments.fromJson(Map<String, dynamic> json) {
+    return PaginatedShipments(
+      shipments: (json['data'] as List<dynamic>)
+          .map((e) => Shipment.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      totalCount: json['totalCount'] as int,
+      currentPage: json['currentPage'] as int,
+      totalPages: json['totalPages'] as int,
+    );
+  }
 }
+
+const String _sellerShipments = '/api/v1/seller/shipments';
 
 /// Repository for managing shipments.
 class ShipmentRepository {
+  final ApiClient _apiClient;
+
+  ShipmentRepository({required ApiClient apiClient})
+      : _apiClient = apiClient;
+
   /// Fetches paginated list of shipments.
   Future<PaginatedShipments> getShipments({int page = 1}) async {
-    // TODO: Replace with actual API call to /seller/shipments
-    await Future.delayed(const Duration(seconds: 1));
+    final queryParams = <String, dynamic>{'page': page};
 
-    final now = DateTime.now();
-    final carriers = ['FedEx', 'UPS', 'USPS', 'DHL'];
-    final statuses = ['pending', 'in_transit', 'delivered'];
-
-    final allShipments = List.generate(
-      12,
-      (i) => Shipment(
-        id: 'ship_${i + 1}',
-        orderId: 'order_${i + 1}',
-        orderNumber: 'ORD-${1001 + i}',
-        carrier: carriers[i % carriers.length],
-        trackingNumber: 'TRK${900000 + i * 111}',
-        status: statuses[i % statuses.length],
-        weight: i % 2 == 0 ? 2.5 + (i * 0.5) : null,
-        dimensions: i % 3 == 0
-            ? ShipmentDimensions(
-                length: 10.0 + i,
-                width: 8.0 + i,
-                height: 4.0 + i,
-              )
-            : null,
-        createdAt: now.subtract(Duration(days: i * 2)),
-        updatedAt: now.subtract(Duration(days: i)),
-      ),
+    final response = await _apiClient.get(
+      _sellerShipments,
+      queryParameters: queryParams,
     );
-
-    return PaginatedShipments(
-      shipments: allShipments,
-      totalCount: allShipments.length,
-      currentPage: page,
-      totalPages: 1,
-    );
+    return PaginatedShipments.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Creates a new shipment for an order.
@@ -105,41 +123,32 @@ class ShipmentRepository {
     double? weight,
     ShipmentDimensions? dimensions,
   }) async {
-    // TODO: Replace with actual API call to /seller/shipments
-    await Future.delayed(const Duration(seconds: 1));
+    final body = <String, dynamic>{
+      'orderId': orderId,
+      'carrier': carrier,
+      'trackingNumber': trackingNumber,
+    };
+    if (weight != null) body['weight'] = weight;
+    if (dimensions != null) {
+      body['dimensions'] = {
+        'length': dimensions.length,
+        'width': dimensions.width,
+        'height': dimensions.height,
+      };
+    }
 
-    final now = DateTime.now();
-    return Shipment(
-      id: 'ship_new_${now.millisecondsSinceEpoch}',
-      orderId: orderId,
-      orderNumber: 'ORD-$orderId',
-      carrier: carrier,
-      trackingNumber: trackingNumber,
-      status: 'pending',
-      weight: weight,
-      dimensions: dimensions,
-      createdAt: now,
-      updatedAt: now,
+    final response = await _apiClient.post(
+      _sellerShipments,
+      data: body,
     );
+    return Shipment.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Fetches a single shipment by ID.
   Future<Shipment> getShipmentById(String id) async {
-    // TODO: Replace with actual API call to /seller/shipments/:id
-    await Future.delayed(const Duration(seconds: 1));
-
-    final now = DateTime.now();
-    return Shipment(
-      id: id,
-      orderId: 'order_1',
-      orderNumber: 'ORD-1001',
-      carrier: 'FedEx',
-      trackingNumber: 'TRK900000',
-      status: 'in_transit',
-      weight: 3.5,
-      dimensions: const ShipmentDimensions(length: 12, width: 10, height: 6),
-      createdAt: now.subtract(const Duration(days: 3)),
-      updatedAt: now.subtract(const Duration(days: 1)),
+    final response = await _apiClient.get(
+      '$_sellerShipments/$id',
     );
+    return Shipment.fromJson(response.data as Map<String, dynamic>);
   }
 }

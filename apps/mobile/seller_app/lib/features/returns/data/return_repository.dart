@@ -1,3 +1,6 @@
+import 'package:ecommerce_api_client/ecommerce_api_client.dart';
+import 'package:ecommerce_core/ecommerce_core.dart';
+
 /// Represents an item being returned.
 class ReturnItem {
   final String id;
@@ -15,6 +18,17 @@ class ReturnItem {
     required this.quantity,
     required this.price,
   });
+
+  factory ReturnItem.fromJson(Map<String, dynamic> json) {
+    return ReturnItem(
+      id: json['id'] as String,
+      productId: json['productId'] as String,
+      productName: json['productName'] as String,
+      imageUrl: json['imageUrl'] as String?,
+      quantity: json['quantity'] as int,
+      price: (json['price'] as num).toDouble(),
+    );
+  }
 }
 
 /// Represents a return request from a customer.
@@ -44,6 +58,25 @@ class SellerReturn {
     required this.createdAt,
     required this.updatedAt,
   });
+
+  factory SellerReturn.fromJson(Map<String, dynamic> json) {
+    return SellerReturn(
+      id: json['id'] as String,
+      returnNumber: json['returnNumber'] as String,
+      orderId: json['orderId'] as String,
+      orderNumber: json['orderNumber'] as String,
+      customerName: json['customerName'] as String,
+      reason: json['reason'] as String,
+      status: json['status'] as String,
+      items: (json['items'] as List<dynamic>?)
+              ?.map((e) => ReturnItem.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      note: json['note'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+    );
+  }
 }
 
 /// Paginated result wrapper for returns.
@@ -59,143 +92,70 @@ class PaginatedReturns {
     required this.currentPage,
     required this.totalPages,
   });
+
+  factory PaginatedReturns.fromJson(Map<String, dynamic> json) {
+    return PaginatedReturns(
+      returns: (json['data'] as List<dynamic>)
+          .map((e) => SellerReturn.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      totalCount: json['totalCount'] as int,
+      currentPage: json['currentPage'] as int,
+      totalPages: json['totalPages'] as int,
+    );
+  }
 }
 
 /// Repository for managing seller returns.
 class SellerReturnRepository {
+  final ApiClient _apiClient;
+
+  SellerReturnRepository({required ApiClient apiClient})
+      : _apiClient = apiClient;
+
   /// Fetches paginated list of returns with optional status filter.
   Future<PaginatedReturns> getReturns({
     int page = 1,
     String? status,
   }) async {
-    // TODO: Replace with actual API call to /seller/returns
-    await Future.delayed(const Duration(seconds: 1));
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'scope': 'seller',
+    };
+    if (status != null) queryParams['status'] = status;
 
-    final now = DateTime.now();
-    final statuses = ['pending', 'approved', 'rejected'];
-    final reasons = [
-      'Item damaged during shipping',
-      'Wrong item received',
-      'Item does not match description',
-      'Changed my mind',
-      'Defective product',
-    ];
-    final names = ['Alice Johnson', 'Bob Smith', 'Carol Davis', 'Dan Wilson', 'Eve Brown'];
-
-    final allReturns = List.generate(
-      10,
-      (i) => SellerReturn(
-        id: 'ret_${i + 1}',
-        returnNumber: 'RET-${2001 + i}',
-        orderId: 'order_${i + 1}',
-        orderNumber: 'ORD-${1001 + i}',
-        customerName: names[i % names.length],
-        reason: reasons[i % reasons.length],
-        status: statuses[i % statuses.length],
-        items: [
-          ReturnItem(
-            id: 'ret_item_${i}_1',
-            productId: 'prod_${i + 1}',
-            productName: 'Product ${i + 1}',
-            imageUrl: 'https://picsum.photos/200?random=${i + 100}',
-            quantity: 1,
-            price: 29.99 + (i * 10.0),
-          ),
-        ],
-        note: i % 3 == 1 ? 'Customer provided photos of damage' : null,
-        createdAt: now.subtract(Duration(days: i * 2)),
-        updatedAt: now.subtract(Duration(days: i)),
-      ),
+    final response = await _apiClient.get(
+      ApiEndpoints.returns,
+      queryParameters: queryParams,
     );
-
-    final filtered = status != null
-        ? allReturns.where((r) => r.status == status).toList()
-        : allReturns;
-
-    return PaginatedReturns(
-      returns: filtered,
-      totalCount: filtered.length,
-      currentPage: page,
-      totalPages: 1,
-    );
+    return PaginatedReturns.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Fetches a single return by ID.
   Future<SellerReturn> getReturnById(String id) async {
-    // TODO: Replace with actual API call to /seller/returns/:id
-    await Future.delayed(const Duration(seconds: 1));
-
-    final now = DateTime.now();
-    return SellerReturn(
-      id: id,
-      returnNumber: 'RET-2001',
-      orderId: 'order_1',
-      orderNumber: 'ORD-1001',
-      customerName: 'Alice Johnson',
-      reason: 'Item damaged during shipping. The packaging was torn and the product has visible scratches on the surface.',
-      status: 'pending',
-      items: [
-        const ReturnItem(
-          id: 'ret_item_1',
-          productId: 'prod_1',
-          productName: 'Wireless Bluetooth Headphones',
-          imageUrl: 'https://picsum.photos/200?random=101',
-          quantity: 1,
-          price: 79.99,
-        ),
-        const ReturnItem(
-          id: 'ret_item_2',
-          productId: 'prod_3',
-          productName: 'USB-C Charging Cable',
-          imageUrl: 'https://picsum.photos/200?random=103',
-          quantity: 2,
-          price: 12.99,
-        ),
-      ],
-      createdAt: now.subtract(const Duration(days: 2)),
-      updatedAt: now.subtract(const Duration(hours: 6)),
+    final response = await _apiClient.get(
+      '${ApiEndpoints.returns}/$id',
     );
+    return SellerReturn.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Approves a return request with an optional note.
   Future<SellerReturn> approveReturn(String id, {String? note}) async {
-    // TODO: Replace with actual API call to /seller/returns/:id/approve
-    await Future.delayed(const Duration(milliseconds: 800));
+    final body = <String, dynamic>{};
+    if (note != null) body['note'] = note;
 
-    final original = await getReturnById(id);
-    return SellerReturn(
-      id: original.id,
-      returnNumber: original.returnNumber,
-      orderId: original.orderId,
-      orderNumber: original.orderNumber,
-      customerName: original.customerName,
-      reason: original.reason,
-      status: 'approved',
-      items: original.items,
-      note: note,
-      createdAt: original.createdAt,
-      updatedAt: DateTime.now(),
+    final response = await _apiClient.post(
+      '${ApiEndpoints.returns}/$id/approve',
+      data: body,
     );
+    return SellerReturn.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Rejects a return request with a required note.
   Future<SellerReturn> rejectReturn(String id, String note) async {
-    // TODO: Replace with actual API call to /seller/returns/:id/reject
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    final original = await getReturnById(id);
-    return SellerReturn(
-      id: original.id,
-      returnNumber: original.returnNumber,
-      orderId: original.orderId,
-      orderNumber: original.orderNumber,
-      customerName: original.customerName,
-      reason: original.reason,
-      status: 'rejected',
-      items: original.items,
-      note: note,
-      createdAt: original.createdAt,
-      updatedAt: DateTime.now(),
+    final response = await _apiClient.post(
+      '${ApiEndpoints.returns}/$id/reject',
+      data: {'note': note},
     );
+    return SellerReturn.fromJson(response.data as Map<String, dynamic>);
   }
 }

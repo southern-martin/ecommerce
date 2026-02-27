@@ -1,3 +1,6 @@
+import 'package:ecommerce_api_client/ecommerce_api_client.dart';
+import 'package:ecommerce_core/ecommerce_core.dart';
+
 /// Data model for dashboard statistics.
 class DashboardStats {
   final double totalRevenue;
@@ -19,6 +22,23 @@ class DashboardStats {
     required this.revenueChart,
     required this.recentOrders,
   });
+
+  factory DashboardStats.fromJson(Map<String, dynamic> json) {
+    return DashboardStats(
+      totalRevenue: (json['total_revenue'] as num).toDouble(),
+      totalOrders: json['total_orders'] as int,
+      totalProducts: json['total_products'] as int,
+      pendingOrders: json['pending_orders'] as int,
+      revenueTrend: (json['revenue_trend'] as num).toDouble(),
+      ordersTrend: (json['orders_trend'] as num).toDouble(),
+      revenueChart: (json['revenue_chart'] as List<dynamic>)
+          .map((e) => RevenueDataPoint.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      recentOrders: (json['recent_orders'] as List<dynamic>)
+          .map((e) => RecentOrder.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
 }
 
 /// A single data point in the revenue chart.
@@ -27,6 +47,13 @@ class RevenueDataPoint {
   final double amount;
 
   const RevenueDataPoint({required this.date, required this.amount});
+
+  factory RevenueDataPoint.fromJson(Map<String, dynamic> json) {
+    return RevenueDataPoint(
+      date: DateTime.parse(json['date'] as String),
+      amount: (json['amount'] as num).toDouble(),
+    );
+  }
 }
 
 /// A recent order shown on the dashboard.
@@ -46,69 +73,54 @@ class RecentOrder {
     required this.createdAt,
     required this.itemCount,
   });
+
+  factory RecentOrder.fromJson(Map<String, dynamic> json) {
+    return RecentOrder(
+      id: json['id'] as String,
+      customerName: json['customer_name'] as String,
+      total: (json['total'] as num).toDouble(),
+      status: json['status'] as String,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      itemCount: json['item_count'] as int,
+    );
+  }
 }
 
 /// Repository for fetching seller dashboard data.
 class DashboardRepository {
+  final ApiClient _apiClient;
+
+  DashboardRepository({required ApiClient apiClient})
+      : _apiClient = apiClient;
+
   /// Fetches all dashboard statistics including revenue, orders, products,
-  /// revenue chart data for the last 30 days, and recent orders.
+  /// revenue chart data, and recent orders.
   Future<DashboardStats> getDashboardStats() async {
-    // TODO: Replace with actual API call
-    await Future.delayed(const Duration(seconds: 1));
+    final response = await _apiClient.get(ApiEndpoints.sellerDashboard);
+    return DashboardStats.fromJson(response.data as Map<String, dynamic>);
+  }
 
-    final now = DateTime.now();
-    final revenueChart = List.generate(
-      30,
-      (i) => RevenueDataPoint(
-        date: now.subtract(Duration(days: 29 - i)),
-        amount: 200.0 + (i * 15.0) + (i % 5 * 30.0),
-      ),
+  /// Fetches revenue data points for the given [period] (e.g. '7d', '30d', '90d').
+  Future<List<RevenueDataPoint>> getRevenueData(String period) async {
+    final response = await _apiClient.get(
+      '${ApiEndpoints.sellerDashboard}/revenue',
+      queryParameters: {'period': period},
     );
+    final data = response.data as List<dynamic>;
+    return data
+        .map((e) => RevenueDataPoint.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
 
-    final recentOrders = [
-      RecentOrder(
-        id: 'ORD-1001',
-        customerName: 'Alice Johnson',
-        total: 129.99,
-        status: 'pending',
-        createdAt: now.subtract(const Duration(hours: 2)),
-        itemCount: 3,
-      ),
-      RecentOrder(
-        id: 'ORD-1002',
-        customerName: 'Bob Smith',
-        total: 79.50,
-        status: 'processing',
-        createdAt: now.subtract(const Duration(hours: 5)),
-        itemCount: 1,
-      ),
-      RecentOrder(
-        id: 'ORD-1003',
-        customerName: 'Carol Davis',
-        total: 249.00,
-        status: 'shipped',
-        createdAt: now.subtract(const Duration(days: 1)),
-        itemCount: 4,
-      ),
-      RecentOrder(
-        id: 'ORD-1004',
-        customerName: 'Dan Wilson',
-        total: 55.00,
-        status: 'delivered',
-        createdAt: now.subtract(const Duration(days: 2)),
-        itemCount: 2,
-      ),
-    ];
-
-    return DashboardStats(
-      totalRevenue: 15420.50,
-      totalOrders: 187,
-      totalProducts: 45,
-      pendingOrders: 12,
-      revenueTrend: 12.5,
-      ordersTrend: 8.3,
-      revenueChart: revenueChart,
-      recentOrders: recentOrders,
+  /// Fetches the most recent orders for the dashboard summary.
+  Future<List<RecentOrder>> getRecentOrders({int limit = 10}) async {
+    final response = await _apiClient.get(
+      '${ApiEndpoints.sellerDashboard}/recent-orders',
+      queryParameters: {'limit': limit},
     );
+    final data = response.data as List<dynamic>;
+    return data
+        .map((e) => RecentOrder.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

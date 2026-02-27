@@ -1,3 +1,6 @@
+import 'package:ecommerce_api_client/ecommerce_api_client.dart';
+import 'package:ecommerce_core/ecommerce_core.dart';
+
 /// Represents the seller's current payout balance.
 class PayoutBalance {
   final double available;
@@ -9,6 +12,14 @@ class PayoutBalance {
     required this.pending,
     required this.totalEarned,
   });
+
+  factory PayoutBalance.fromJson(Map<String, dynamic> json) {
+    return PayoutBalance(
+      available: (json['available'] as num).toDouble(),
+      pending: (json['pending'] as num).toDouble(),
+      totalEarned: (json['totalEarned'] as num).toDouble(),
+    );
+  }
 }
 
 /// Represents a single payout record.
@@ -31,6 +42,20 @@ class Payout {
     this.reference,
   });
 
+  factory Payout.fromJson(Map<String, dynamic> json) {
+    return Payout(
+      id: json['id'] as String,
+      amount: (json['amount'] as num).toDouble(),
+      status: json['status'] as String,
+      method: json['method'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      completedAt: json['completedAt'] != null
+          ? DateTime.parse(json['completedAt'] as String)
+          : null,
+      reference: json['reference'] as String?,
+    );
+  }
+
   String get methodDisplay {
     switch (method) {
       case 'bank_transfer':
@@ -51,114 +76,42 @@ class Payout {
 
 /// Repository for managing seller payouts.
 class PayoutRepository {
+  final ApiClient _apiClient;
+
+  PayoutRepository({required ApiClient apiClient}) : _apiClient = apiClient;
+
   /// Fetches the payout history for the seller.
   Future<List<Payout>> getPayoutHistory() async {
-    // TODO: Replace with actual API call to /seller/payouts
-    await Future.delayed(const Duration(seconds: 1));
-
-    final now = DateTime.now();
-    return [
-      Payout(
-        id: 'pay_1',
-        amount: 1250.00,
-        status: 'completed',
-        method: 'bank_transfer',
-        createdAt: now.subtract(const Duration(days: 3)),
-        completedAt: now.subtract(const Duration(days: 1)),
-        reference: 'TXN-20260223-001',
-      ),
-      Payout(
-        id: 'pay_2',
-        amount: 890.50,
-        status: 'processing',
-        method: 'paypal',
-        createdAt: now.subtract(const Duration(days: 1)),
-      ),
-      Payout(
-        id: 'pay_3',
-        amount: 2100.00,
-        status: 'completed',
-        method: 'bank_transfer',
-        createdAt: now.subtract(const Duration(days: 10)),
-        completedAt: now.subtract(const Duration(days: 8)),
-        reference: 'TXN-20260216-003',
-      ),
-      Payout(
-        id: 'pay_4',
-        amount: 450.00,
-        status: 'failed',
-        method: 'stripe',
-        createdAt: now.subtract(const Duration(days: 15)),
-      ),
-      Payout(
-        id: 'pay_5',
-        amount: 3200.00,
-        status: 'completed',
-        method: 'bank_transfer',
-        createdAt: now.subtract(const Duration(days: 20)),
-        completedAt: now.subtract(const Duration(days: 18)),
-        reference: 'TXN-20260206-002',
-      ),
-      Payout(
-        id: 'pay_6',
-        amount: 675.25,
-        status: 'pending',
-        method: 'paypal',
-        createdAt: now.subtract(const Duration(hours: 6)),
-      ),
-      Payout(
-        id: 'pay_7',
-        amount: 1500.00,
-        status: 'completed',
-        method: 'stripe',
-        createdAt: now.subtract(const Duration(days: 30)),
-        completedAt: now.subtract(const Duration(days: 28)),
-        reference: 'TXN-20260127-001',
-      ),
-    ];
+    final response = await _apiClient.get(ApiEndpoints.sellerPayouts);
+    final list = response.data as List<dynamic>;
+    return list
+        .map((e) => Payout.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// Fetches the current payout balance.
   Future<PayoutBalance> getCurrentBalance() async {
-    // TODO: Replace with actual API call to /seller/payouts/balance
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    return const PayoutBalance(
-      available: 4325.75,
-      pending: 890.50,
-      totalEarned: 34250.00,
-    );
+    final response =
+        await _apiClient.get('${ApiEndpoints.sellerPayouts}/balance');
+    return PayoutBalance.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Requests a payout of the given [amount] via the specified [method].
   Future<Payout> requestPayout(double amount, String method) async {
-    // TODO: Replace with actual API call to /seller/payouts/request
-    await Future.delayed(const Duration(seconds: 1));
-
-    final now = DateTime.now();
-    return Payout(
-      id: 'pay_new_${now.millisecondsSinceEpoch}',
-      amount: amount,
-      status: 'pending',
-      method: method,
-      createdAt: now,
+    final response = await _apiClient.post(
+      '${ApiEndpoints.sellerPayouts}/request',
+      data: {
+        'amount': amount,
+        'method': method,
+      },
     );
+    return Payout.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Fetches a single payout by ID.
   Future<Payout> getPayoutById(String id) async {
-    // TODO: Replace with actual API call to /seller/payouts/:id
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    final now = DateTime.now();
-    return Payout(
-      id: id,
-      amount: 1250.00,
-      status: 'completed',
-      method: 'bank_transfer',
-      createdAt: now.subtract(const Duration(days: 3)),
-      completedAt: now.subtract(const Duration(days: 1)),
-      reference: 'TXN-20260223-001',
-    );
+    final response =
+        await _apiClient.get('${ApiEndpoints.sellerPayouts}/$id');
+    return Payout.fromJson(response.data as Map<String, dynamic>);
   }
 }

@@ -1,3 +1,6 @@
+import 'package:ecommerce_api_client/ecommerce_api_client.dart';
+import 'package:ecommerce_core/ecommerce_core.dart';
+
 /// Revenue summary for a given time period.
 class RevenueSummary {
   final double totalRevenue;
@@ -11,6 +14,15 @@ class RevenueSummary {
     required this.totalOrders,
     required this.revenueTrend,
   });
+
+  factory RevenueSummary.fromJson(Map<String, dynamic> json) {
+    return RevenueSummary(
+      totalRevenue: (json['totalRevenue'] as num).toDouble(),
+      averageOrderValue: (json['averageOrderValue'] as num).toDouble(),
+      totalOrders: json['totalOrders'] as int,
+      revenueTrend: (json['revenueTrend'] as num).toDouble(),
+    );
+  }
 }
 
 /// A single data point for the sales chart.
@@ -24,6 +36,14 @@ class SalesDataPoint {
     required this.revenue,
     required this.orders,
   });
+
+  factory SalesDataPoint.fromJson(Map<String, dynamic> json) {
+    return SalesDataPoint(
+      label: json['label'] as String,
+      revenue: (json['revenue'] as num).toDouble(),
+      orders: json['orders'] as int,
+    );
+  }
 }
 
 /// Represents a top-selling product.
@@ -39,6 +59,15 @@ class TopProduct {
     required this.unitsSold,
     required this.revenue,
   });
+
+  factory TopProduct.fromJson(Map<String, dynamic> json) {
+    return TopProduct(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      unitsSold: json['unitsSold'] as int,
+      revenue: (json['revenue'] as num).toDouble(),
+    );
+  }
 }
 
 /// Order statistics summary.
@@ -56,157 +85,55 @@ class OrderStats {
     required this.cancelledOrders,
     required this.fulfillmentRate,
   });
+
+  factory OrderStats.fromJson(Map<String, dynamic> json) {
+    return OrderStats(
+      totalOrders: json['totalOrders'] as int,
+      pendingOrders: json['pendingOrders'] as int,
+      completedOrders: json['completedOrders'] as int,
+      cancelledOrders: json['cancelledOrders'] as int,
+      fulfillmentRate: (json['fulfillmentRate'] as num).toDouble(),
+    );
+  }
 }
 
 /// Repository for fetching seller analytics data.
 class AnalyticsRepository {
+  final ApiClient _apiClient;
+
+  AnalyticsRepository({required ApiClient apiClient}) : _apiClient = apiClient;
+
   /// Fetches the revenue summary for the given [period] (e.g. '7d', '30d', '90d', '1y').
   Future<RevenueSummary> getRevenueSummary(String period) async {
-    // TODO: Replace with actual API call to /seller/analytics/revenue?period=
-    await Future.delayed(const Duration(seconds: 1));
-
-    final multiplier = _periodMultiplier(period);
-    return RevenueSummary(
-      totalRevenue: 12450.00 * multiplier,
-      averageOrderValue: 67.50 * (1 + multiplier * 0.1),
-      totalOrders: (185 * multiplier).round(),
-      revenueTrend: 12.5,
-    );
+    final response = await _apiClient
+        .get('${ApiEndpoints.sellerAnalytics}/revenue?period=$period');
+    return RevenueSummary.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Fetches the top-selling products, limited to [limit] results.
   Future<List<TopProduct>> getTopProducts(int limit) async {
-    // TODO: Replace with actual API call to /seller/analytics/top-products?limit=
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    final products = [
-      const TopProduct(
-          id: 'prod_1',
-          name: 'Wireless Bluetooth Headphones',
-          unitsSold: 142,
-          revenue: 11218.00),
-      const TopProduct(
-          id: 'prod_2',
-          name: 'USB-C Hub Adapter',
-          unitsSold: 98,
-          revenue: 4802.00),
-      const TopProduct(
-          id: 'prod_3',
-          name: 'Laptop Stand - Aluminum',
-          unitsSold: 76,
-          revenue: 3724.00),
-      const TopProduct(
-          id: 'prod_4',
-          name: 'Mechanical Keyboard RGB',
-          unitsSold: 64,
-          revenue: 5120.00),
-      const TopProduct(
-          id: 'prod_5',
-          name: 'Webcam 1080p HD',
-          unitsSold: 53,
-          revenue: 2597.00),
-      const TopProduct(
-          id: 'prod_6',
-          name: 'Monitor Light Bar',
-          unitsSold: 47,
-          revenue: 2209.00),
-      const TopProduct(
-          id: 'prod_7',
-          name: 'Desk Mat XL',
-          unitsSold: 41,
-          revenue: 1189.00),
-      const TopProduct(
-          id: 'prod_8',
-          name: 'Cable Management Kit',
-          unitsSold: 38,
-          revenue: 722.00),
-      const TopProduct(
-          id: 'prod_9',
-          name: 'Wireless Mouse Ergonomic',
-          unitsSold: 35,
-          revenue: 1715.00),
-      const TopProduct(
-          id: 'prod_10',
-          name: 'Screen Protector Pack',
-          unitsSold: 29,
-          revenue: 435.00),
-    ];
-
-    return products.take(limit).toList();
+    final response = await _apiClient
+        .get('${ApiEndpoints.sellerAnalytics}/top-products?limit=$limit');
+    final list = response.data as List<dynamic>;
+    return list
+        .map((e) => TopProduct.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// Fetches sales chart data points for the given [period].
   Future<List<SalesDataPoint>> getSalesChart(String period) async {
-    // TODO: Replace with actual API call to /seller/analytics/sales-chart?period=
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    final count = _periodDataPoints(period);
-    final labels = _generateLabels(period, count);
-
-    return List.generate(count, (i) {
-      final base = 300.0 + (i * 50.0) + (i % 3 == 0 ? 150 : 0);
-      return SalesDataPoint(
-        label: labels[i],
-        revenue: base + (i * 17.0 % 200),
-        orders: (base / 20).round(),
-      );
-    });
+    final response = await _apiClient
+        .get('${ApiEndpoints.sellerAnalytics}/sales-chart?period=$period');
+    final list = response.data as List<dynamic>;
+    return list
+        .map((e) => SalesDataPoint.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// Fetches overall order statistics.
   Future<OrderStats> getOrderStats() async {
-    // TODO: Replace with actual API call to /seller/analytics/orders
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    return const OrderStats(
-      totalOrders: 1247,
-      pendingOrders: 23,
-      completedOrders: 1189,
-      cancelledOrders: 35,
-      fulfillmentRate: 95.3,
-    );
-  }
-
-  double _periodMultiplier(String period) {
-    switch (period) {
-      case '7d':
-        return 0.25;
-      case '30d':
-        return 1.0;
-      case '90d':
-        return 2.8;
-      case '1y':
-        return 10.0;
-      default:
-        return 1.0;
-    }
-  }
-
-  int _periodDataPoints(String period) {
-    switch (period) {
-      case '7d':
-        return 7;
-      case '30d':
-        return 15;
-      case '90d':
-        return 12;
-      case '1y':
-        return 12;
-      default:
-        return 15;
-    }
-  }
-
-  List<String> _generateLabels(String period, int count) {
-    if (period == '7d') {
-      return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    }
-    if (period == '1y') {
-      return [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-      ];
-    }
-    return List.generate(count, (i) => 'Day ${i + 1}');
+    final response =
+        await _apiClient.get('${ApiEndpoints.sellerAnalytics}/orders');
+    return OrderStats.fromJson(response.data as Map<String, dynamic>);
   }
 }

@@ -7,6 +7,7 @@ import '../../../../core/di/injection.dart';
 import '../../data/product_repository.dart';
 import '../../domain/filter_state.dart';
 import '../../../home/data/home_repository.dart';
+import '../../../wishlist/data/wishlist_repository.dart';
 import '../widgets/filter_bottom_sheet.dart';
 
 class ProductListPage extends StatefulWidget {
@@ -272,6 +273,22 @@ class _ProductListPageState extends State<ProductListPage> {
                             return _ProductGridCard(
                               product: product,
                               onTap: () => context.push('/products/${product.slug}'),
+                              onWishlist: () async {
+                                try {
+                                  await getIt<WishlistRepository>().addToWishlist(product.id);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('${product.name} added to wishlist')),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Failed to add to wishlist: ${e.toString()}')),
+                                    );
+                                  }
+                                }
+                              },
                             );
                           },
                         ),
@@ -286,8 +303,9 @@ class _ProductListPageState extends State<ProductListPage> {
 class _ProductGridCard extends StatelessWidget {
   final ProductSummary product;
   final VoidCallback? onTap;
+  final VoidCallback? onWishlist;
 
-  const _ProductGridCard({required this.product, this.onTap});
+  const _ProductGridCard({required this.product, this.onTap, this.onWishlist});
 
   @override
   Widget build(BuildContext context) {
@@ -345,9 +363,7 @@ class _ProductGridCard extends StatelessWidget {
                       child: IconButton(
                         icon: const Icon(Icons.favorite_border, size: 16),
                         padding: EdgeInsets.zero,
-                        onPressed: () {
-                          // TODO: Add to wishlist
-                        },
+                        onPressed: onWishlist,
                       ),
                     ),
                   ),

@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:ecommerce_api_client/ecommerce_api_client.dart';
+import 'package:ecommerce_core/ecommerce_core.dart';
 
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/home/data/home_repository.dart';
@@ -22,6 +23,9 @@ import '../../features/wishlist/data/wishlist_repository.dart';
 final getIt = GetIt.instance;
 
 Future<void> configureDependencies() async {
+  // Core services
+  getIt.registerLazySingleton<SecureStorage>(() => SecureStorage());
+
   // API Client
   getIt.registerLazySingleton<ApiClient>(
     () => ApiClient(baseUrl: const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://api.example.com')),
