@@ -1,0 +1,56 @@
+_format_version: "3.0"
+
+# ─────────────────────────────────────────────────────────────
+# Production Global Plugins — tighter CORS, stricter rate limits
+# ─────────────────────────────────────────────────────────────
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - https://yourdomain.com
+        - https://www.yourdomain.com
+        - https://admin.yourdomain.com
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      headers:
+        - Authorization
+        - Content-Type
+        - X-Request-ID
+      exposed_headers:
+        - X-Request-ID
+      credentials: true
+      max_age: 3600
+
+  - name: rate-limiting
+    config:
+      minute: 60
+      hour: 2000
+      policy: redis
+      redis:
+        host: redis
+        port: 6379
+
+  - name: correlation-id
+    config:
+      header_name: X-Request-ID
+      generator: uuid#counter
+      echo_downstream: true
+
+  - name: request-size-limiting
+    config:
+      allowed_payload_size: 10
+
+  - name: file-log
+    config:
+      path: /dev/stdout
+
+# NOTE: Services & routes section is identical to kong.yml.
+# In production, copy the services block from kong.yml into this file,
+# or use Kong's deck tool to merge configs:
+#   deck file merge kong.yml kong.prod.yml -o kong.final.yml

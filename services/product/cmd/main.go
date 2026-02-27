@@ -13,6 +13,9 @@ import (
 	"github.com/rs/zerolog/log"
 	googlegrpc "google.golang.org/grpc"
 
+	"github.com/nats-io/nats.go"
+
+	"github.com/southern-martin/ecommerce/pkg/events"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
 
@@ -69,10 +72,30 @@ func main() {
 	}
 	log.Info().Msg("Database migration completed")
 
-	// Connect to NATS
+	// Connect to NATS (publisher — plain NATS)
 	publisher, err := natspub.NewPublisher(cfg.NatsURL)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to connect to NATS, events will not be published")
+	}
+
+	// Connect to NATS JetStream for subscribing to order events
+	var jsSub *events.Subscriber
+	nc, err := nats.Connect(cfg.NatsURL,
+		nats.RetryOnFailedConnect(true),
+		nats.MaxReconnects(10),
+		nats.ReconnectWait(2*time.Second),
+	)
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to connect to NATS for subscriber")
+	} else {
+		defer nc.Close()
+		js, jsErr := nc.JetStream()
+		if jsErr != nil {
+			log.Warn().Err(jsErr).Msg("Failed to create JetStream context")
+		} else {
+			jsSub = events.NewSubscriber(js)
+			log.Info().Msg("NATS JetStream subscriber context ready")
+		}
 	}
 
 	// Initialize repositories
@@ -87,6 +110,15 @@ func main() {
 	categoryUC := usecase.NewCategoryUseCase(categoryRepo)
 	attributeUC := usecase.NewAttributeUseCase(attributeRepo, categoryRepo)
 	variantUC := usecase.NewVariantUseCase(productRepo, optionRepo, variantRepo, publisher)
+
+	// Start NATS subscriber for order.created events (stock decrement)
+	if jsSub != nil {
+		if err := natspub.StartSubscriber(jsSub, variantUC, log.Logger); err != nil {
+			log.Warn().Err(err).Msg("Failed to start order.created subscriber, stock will not be decremented automatically")
+		} else {
+			log.Info().Msg("NATS subscriber started for order.created events")
+		}
+	}
 
 	// Initialize HTTP handler and router
 	handler := producthttp.NewHandler(productUC, categoryUC, attributeUC, variantUC)

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #059669; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+    <h1 style="margin: 0;">Your Order Has Been Delivered!</h1>
+  </div>
+  <div style="border: 1px solid #e5e7eb; padding: 20px; border-radius: 0 0 8px 8px;">
+    <p>Hi {{.BuyerName}},</p>
+    <p>Your order <strong>#{{.OrderNumber}}</strong> has been delivered.</p>
+    <div style="background: #f9fafb; padding: 15px; border-radius: 6px; margin: 15px 0;">
+      <p style="margin: 5px 0;"><strong>Order Number:</strong> {{.OrderNumber}}</p>
+      <p style="margin: 5px 0;"><strong>Items:</strong> {{.ItemCount}}</p>
+      <p style="margin: 5px 0;"><strong>Total:</strong> {{.TotalAmount}}</p>
+    </div>
+    <p>We hope you enjoy your purchase! If you have any issues, please contact our support team.</p>
+    <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">This is an automated message from our ecommerce platform.</p>
+  </div>
+</body>
+</html>

@@ -14,10 +14,11 @@ import (
 
 // Handler holds all HTTP handlers for the user service.
 type Handler struct {
-	profile *usecase.ProfileUseCase
-	address *usecase.AddressUseCase
-	seller  *usecase.SellerUseCase
-	follow  *usecase.FollowUseCase
+	profile  *usecase.ProfileUseCase
+	address  *usecase.AddressUseCase
+	seller   *usecase.SellerUseCase
+	follow   *usecase.FollowUseCase
+	wishlist *usecase.WishlistUseCase
 }
 
 // NewHandler creates a new Handler with the given use cases.
@@ -26,12 +27,14 @@ func NewHandler(
 	address *usecase.AddressUseCase,
 	seller *usecase.SellerUseCase,
 	follow *usecase.FollowUseCase,
+	wishlist *usecase.WishlistUseCase,
 ) *Handler {
 	return &Handler{
-		profile: profile,
-		address: address,
-		seller:  seller,
-		follow:  follow,
+		profile:  profile,
+		address:  address,
+		seller:   seller,
+		follow:   follow,
+		wishlist: wishlist,
 	}
 }
 
@@ -266,4 +269,46 @@ func (h *Handler) GetFollowerCount(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"seller_id": sellerID, "follower_count": count})
+}
+
+// GetWishlist handles GET /api/v1/wishlist
+func (h *Handler) GetWishlist(c *gin.Context) {
+	userID := getUserID(c)
+	items, err := h.wishlist.ListItems(c.Request.Context(), userID)
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": items})
+}
+
+// AddToWishlist handles POST /api/v1/wishlist
+func (h *Handler) AddToWishlist(c *gin.Context) {
+	userID := getUserID(c)
+
+	var input struct {
+		ProductID string `json:"product_id" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "product_id is required"})
+		return
+	}
+
+	if err := h.wishlist.AddItem(c.Request.Context(), userID, input.ProductID); err != nil {
+		handleError(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"message": "added to wishlist"})
+}
+
+// RemoveFromWishlist handles DELETE /api/v1/wishlist/:productId
+func (h *Handler) RemoveFromWishlist(c *gin.Context) {
+	userID := getUserID(c)
+	productID := c.Param("productId")
+
+	if err := h.wishlist.RemoveItem(c.Request.Context(), userID, productID); err != nil {
+		handleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "removed from wishlist"})
 }

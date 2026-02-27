@@ -39,6 +39,7 @@ func (uc *PageUseCase) CreatePage(ctx context.Context, page *domain.Page) error 
 	page.ID = uuid.New().String()
 	page.Slug = generateSlug(page.Title)
 	page.Status = domain.PageStatusDraft
+	page.ContentHTML = sanitizeHTML(page.ContentHTML)
 
 	if err := uc.pageRepo.Create(ctx, page); err != nil {
 		return fmt.Errorf("failed to create page: %w", err)
@@ -97,6 +98,10 @@ func (uc *PageUseCase) UpdatePage(ctx context.Context, page *domain.Page) error 
 		page.Slug = generateSlug(page.Title)
 	} else {
 		page.Slug = existing.Slug
+	}
+
+	if page.ContentHTML != "" {
+		page.ContentHTML = sanitizeHTML(page.ContentHTML)
 	}
 
 	if err := uc.pageRepo.Update(ctx, page); err != nil {

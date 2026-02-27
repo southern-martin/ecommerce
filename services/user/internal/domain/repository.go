@@ -37,3 +37,11 @@ type FollowRepository interface {
 	CountBySellerID(ctx context.Context, sellerID string) (int64, error)
 	Exists(ctx context.Context, followerID, sellerID string) (bool, error)
 }
+
+// WishlistRepository defines the interface for wishlist persistence.
+type WishlistRepository interface {
+	Create(ctx context.Context, item *WishlistItem) error
+	Delete(ctx context.Context, userID, productID string) error
+	ListByUserID(ctx context.Context, userID string) ([]WishlistItem, error)
+	Exists(ctx context.Context, userID, productID string) (bool, error)
+}

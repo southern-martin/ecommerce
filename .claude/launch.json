@@ -33,7 +33,7 @@
       "name": "user-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8095,
+      "port": 18091,
       "cwd": "services/user",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -42,7 +42,7 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_users",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "8095",
+        "HTTP_PORT": "18091",
         "GRPC_PORT": "19091",
         "LOG_LEVEL": "debug",
         "AUTH_GRPC_ADDR": "localhost:19090"
@@ -241,7 +241,7 @@
       "name": "notification-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8092,
+      "port": 18092,
       "cwd": "services/notification",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -252,7 +252,7 @@
         "NATS_URL": "nats://localhost:14222",
         "SMTP_HOST": "localhost",
         "SMTP_PORT": "1025",
-        "HTTP_PORT": "8092",
+        "HTTP_PORT": "18092",
         "GRPC_PORT": "9092",
         "LOG_LEVEL": "debug"
       }

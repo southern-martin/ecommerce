@@ -44,6 +44,15 @@ func NewRouter(h *Handler) *gin.Engine {
 		users.DELETE("/:id/follow", h.UnfollowSeller)
 	}
 
+	// Wishlist routes
+	wishlist := v1.Group("/wishlist")
+	wishlist.Use(middleware.RequireAuth())
+	{
+		wishlist.GET("", h.GetWishlist)
+		wishlist.POST("", h.AddToWishlist)
+		wishlist.DELETE("/:productId", h.RemoveFromWishlist)
+	}
+
 	// Seller routes
 	sellers := v1.Group("/sellers")
 	sellers.Use(middleware.RequireAuth())

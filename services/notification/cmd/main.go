@@ -14,8 +14,12 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
+	"github.com/nats-io/nats.go"
+
+	"github.com/southern-martin/ecommerce/pkg/events"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
+	emailAdapter "github.com/southern-martin/ecommerce/services/notification/internal/adapter/email"
 	grpcAdapter "github.com/southern-martin/ecommerce/services/notification/internal/adapter/grpc"
 	httpAdapter "github.com/southern-martin/ecommerce/services/notification/internal/adapter/http"
 	"github.com/southern-martin/ecommerce/services/notification/internal/adapter/postgres"
@@ -59,13 +63,33 @@ func main() {
 	}
 	defer publisher.Close()
 
+	// Initialize email sender
+	emailSender := emailAdapter.NewSender(cfg.SMTP.Host, cfg.SMTP.Port, cfg.SMTP.User, cfg.SMTP.Password)
+
 	// Initialize repositories
 	notificationRepo := postgres.NewNotificationRepo(db)
 	preferenceRepo := postgres.NewPreferenceRepo(db)
 
 	// Initialize use cases
-	notificationUC := usecase.NewNotificationUseCase(notificationRepo, publisher)
+	notificationUC := usecase.NewNotificationUseCase(notificationRepo, publisher, emailSender)
 	preferenceUC := usecase.NewPreferenceUseCase(preferenceRepo)
+
+	// Initialize NATS JetStream subscriber for order events
+	nc, err := nats.Connect(cfg.NATS.URL)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to connect to NATS for subscriber (notifications will work without event subscriptions)")
+	} else {
+		js, err := nc.JetStream()
+		if err != nil {
+			log.Warn().Err(err).Msg("failed to create JetStream context for subscriber")
+		} else {
+			sub := events.NewSubscriber(js)
+			if err := natsInfra.StartSubscriber(sub, notificationUC, log.Logger); err != nil {
+				log.Warn().Err(err).Msg("failed to start NATS subscribers")
+			}
+		}
+		defer nc.Close()
+	}
 
 	// Initialize HTTP handler and router
 	handler := httpAdapter.NewHandler(notificationUC, preferenceUC)

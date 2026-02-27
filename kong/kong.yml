@@ -22,6 +22,8 @@ plugins:
         - Content-Type
         - X-Request-ID
         - X-User-ID
+      exposed_headers:
+        - X-Request-ID
       credentials: true
       max_age: 3600
 
@@ -120,6 +122,12 @@ services:
 
       - name: sellers
         paths: [/api/v1/sellers]
+        strip_path: false
+        plugins:
+          - name: jwt
+
+      - name: wishlist
+        paths: [/api/v1/wishlist]
         strip_path: false
         plugins:
           - name: jwt
@@ -375,7 +383,7 @@ services:
 
   # ── Chat Service ──────────────────────────────────────────
   - name: chat-service
-    url: http://chat:8095
+    url: http://chat:8094
     routes:
       - name: conversations
         paths: [/api/v1/conversations]

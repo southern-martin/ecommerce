@@ -67,12 +67,14 @@ func main() {
 	addressRepo := postgres.NewAddressRepository(db)
 	sellerRepo := postgres.NewSellerRepository(db)
 	followRepo := postgres.NewFollowRepository(db)
+	wishlistRepo := postgres.NewWishlistRepository(db)
 
 	// Create use cases
 	profileUC := usecase.NewProfileUseCase(profileRepo, l)
 	addressUC := usecase.NewAddressUseCase(addressRepo, l)
 	sellerUC := usecase.NewSellerUseCase(sellerRepo, publisher, l)
 	followUC := usecase.NewFollowUseCase(followRepo, l)
+	wishlistUC := usecase.NewWishlistUseCase(wishlistRepo, l)
 
 	// Start NATS subscriber for user.registered events
 	sub := events.NewSubscriber(js)
@@ -82,7 +84,7 @@ func main() {
 	l.Info().Msg("NATS subscriber started for user.registered events")
 
 	// Setup HTTP router
-	handler := userhttp.NewHandler(profileUC, addressUC, sellerUC, followUC)
+	handler := userhttp.NewHandler(profileUC, addressUC, sellerUC, followUC, wishlistUC)
 	router := userhttp.NewRouter(handler)
 
 	// Setup gRPC server

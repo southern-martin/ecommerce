@@ -510,6 +510,8 @@ services:
         condition: service_healthy
       nats:
         condition: service_started
+      mailhog:
+        condition: service_started
     networks:
       - ecommerce-network
 
@@ -687,6 +689,16 @@ services:
         condition: service_healthy
       nats:
         condition: service_started
+    networks:
+      - ecommerce-network
+
+  # ── MailHog (Dev email testing) ───────────────────────────
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: ecommerce-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
     networks:
       - ecommerce-network
 

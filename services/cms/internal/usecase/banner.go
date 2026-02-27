@@ -25,6 +25,8 @@ func NewBannerUseCase(bannerRepo domain.BannerRepository, publisher domain.Event
 // CreateBanner creates a new banner.
 func (uc *BannerUseCase) CreateBanner(ctx context.Context, banner *domain.Banner) error {
 	banner.ID = uuid.New().String()
+	banner.Title = sanitizeText(banner.Title)
+	banner.LinkURL = sanitizeText(banner.LinkURL)
 
 	if err := uc.bannerRepo.Create(ctx, banner); err != nil {
 		return fmt.Errorf("failed to create banner: %w", err)
@@ -44,6 +46,9 @@ func (uc *BannerUseCase) UpdateBanner(ctx context.Context, banner *domain.Banner
 	if _, err := uc.bannerRepo.GetByID(ctx, banner.ID); err != nil {
 		return fmt.Errorf("banner not found: %w", err)
 	}
+
+	banner.Title = sanitizeText(banner.Title)
+	banner.LinkURL = sanitizeText(banner.LinkURL)
 
 	if err := uc.bannerRepo.Update(ctx, banner); err != nil {
 		return fmt.Errorf("failed to update banner: %w", err)

@@ -75,3 +75,15 @@ type UserFollow struct {
 func (UserFollow) TableName() string {
 	return "user_follows"
 }
+
+// WishlistItem represents a product saved to a user's wishlist.
+type WishlistItem struct {
+	ID        string    `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
+	UserID    string    `gorm:"type:uuid;not null;index" json:"user_id"`
+	ProductID string    `gorm:"type:uuid;not null;index" json:"product_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+func (WishlistItem) TableName() string {
+	return "wishlist_items"
+}

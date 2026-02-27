@@ -9,17 +9,24 @@ import (
 	"github.com/southern-martin/ecommerce/services/notification/internal/domain"
 )
 
+// EmailSender defines the interface for sending emails.
+type EmailSender interface {
+	Send(to, subject, htmlBody string) error
+}
+
 // NotificationUseCase handles notification business logic.
 type NotificationUseCase struct {
-	repo      domain.NotificationRepository
-	publisher domain.EventPublisher
+	repo        domain.NotificationRepository
+	publisher   domain.EventPublisher
+	emailSender EmailSender
 }
 
 // NewNotificationUseCase creates a new NotificationUseCase.
-func NewNotificationUseCase(repo domain.NotificationRepository, publisher domain.EventPublisher) *NotificationUseCase {
+func NewNotificationUseCase(repo domain.NotificationRepository, publisher domain.EventPublisher, emailSender EmailSender) *NotificationUseCase {
 	return &NotificationUseCase{
-		repo:      repo,
-		publisher: publisher,
+		repo:        repo,
+		publisher:   publisher,
+		emailSender: emailSender,
 	}
 }
 
@@ -51,7 +58,20 @@ func (uc *NotificationUseCase) SendNotification(ctx context.Context, req SendNot
 		return nil, err
 	}
 
-	// Mock send: simulate sending the notification
+	// Send via the appropriate channel
+	switch notification.Channel {
+	case domain.ChannelEmail:
+		if uc.emailSender != nil && req.Data != "" {
+			// Data field is expected to contain the recipient email address for email channel
+			if err := uc.emailSender.Send(req.Data, notification.Subject, notification.Body); err != nil {
+				log.Error().Err(err).Str("id", notification.ID).Str("to", req.Data).Msg("failed to send email (best effort)")
+				// Best effort: log but don't fail
+			}
+		}
+	default:
+		// in_app and push channels: no external delivery needed at this time
+	}
+
 	now := time.Now()
 	notification.SentAt = &now
 	notification.Status = domain.StatusSent
