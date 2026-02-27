@@ -15,6 +15,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
+	"github.com/southern-martin/ecommerce/pkg/metrics"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
+
 	grpcAdapter "github.com/southern-martin/ecommerce/services/payment/internal/adapter/grpc"
 	httpAdapter "github.com/southern-martin/ecommerce/services/payment/internal/adapter/http"
 	"github.com/southern-martin/ecommerce/services/payment/internal/adapter/postgres"
@@ -43,6 +46,14 @@ func main() {
 		level = zerolog.InfoLevel
 	}
 	zerolog.SetGlobalLevel(level)
+
+	// Init tracer
+	tracerShutdown, tracerErr := tracing.InitTracer("payment-service", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"), os.Getenv("ENVIRONMENT"))
+	if tracerErr != nil {
+		log.Warn().Err(tracerErr).Msg("failed to init tracer")
+	} else {
+		defer tracerShutdown(context.Background())
+	}
 
 	log.Info().Msg("Starting Payment Service")
 
@@ -100,7 +111,12 @@ func main() {
 	router := httpAdapter.NewRouter(handler)
 
 	// Start gRPC server.
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			tracing.GRPCUnaryInterceptor(),
+			metrics.GRPCUnaryInterceptor("payment-service"),
+		),
+	)
 	paymentGRPC := grpcAdapter.NewPaymentGRPCServer(paymentRepo, refundUC)
 	grpcAdapter.RegisterPaymentService(grpcServer, paymentGRPC)
 

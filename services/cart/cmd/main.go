@@ -13,8 +13,13 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 
+	"github.com/southern-martin/ecommerce/pkg/metrics"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
+
+	"github.com/southern-martin/ecommerce/services/cart/internal/adapter/dualstore"
 	cartgrpc "github.com/southern-martin/ecommerce/services/cart/internal/adapter/grpc"
 	carthttp "github.com/southern-martin/ecommerce/services/cart/internal/adapter/http"
+	cartpg "github.com/southern-martin/ecommerce/services/cart/internal/adapter/postgres"
 	cartredis "github.com/southern-martin/ecommerce/services/cart/internal/adapter/redis"
 	"github.com/southern-martin/ecommerce/services/cart/internal/infrastructure/config"
 	"github.com/southern-martin/ecommerce/services/cart/internal/infrastructure/database"
@@ -33,13 +38,21 @@ func main() {
 	}
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("service", "cart").Logger().Level(level)
 
-	// Connect to PostgreSQL (for backup/persistence - future use)
-	_, err = database.NewPostgresDB(cfg.PostgresDSN(), logger)
-	if err != nil {
-		logger.Warn().Err(err).Msg("failed to connect to PostgreSQL - cart backup disabled")
+	// Init tracer
+	tracerShutdown, tracerErr := tracing.InitTracer("cart-service", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"), os.Getenv("ENVIRONMENT"))
+	if tracerErr != nil {
+		logger.Warn().Err(tracerErr).Msg("failed to init tracer")
+	} else {
+		defer tracerShutdown(context.Background())
 	}
 
-	// Connect to Redis (primary storage)
+	// Connect to PostgreSQL (durable cart persistence)
+	pgDB, err := database.NewPostgresDB(cfg.PostgresDSN(), logger)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("failed to connect to PostgreSQL")
+	}
+
+	// Connect to Redis (fast cache layer)
 	rdb := redis.NewClient(&redis.Options{
 		Addr: cfg.RedisURL,
 	})
@@ -57,8 +70,10 @@ func main() {
 	}
 	defer natsConn.Close()
 
-	// Initialize layers
-	cartRepo := cartredis.NewRedisCartRepository(rdb)
+	// Initialize layers: Redis cache + Postgres durable store
+	redisRepo := cartredis.NewRedisCartRepository(rdb)
+	pgRepo := cartpg.NewPostgresCartRepository(pgDB)
+	cartRepo := dualstore.NewDualStoreCartRepository(redisRepo, pgRepo, logger)
 	eventPublisher := cartnats.NewEventPublisher(natsConn, logger)
 	cartUC := usecase.NewCartUseCase(cartRepo, eventPublisher, logger)
 
@@ -73,7 +88,12 @@ func main() {
 	}
 
 	// gRPC server
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			tracing.GRPCUnaryInterceptor(),
+			metrics.GRPCUnaryInterceptor("cart-service"),
+		),
+	)
 	cartSvc := cartgrpc.NewCartServiceServer(cartUC, logger)
 	cartgrpc.RegisterCartServiceServer(grpcServer, cartSvc)
 

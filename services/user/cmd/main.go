@@ -1,14 +1,18 @@
 package main
 
 import (
+	"context"
 	"log"
+	"os"
 
 	"github.com/nats-io/nats.go"
 	"google.golang.org/grpc"
 
 	"github.com/southern-martin/ecommerce/pkg/events"
 	"github.com/southern-martin/ecommerce/pkg/logger"
+	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/server"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
 
 	usergrpc "github.com/southern-martin/ecommerce/services/user/internal/adapter/grpc"
 	userhttp "github.com/southern-martin/ecommerce/services/user/internal/adapter/http"
@@ -25,6 +29,14 @@ func main() {
 
 	// Initialize logger
 	l := logger.New(cfg.LogLevel, "user-service")
+
+	// Init tracer
+	tracerShutdown, err := tracing.InitTracer("user-service", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"), os.Getenv("ENVIRONMENT"))
+	if err != nil {
+		l.Warn().Err(err).Msg("failed to init tracer")
+	} else {
+		defer tracerShutdown(context.Background())
+	}
 
 	// Connect to Postgres
 	db, err := database.NewPostgresDB(cfg)
@@ -55,12 +67,14 @@ func main() {
 	addressRepo := postgres.NewAddressRepository(db)
 	sellerRepo := postgres.NewSellerRepository(db)
 	followRepo := postgres.NewFollowRepository(db)
+	wishlistRepo := postgres.NewWishlistRepository(db)
 
 	// Create use cases
 	profileUC := usecase.NewProfileUseCase(profileRepo, l)
 	addressUC := usecase.NewAddressUseCase(addressRepo, l)
 	sellerUC := usecase.NewSellerUseCase(sellerRepo, publisher, l)
 	followUC := usecase.NewFollowUseCase(followRepo, l)
+	wishlistUC := usecase.NewWishlistUseCase(wishlistRepo, l)
 
 	// Start NATS subscriber for user.registered events
 	sub := events.NewSubscriber(js)
@@ -70,11 +84,16 @@ func main() {
 	l.Info().Msg("NATS subscriber started for user.registered events")
 
 	// Setup HTTP router
-	handler := userhttp.NewHandler(profileUC, addressUC, sellerUC, followUC)
+	handler := userhttp.NewHandler(profileUC, addressUC, sellerUC, followUC, wishlistUC)
 	router := userhttp.NewRouter(handler)
 
 	// Setup gRPC server
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			tracing.GRPCUnaryInterceptor(),
+			metrics.GRPCUnaryInterceptor("user-service"),
+		),
+	)
 	userServiceServer := usergrpc.NewUserServiceServer(profileUC, sellerUC)
 	usergrpc.RegisterServer(grpcServer, userServiceServer)
 

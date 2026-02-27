@@ -8,10 +8,16 @@
       "port": 15432
     },
     {
+      "name": "all-docker",
+      "runtimeExecutable": "/usr/local/bin/docker",
+      "runtimeArgs": ["compose", "up", "-d", "--build"],
+      "port": 28000
+    },
+    {
       "name": "auth-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8090,
+      "port": 28090,
       "cwd": "services/auth",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -24,8 +30,8 @@
         "JWT_SECRET": "change-this-to-a-256-bit-secret-in-production",
         "JWT_ACCESS_EXPIRY": "15m",
         "JWT_REFRESH_EXPIRY": "168h",
-        "HTTP_PORT": "8090",
-        "GRPC_PORT": "19090",
+        "HTTP_PORT": "28090",
+        "GRPC_PORT": "29090",
         "LOG_LEVEL": "debug"
       }
     },
@@ -33,7 +39,7 @@
       "name": "user-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8095,
+      "port": 28091,
       "cwd": "services/user",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -42,17 +48,17 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_users",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "8095",
-        "GRPC_PORT": "19091",
+        "HTTP_PORT": "28091",
+        "GRPC_PORT": "29091",
         "LOG_LEVEL": "debug",
-        "AUTH_GRPC_ADDR": "localhost:19090"
+        "AUTH_GRPC_ADDR": "localhost:29090"
       }
     },
     {
       "name": "product-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8081,
+      "port": 28081,
       "cwd": "services/product",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -61,8 +67,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_products",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "8081",
-        "GRPC_PORT": "9081",
+        "HTTP_PORT": "28081",
+        "GRPC_PORT": "29081",
         "LOG_LEVEL": "debug"
       }
     },
@@ -70,7 +76,7 @@
       "name": "cart-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8082,
+      "port": 28082,
       "cwd": "services/cart",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -80,8 +86,8 @@
         "DB_NAME": "ecommerce_cart",
         "REDIS_URL": "localhost:16379",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "8082",
-        "GRPC_PORT": "9082",
+        "HTTP_PORT": "28082",
+        "GRPC_PORT": "29082",
         "LOG_LEVEL": "debug"
       }
     },
@@ -89,7 +95,7 @@
       "name": "order-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8083,
+      "port": 28083,
       "cwd": "services/order",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -98,8 +104,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_orders",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "8083",
-        "GRPC_PORT": "9083",
+        "HTTP_PORT": "28083",
+        "GRPC_PORT": "29083",
         "LOG_LEVEL": "debug"
       }
     },
@@ -107,7 +113,7 @@
       "name": "payment-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8084,
+      "port": 28084,
       "cwd": "services/payment",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -116,8 +122,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_payments",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "8084",
-        "GRPC_PORT": "9084",
+        "HTTP_PORT": "28084",
+        "GRPC_PORT": "29084",
         "LOG_LEVEL": "debug",
         "STRIPE_SECRET_KEY": "sk_test_mock",
         "STRIPE_WEBHOOK_SECRET": "whsec_mock",
@@ -128,7 +134,7 @@
       "name": "tax-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8098,
+      "port": 28098,
       "cwd": "services/tax",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -136,8 +142,8 @@
         "POSTGRES_HOST": "localhost",
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_tax",
-        "HTTP_PORT": "8098",
-        "GRPC_PORT": "9098",
+        "HTTP_PORT": "28098",
+        "GRPC_PORT": "29098",
         "LOG_LEVEL": "debug"
       }
     },
@@ -145,7 +151,7 @@
       "name": "shipping-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8085,
+      "port": 28085,
       "cwd": "services/shipping",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -154,8 +160,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_shipping",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "8085",
-        "GRPC_PORT": "9085",
+        "HTTP_PORT": "28085",
+        "GRPC_PORT": "29085",
         "LOG_LEVEL": "debug"
       }
     },
@@ -163,7 +169,7 @@
       "name": "return-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8086,
+      "port": 28086,
       "cwd": "services/return",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -172,8 +178,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_returns",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "8086",
-        "GRPC_PORT": "9086",
+        "HTTP_PORT": "28086",
+        "GRPC_PORT": "29086",
         "LOG_LEVEL": "debug"
       }
     },
@@ -181,7 +187,7 @@
       "name": "search-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8087,
+      "port": 28087,
       "cwd": "services/search",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -191,8 +197,8 @@
         "DB_NAME": "ecommerce_search",
         "NATS_URL": "nats://localhost:14222",
         "ELASTICSEARCH_URL": "http://localhost:19200",
-        "HTTP_PORT": "8087",
-        "GRPC_PORT": "9087",
+        "HTTP_PORT": "28087",
+        "GRPC_PORT": "29087",
         "LOG_LEVEL": "debug"
       }
     },
@@ -200,7 +206,7 @@
       "name": "review-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8088,
+      "port": 28088,
       "cwd": "services/review",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -209,8 +215,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_reviews",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "8088",
-        "GRPC_PORT": "9088",
+        "HTTP_PORT": "28088",
+        "GRPC_PORT": "29088",
         "LOG_LEVEL": "debug"
       }
     },
@@ -218,7 +224,7 @@
       "name": "media-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8089,
+      "port": 28089,
       "cwd": "services/media",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -232,8 +238,8 @@
         "S3_SECRET_KEY": "minioadmin",
         "S3_BUCKET": "ecommerce-media",
         "S3_REGION": "us-east-1",
-        "HTTP_PORT": "8089",
-        "GRPC_PORT": "9089",
+        "HTTP_PORT": "28089",
+        "GRPC_PORT": "29089",
         "LOG_LEVEL": "debug"
       }
     },
@@ -241,7 +247,7 @@
       "name": "notification-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8092,
+      "port": 28092,
       "cwd": "services/notification",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -251,9 +257,9 @@
         "DB_NAME": "ecommerce_notifications",
         "NATS_URL": "nats://localhost:14222",
         "SMTP_HOST": "localhost",
-        "SMTP_PORT": "1025",
-        "HTTP_PORT": "8092",
-        "GRPC_PORT": "9092",
+        "SMTP_PORT": "21025",
+        "HTTP_PORT": "28092",
+        "GRPC_PORT": "29092",
         "LOG_LEVEL": "debug"
       }
     },
@@ -261,7 +267,7 @@
       "name": "cms-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8099,
+      "port": 28099,
       "cwd": "services/cms",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -270,8 +276,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_cms",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "8099",
-        "GRPC_PORT": "9099",
+        "HTTP_PORT": "28099",
+        "GRPC_PORT": "29099",
         "LOG_LEVEL": "debug"
       }
     },
@@ -279,7 +285,7 @@
       "name": "promotion-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8093,
+      "port": 28093,
       "cwd": "services/promotion",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -288,8 +294,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_promotions",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "8093",
-        "GRPC_PORT": "9093",
+        "HTTP_PORT": "28093",
+        "GRPC_PORT": "29093",
         "LOG_LEVEL": "debug"
       }
     },
@@ -297,7 +303,7 @@
       "name": "loyalty-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8096,
+      "port": 28096,
       "cwd": "services/loyalty",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -306,8 +312,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_loyalty",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "8096",
-        "GRPC_PORT": "9096",
+        "HTTP_PORT": "28096",
+        "GRPC_PORT": "29096",
         "LOG_LEVEL": "debug"
       }
     },
@@ -315,7 +321,7 @@
       "name": "affiliate-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8097,
+      "port": 28097,
       "cwd": "services/affiliate",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -324,8 +330,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_affiliates",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "8097",
-        "GRPC_PORT": "9097",
+        "HTTP_PORT": "28097",
+        "GRPC_PORT": "29097",
         "LOG_LEVEL": "debug"
       }
     },
@@ -333,7 +339,7 @@
       "name": "chat-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8094,
+      "port": 28094,
       "cwd": "services/chat",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -342,8 +348,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_chat",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "8094",
-        "GRPC_PORT": "9094",
+        "HTTP_PORT": "28094",
+        "GRPC_PORT": "29094",
         "LOG_LEVEL": "debug"
       }
     },
@@ -351,7 +357,7 @@
       "name": "ai-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 8095,
+      "port": 28095,
       "cwd": "services/ai",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -360,8 +366,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_ai",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "8095",
-        "GRPC_PORT": "9095",
+        "HTTP_PORT": "28095",
+        "GRPC_PORT": "29095",
         "LOG_LEVEL": "debug",
         "AI_PYTHON_SERVICE_URL": "http://localhost:8000"
       }

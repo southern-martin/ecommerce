@@ -14,6 +14,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
+	"github.com/southern-martin/ecommerce/pkg/metrics"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
+
 	grpcAdapter "github.com/southern-martin/ecommerce/services/promotion/internal/adapter/grpc"
 	httpAdapter "github.com/southern-martin/ecommerce/services/promotion/internal/adapter/http"
 	"github.com/southern-martin/ecommerce/services/promotion/internal/adapter/postgres"
@@ -31,6 +34,13 @@ func main() {
 	setupLogger(cfg.LogLevel)
 
 	log.Info().Msg("starting promotion service")
+
+	tracerShutdown, err := tracing.InitTracer("promotion-service", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"), os.Getenv("ENVIRONMENT"))
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to init tracer")
+	} else {
+		defer tracerShutdown(context.Background())
+	}
 
 	// Initialize database
 	db, err := database.NewPostgresDB(cfg.Postgres)
@@ -75,7 +85,12 @@ func main() {
 	}()
 
 	// Start gRPC server
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			tracing.GRPCUnaryInterceptor(),
+			metrics.GRPCUnaryInterceptor("promotion-service"),
+		),
+	)
 	grpcSrv := grpcAdapter.NewServer(couponUC, flashSaleUC)
 	grpcAdapter.RegisterPromotionServiceServer(grpcServer, grpcSrv)
 

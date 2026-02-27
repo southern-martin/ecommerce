@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS variant_option_values, product_variants, product_option_values, product_options, product_attribute_values, category_attributes, attribute_definitions, products, categories CASCADE;

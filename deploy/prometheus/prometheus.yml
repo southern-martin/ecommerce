@@ -1,0 +1,31 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: otel-collector
+    static_configs:
+      - targets: ['otel-collector:8889']
+
+  - job_name: go-services
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - 'product:8081'
+          - 'cart:8082'
+          - 'order:8083'
+          - 'payment:8084'
+          - 'shipping:8085'
+          - 'return:8086'
+          - 'search:8087'
+          - 'review:8088'
+          - 'media:8089'
+          - 'auth:8090'
+          - 'user:8091'
+          - 'notification:8092'
+          - 'promotion:8093'
+          - 'chat:8094'
+          - 'ai:8095'
+          - 'loyalty:8096'
+          - 'affiliate:8097'
+          - 'tax:8098'
+          - 'cms:8099'

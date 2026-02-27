@@ -14,6 +14,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
+	"github.com/southern-martin/ecommerce/pkg/metrics"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
 	grpcAdapter "github.com/southern-martin/ecommerce/services/media/internal/adapter/grpc"
 	httpAdapter "github.com/southern-martin/ecommerce/services/media/internal/adapter/http"
 	"github.com/southern-martin/ecommerce/services/media/internal/adapter/postgres"
@@ -29,6 +31,13 @@ func main() {
 	setupLogger(cfg.LogLevel)
 
 	log.Info().Msg("starting media service")
+
+	tracerShutdown, err := tracing.InitTracer("media-service", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"), os.Getenv("ENVIRONMENT"))
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to init tracer")
+	} else {
+		defer tracerShutdown(context.Background())
+	}
 
 	// Initialize database
 	db, err := database.NewPostgresDB(cfg.Postgres)
@@ -77,7 +86,12 @@ func main() {
 	}()
 
 	// Start gRPC server
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			tracing.GRPCUnaryInterceptor(),
+			metrics.GRPCUnaryInterceptor("media-service"),
+		),
+	)
 	grpcSrv := grpcAdapter.NewServer(mediaUC)
 	grpcAdapter.RegisterMediaServiceServer(grpcServer, grpcSrv)
 

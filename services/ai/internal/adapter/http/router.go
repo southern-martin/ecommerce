@@ -1,12 +1,20 @@
 package http
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/southern-martin/ecommerce/pkg/metrics"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
+)
 
 // NewRouter creates a new Gin router with all AI service routes.
 func NewRouter(handler *Handler) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.Recovery(), gin.Logger())
+
+	r.Use(tracing.GinMiddleware("ai-service"))
+	r.Use(metrics.GinMiddleware("ai-service"))
+	r.GET("/metrics", metrics.Handler())
 
 	r.GET("/health", handler.Health)
 

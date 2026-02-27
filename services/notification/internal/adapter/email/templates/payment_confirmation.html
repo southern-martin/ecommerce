@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #7C3AED; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+    <h1 style="margin: 0;">Payment Received!</h1>
+  </div>
+  <div style="border: 1px solid #e5e7eb; padding: 20px; border-radius: 0 0 8px 8px;">
+    <p>Hi {{.BuyerName}},</p>
+    <p>We have received your payment for order <strong>#{{.OrderNumber}}</strong>.</p>
+    <div style="background: #f9fafb; padding: 15px; border-radius: 6px; margin: 15px 0;">
+      <p style="margin: 5px 0;"><strong>Order Number:</strong> {{.OrderNumber}}</p>
+      <p style="margin: 5px 0;"><strong>Amount Paid:</strong> {{.TotalAmount}}</p>
+      <p style="margin: 5px 0;"><strong>Items:</strong> {{.ItemCount}}</p>
+    </div>
+    <p>Your order is now being processed and you will receive updates on its status.</p>
+    <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">This is an automated message from our ecommerce platform.</p>
+  </div>
+</body>
+</html>

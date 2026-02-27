@@ -3,7 +3,9 @@ package http
 import (
 	"github.com/gin-gonic/gin"
 
+	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/middleware"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
 )
 
 // NewRouter creates a new Gin engine with all user service routes.
@@ -11,6 +13,9 @@ func NewRouter(h *Handler) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.ExtractUserID())
+	r.Use(tracing.GinMiddleware("user-service"))
+	r.Use(metrics.GinMiddleware("user-service"))
+	r.GET("/metrics", metrics.Handler())
 
 	// Health check
 	r.GET("/health", h.Health)
@@ -37,6 +42,15 @@ func NewRouter(h *Handler) *gin.Engine {
 		// Follow/unfollow a seller
 		users.POST("/:id/follow", h.FollowSeller)
 		users.DELETE("/:id/follow", h.UnfollowSeller)
+	}
+
+	// Wishlist routes
+	wishlist := v1.Group("/wishlist")
+	wishlist.Use(middleware.RequireAuth())
+	{
+		wishlist.GET("", h.GetWishlist)
+		wishlist.POST("", h.AddToWishlist)
+		wishlist.DELETE("/:productId", h.RemoveFromWishlist)
 	}
 
 	// Seller routes
