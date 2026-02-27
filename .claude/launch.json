@@ -151,7 +151,7 @@
       "name": "shipping-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 28085,
+      "port": 28095,
       "cwd": "services/shipping",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -160,8 +160,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_shipping",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "28085",
-        "GRPC_PORT": "29085",
+        "HTTP_PORT": "28095",
+        "GRPC_PORT": "29095",
         "LOG_LEVEL": "debug"
       }
     },
@@ -169,7 +169,7 @@
       "name": "return-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 28086,
+      "port": 28094,
       "cwd": "services/return",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -178,8 +178,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_returns",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "28086",
-        "GRPC_PORT": "29086",
+        "HTTP_PORT": "28094",
+        "GRPC_PORT": "29094",
         "LOG_LEVEL": "debug"
       }
     },
@@ -187,7 +187,7 @@
       "name": "search-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 28087,
+      "port": 28085,
       "cwd": "services/search",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -197,8 +197,8 @@
         "DB_NAME": "ecommerce_search",
         "NATS_URL": "nats://localhost:14222",
         "ELASTICSEARCH_URL": "http://localhost:19200",
-        "HTTP_PORT": "28087",
-        "GRPC_PORT": "29087",
+        "HTTP_PORT": "28085",
+        "GRPC_PORT": "29085",
         "LOG_LEVEL": "debug"
       }
     },
@@ -206,7 +206,7 @@
       "name": "review-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 28088,
+      "port": 28086,
       "cwd": "services/review",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -215,8 +215,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_reviews",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "28088",
-        "GRPC_PORT": "29088",
+        "HTTP_PORT": "28086",
+        "GRPC_PORT": "29086",
         "LOG_LEVEL": "debug"
       }
     },
@@ -247,7 +247,7 @@
       "name": "notification-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 28092,
+      "port": 28087,
       "cwd": "services/notification",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -258,8 +258,8 @@
         "NATS_URL": "nats://localhost:14222",
         "SMTP_HOST": "localhost",
         "SMTP_PORT": "21025",
-        "HTTP_PORT": "28092",
-        "GRPC_PORT": "29092",
+        "HTTP_PORT": "28087",
+        "GRPC_PORT": "29087",
         "LOG_LEVEL": "debug"
       }
     },
@@ -339,7 +339,7 @@
       "name": "chat-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 28094,
+      "port": 28088,
       "cwd": "services/chat",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -348,8 +348,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_chat",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "28094",
-        "GRPC_PORT": "29094",
+        "HTTP_PORT": "28088",
+        "GRPC_PORT": "29088",
         "LOG_LEVEL": "debug"
       }
     },
@@ -357,7 +357,7 @@
       "name": "ai-service",
       "runtimeExecutable": "/opt/homebrew/bin/go",
       "runtimeArgs": ["run", "./cmd/"],
-      "port": 28095,
+      "port": 28092,
       "cwd": "services/ai",
       "env": {
         "POSTGRES_USER": "ecommerce",
@@ -366,8 +366,8 @@
         "POSTGRES_PORT": "15432",
         "DB_NAME": "ecommerce_ai",
         "NATS_URL": "nats://localhost:14222",
-        "HTTP_PORT": "28095",
-        "GRPC_PORT": "29095",
+        "HTTP_PORT": "28092",
+        "GRPC_PORT": "29092",
         "LOG_LEVEL": "debug",
         "AI_PYTHON_SERVICE_URL": "http://localhost:8000"
       }
