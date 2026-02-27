@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Bell, CheckCheck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PageLayout } from '@/shared/components/layout/PageLayout';
 import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
-import { Bell, CheckCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDateTime } from '@/shared/lib/utils';
 import { useNotifications, useMarkAsRead, useMarkAllAsRead } from '../hooks/useNotifications';
 
@@ -24,16 +25,23 @@ export default function NotificationsPage() {
     );
   }
 
-  return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Notifications</h1>
-        <Button variant="outline" size="sm" onClick={() => markAllAsRead.mutate()}>
-          <CheckCheck className="mr-2 h-4 w-4" />
-          Mark All as Read
-        </Button>
-      </div>
+  const markAllReadButton = (
+    <Button variant="outline" size="sm" onClick={() => markAllAsRead.mutate()}>
+      <CheckCheck className="mr-2 h-4 w-4" />
+      Mark All as Read
+    </Button>
+  );
 
+  return (
+    <PageLayout
+      title="Notifications"
+      icon={Bell}
+      breadcrumbs={[
+        { label: 'Account', href: '/account/profile' },
+        { label: 'Notifications' },
+      ]}
+      actions={markAllReadButton}
+    >
       {data && data.data.length > 0 ? (
         <div className="space-y-2">
           {data.data.map((notification) => (
@@ -80,6 +88,6 @@ export default function NotificationsPage() {
           <p className="mt-4 text-muted-foreground">No notifications yet.</p>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }

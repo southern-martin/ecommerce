@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { Package, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PageLayout } from '@/shared/components/layout/PageLayout';
 import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { OrderList } from '../components/OrderList';
 import { useOrders } from '../hooks/useOrders';
 
@@ -20,9 +21,14 @@ export default function OrdersPage() {
   }
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">My Orders</h1>
-
+    <PageLayout
+      title="My Orders"
+      icon={Package}
+      breadcrumbs={[
+        { label: 'Account', href: '/account/profile' },
+        { label: 'Orders' },
+      ]}
+    >
       {data && data.data.length > 0 ? (
         <>
           <OrderList orders={data.data} />
@@ -41,6 +47,6 @@ export default function OrdersPage() {
       ) : (
         <p className="py-8 text-center text-muted-foreground">No orders yet.</p>
       )}
-    </div>
+    </PageLayout>
   );
 }

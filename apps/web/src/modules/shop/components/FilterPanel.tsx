@@ -19,7 +19,7 @@ export function FilterPanel({
   onReset,
 }: FilterPanelProps) {
   return (
-    <aside className="w-64 space-y-6">
+    <aside className="sticky top-24 hidden w-64 space-y-6 rounded-2xl border bg-card p-5 lg:block">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Filters</h3>
         <Button variant="ghost" size="sm" onClick={onReset}>
@@ -32,14 +32,14 @@ export function FilterPanel({
 
       <div className="space-y-3">
         <Label className="text-sm font-medium">Category</Label>
-        <div className="space-y-2">
+        <div className="space-y-1">
           {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => onFilterChange({ category: cat.slug })}
-              className={`block w-full text-left text-sm hover:text-primary ${
+              className={`block w-full rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-primary/5 hover:text-primary ${
                 filters.category === cat.slug
-                  ? 'font-medium text-primary'
+                  ? 'bg-primary/10 font-medium text-primary'
                   : 'text-muted-foreground'
               }`}
             >
@@ -61,7 +61,7 @@ export function FilterPanel({
             onChange={(e) =>
               onFilterChange({ min_price: e.target.value ? Number(e.target.value) : undefined })
             }
-            className="h-9"
+            className="h-9 rounded-lg"
           />
           <span className="text-muted-foreground">-</span>
           <Input
@@ -71,7 +71,7 @@ export function FilterPanel({
             onChange={(e) =>
               onFilterChange({ max_price: e.target.value ? Number(e.target.value) : undefined })
             }
-            className="h-9"
+            className="h-9 rounded-lg"
           />
         </div>
       </div>
@@ -85,8 +85,10 @@ export function FilterPanel({
             <button
               key={rating}
               onClick={() => onFilterChange({ rating })}
-              className={`flex w-full items-center gap-1 rounded px-2 py-1 text-sm hover:bg-muted ${
-                filters.rating === rating ? 'bg-muted font-medium' : ''
+              className={`flex w-full items-center gap-1 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-amber-50 ${
+                filters.rating === rating
+                  ? 'border border-amber-200 bg-amber-50 font-medium'
+                  : ''
               }`}
             >
               {Array.from({ length: 5 }).map((_, i) => (
@@ -111,7 +113,7 @@ export function FilterPanel({
           id="in_stock"
           checked={filters.in_stock ?? false}
           onChange={(e) => onFilterChange({ in_stock: e.target.checked || undefined })}
-          className="rounded border-input"
+          className="rounded border-input accent-primary"
         />
         <Label htmlFor="in_stock" className="text-sm">
           In Stock Only

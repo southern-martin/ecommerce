@@ -1,6 +1,7 @@
+import { Link2, DollarSign } from 'lucide-react';
+import { PageLayout } from '@/shared/components/layout/PageLayout';
 import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
-import { DollarSign } from 'lucide-react';
 import { ReferralStats } from '../components/ReferralStats';
 import { ReferralLinkGenerator } from '../components/ReferralLinkGenerator';
 import { useAffiliateStats, useRequestPayout } from '../hooks/useAffiliateStats';
@@ -26,20 +27,27 @@ export default function AffiliateDashboardPage() {
 
   if (!stats) return null;
 
-  return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Affiliate Dashboard</h1>
-        {stats.pending_payout > 0 && (
-          <Button onClick={() => requestPayout.mutate()} disabled={requestPayout.isPending}>
-            <DollarSign className="mr-2 h-4 w-4" />
-            Request Payout ({formatPrice(stats.pending_payout)})
-          </Button>
-        )}
-      </div>
+  const payoutButton = stats.pending_payout > 0 ? (
+    <Button onClick={() => requestPayout.mutate()} disabled={requestPayout.isPending}>
+      <DollarSign className="mr-2 h-4 w-4" />
+      Request Payout ({formatPrice(stats.pending_payout)})
+    </Button>
+  ) : undefined;
 
-      <ReferralStats stats={stats} />
-      <ReferralLinkGenerator />
-    </div>
+  return (
+    <PageLayout
+      title="Affiliate Dashboard"
+      icon={Link2}
+      breadcrumbs={[
+        { label: 'Account', href: '/account/profile' },
+        { label: 'Affiliate' },
+      ]}
+      actions={payoutButton}
+    >
+      <div className="space-y-8">
+        <ReferralStats stats={stats} />
+        <ReferralLinkGenerator />
+      </div>
+    </PageLayout>
   );
 }

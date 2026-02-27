@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { PageLayout } from '@/shared/components/layout/PageLayout';
 import { ProductGrid } from '../components/ProductGrid';
 import { FilterPanel } from '../components/FilterPanel';
 import { SortDropdown } from '../components/SortDropdown';
@@ -44,51 +45,57 @@ export default function ProductListPage() {
   const totalPages = data ? Math.ceil(data.total / (filters.page_size ?? 20)) : 0;
 
   return (
-    <div className="flex gap-8">
-      <FilterPanel
-        filters={filters}
-        categories={categories ?? []}
-        onFilterChange={handleFilterChange}
-        onReset={handleReset}
-      />
+    <PageLayout
+      title="Shop"
+      subtitle="Browse our collection"
+      breadcrumbs={[{ label: 'Shop' }]}
+    >
+      <div className="flex gap-8">
+        <FilterPanel
+          filters={filters}
+          categories={categories ?? []}
+          onFilterChange={handleFilterChange}
+          onReset={handleReset}
+        />
 
-      <div className="flex-1">
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            {data ? `${data.total} products found` : 'Loading...'}
-          </p>
-          <SortDropdown
-            value={filters.sort ?? 'newest'}
-            onChange={(sort) => handleFilterChange({ sort })}
-          />
-        </div>
-
-        <ProductGrid products={data?.data ?? []} isLoading={isLoading} />
-
-        {totalPages > 1 && (
-          <div className="mt-8 flex items-center justify-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={filters.page === 1}
-              onClick={() => handlePageChange((filters.page ?? 1) - 1)}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Page {filters.page} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={filters.page === totalPages}
-              onClick={() => handlePageChange((filters.page ?? 1) + 1)}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+        <div className="flex-1">
+          <div className="mb-6 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              {data ? `${data.total} products found` : 'Loading...'}
+            </p>
+            <SortDropdown
+              value={filters.sort ?? 'newest'}
+              onChange={(sort) => handleFilterChange({ sort })}
+            />
           </div>
-        )}
+
+          <ProductGrid products={data?.data ?? []} isLoading={isLoading} />
+
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={filters.page === 1}
+                onClick={() => handlePageChange((filters.page ?? 1) - 1)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {filters.page} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={filters.page === totalPages}
+                onClick={() => handlePageChange((filters.page ?? 1) + 1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }
