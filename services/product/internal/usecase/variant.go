@@ -56,6 +56,9 @@ func (uc *VariantUseCase) AddOption(ctx context.Context, productID string, selle
 	if product.SellerID != sellerID {
 		return nil, fmt.Errorf("unauthorized: product belongs to another seller")
 	}
+	if product.ProductType != domain.ProductTypeConfigurable {
+		return nil, fmt.Errorf("cannot add options to a %s product; only configurable products support options", product.ProductType)
+	}
 
 	if input.Name == "" {
 		return nil, fmt.Errorf("option name is required")
@@ -117,6 +120,9 @@ func (uc *VariantUseCase) GenerateVariants(ctx context.Context, productID string
 	}
 	if product.SellerID != sellerID {
 		return nil, fmt.Errorf("unauthorized: product belongs to another seller")
+	}
+	if product.ProductType != domain.ProductTypeConfigurable {
+		return nil, fmt.Errorf("cannot generate variants for a %s product; only configurable products support variants", product.ProductType)
 	}
 
 	options, err := uc.optionRepo.ListByProduct(ctx, productID)

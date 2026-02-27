@@ -9,6 +9,7 @@ export interface Product {
   category: Category;
   rating: number;
   review_count: number;
+  product_type: string;
   in_stock: boolean;
   stock_quantity: number;
   variants?: ProductVariant[];

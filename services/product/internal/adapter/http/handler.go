@@ -134,6 +134,8 @@ type createProductRequest struct {
 	Description    string                        `json:"description"`
 	BasePriceCents int64                         `json:"base_price_cents" binding:"required"`
 	Currency       string                        `json:"currency"`
+	ProductType    string                        `json:"product_type"`
+	StockQuantity  int                           `json:"stock_quantity"`
 	Tags           []string                      `json:"tags"`
 	ImageURLs      []string                      `json:"image_urls"`
 	Attributes     []attributeValueInputRequest  `json:"attributes"`
@@ -175,6 +177,8 @@ func (h *Handler) CreateProduct(c *gin.Context) {
 		Description:    req.Description,
 		BasePriceCents: req.BasePriceCents,
 		Currency:       req.Currency,
+		ProductType:    domain.ProductType(req.ProductType),
+		StockQuantity:  req.StockQuantity,
 		Tags:           req.Tags,
 		ImageURLs:      req.ImageURLs,
 		Attributes:     attrs,
@@ -195,6 +199,7 @@ type updateProductRequest struct {
 	BasePriceCents *int64             `json:"base_price_cents"`
 	Currency       *string            `json:"currency"`
 	Status         *domain.ProductStatus `json:"status"`
+	StockQuantity  *int               `json:"stock_quantity"`
 	Tags           []string           `json:"tags"`
 	ImageURLs      []string           `json:"image_urls"`
 	CategoryID     *string            `json:"category_id"`
@@ -221,6 +226,7 @@ func (h *Handler) UpdateProduct(c *gin.Context) {
 		BasePriceCents: req.BasePriceCents,
 		Currency:       req.Currency,
 		Status:         req.Status,
+		StockQuantity:  req.StockQuantity,
 		Tags:           req.Tags,
 		ImageURLs:      req.ImageURLs,
 		CategoryID:     req.CategoryID,
@@ -485,6 +491,7 @@ func (h *Handler) AdminUpdateProduct(c *gin.Context) {
 		BasePriceCents: req.BasePriceCents,
 		Currency:       req.Currency,
 		Status:         req.Status,
+		StockQuantity:  req.StockQuantity,
 		Tags:           req.Tags,
 		ImageURLs:      req.ImageURLs,
 		CategoryID:     req.CategoryID,

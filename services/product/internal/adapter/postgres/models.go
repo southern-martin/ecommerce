@@ -19,7 +19,9 @@ type ProductModel struct {
 	BasePriceCents int64          `gorm:"not null;default:0"`
 	Currency       string         `gorm:"type:varchar(3);not null;default:'USD'"`
 	Status         string         `gorm:"type:varchar(20);not null;default:'draft';index"`
+	ProductType    string         `gorm:"type:varchar(20);not null;default:'simple'"`
 	HasVariants    bool           `gorm:"not null;default:false"`
+	StockQuantity  int            `gorm:"not null;default:0"`
 	Tags           pq.StringArray `gorm:"type:text[]"`
 	ImageURLs      pq.StringArray `gorm:"type:text[];column:image_urls"`
 	RatingAvg      float64        `gorm:"not null;default:0"`
@@ -49,7 +51,9 @@ func (m *ProductModel) ToDomain() *domain.Product {
 		BasePriceCents: m.BasePriceCents,
 		Currency:       m.Currency,
 		Status:         domain.ProductStatus(m.Status),
+		ProductType:    domain.ProductType(m.ProductType),
 		HasVariants:    m.HasVariants,
+		StockQuantity:  m.StockQuantity,
 		Tags:           m.Tags,
 		ImageURLs:      m.ImageURLs,
 		RatingAvg:      m.RatingAvg,
@@ -81,7 +85,9 @@ func ProductModelFromDomain(p *domain.Product) *ProductModel {
 		BasePriceCents: p.BasePriceCents,
 		Currency:       p.Currency,
 		Status:         string(p.Status),
+		ProductType:    string(p.ProductType),
 		HasVariants:    p.HasVariants,
+		StockQuantity:  p.StockQuantity,
 		Tags:           p.Tags,
 		ImageURLs:      p.ImageURLs,
 		RatingAvg:      p.RatingAvg,

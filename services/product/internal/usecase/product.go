@@ -49,6 +49,8 @@ type CreateProductInput struct {
 	Description    string
 	BasePriceCents int64
 	Currency       string
+	ProductType    domain.ProductType
+	StockQuantity  int
 	Tags           []string
 	ImageURLs      []string
 	Attributes     []AttributeValueInput
@@ -81,6 +83,11 @@ func (uc *ProductUseCase) CreateProduct(ctx context.Context, input CreateProduct
 		}
 	}
 
+	productType := input.ProductType
+	if productType == "" {
+		productType = domain.ProductTypeSimple
+	}
+
 	now := time.Now().UTC()
 	product := &domain.Product{
 		ID:             uuid.New().String(),
@@ -92,7 +99,9 @@ func (uc *ProductUseCase) CreateProduct(ctx context.Context, input CreateProduct
 		BasePriceCents: input.BasePriceCents,
 		Currency:       input.Currency,
 		Status:         domain.ProductStatusDraft,
-		HasVariants:    false,
+		ProductType:    productType,
+		HasVariants:    productType == domain.ProductTypeConfigurable,
+		StockQuantity:  input.StockQuantity,
 		Tags:           input.Tags,
 		ImageURLs:      input.ImageURLs,
 		CreatedAt:      now,
@@ -178,6 +187,7 @@ type UpdateProductInput struct {
 	BasePriceCents *int64
 	Currency       *string
 	Status         *domain.ProductStatus
+	StockQuantity  *int
 	Tags           []string
 	ImageURLs      []string
 	CategoryID     *string
@@ -218,6 +228,9 @@ func (uc *ProductUseCase) UpdateProduct(ctx context.Context, id string, sellerID
 	}
 	if input.CategoryID != nil {
 		product.CategoryID = *input.CategoryID
+	}
+	if input.StockQuantity != nil {
+		product.StockQuantity = *input.StockQuantity
 	}
 	product.UpdatedAt = time.Now().UTC()
 
@@ -281,6 +294,9 @@ func (uc *ProductUseCase) AdminUpdateProduct(ctx context.Context, id string, inp
 	}
 	if input.CategoryID != nil {
 		product.CategoryID = *input.CategoryID
+	}
+	if input.StockQuantity != nil {
+		product.StockQuantity = *input.StockQuantity
 	}
 	product.UpdatedAt = time.Now().UTC()
 

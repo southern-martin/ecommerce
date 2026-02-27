@@ -1,6 +1,8 @@
 import apiClient from '@/shared/lib/api-client';
 import type { PaginatedResponse, ApiResponse } from '@/shared/types/api.types';
 
+export type ProductType = 'simple' | 'configurable' | string;
+
 export interface SellerProduct {
   id: string;
   name: string;
@@ -11,7 +13,9 @@ export interface SellerProduct {
   base_price_cents: number;
   currency: string;
   status: string;
+  product_type: ProductType;
   has_variants: boolean;
+  stock_quantity: number;
   image_urls: string[];
   tags: string[];
   options?: SellerProductOption[];
@@ -71,6 +75,8 @@ export interface CreateProductData {
   base_price_cents: number;
   currency?: string;
   category_id: string;
+  product_type?: ProductType;
+  stock_quantity?: number;
   tags?: string[];
   image_urls?: string[];
   attributes?: { attribute_id: string; value: string; values?: string[] }[];
@@ -92,7 +98,9 @@ function mapRawProduct(raw: any): SellerProduct {
     base_price_cents: raw.base_price_cents || 0,
     currency: raw.currency || 'USD',
     status: raw.status || 'draft',
+    product_type: raw.product_type || 'simple',
     has_variants: raw.has_variants || false,
+    stock_quantity: raw.stock_quantity ?? 0,
     image_urls: raw.image_urls || [],
     tags: raw.tags || [],
     options: raw.options || [],

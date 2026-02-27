@@ -12,6 +12,14 @@ const (
 	ProductStatusArchived ProductStatus = "archived"
 )
 
+// ProductType distinguishes product kinds (simple, configurable, and future types).
+type ProductType string
+
+const (
+	ProductTypeSimple       ProductType = "simple"
+	ProductTypeConfigurable ProductType = "configurable"
+)
+
 // Product represents a product in the catalog.
 type Product struct {
 	ID             string        `json:"id"`
@@ -23,7 +31,9 @@ type Product struct {
 	BasePriceCents int64         `json:"base_price_cents"`
 	Currency       string        `json:"currency"`
 	Status         ProductStatus `json:"status"`
+	ProductType    ProductType   `json:"product_type"`
 	HasVariants    bool          `json:"has_variants"`
+	StockQuantity  int           `json:"stock_quantity"`
 	Tags           []string      `json:"tags"`
 	ImageURLs      []string      `json:"image_urls"`
 	RatingAvg      float64       `json:"rating_avg"`

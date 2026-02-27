@@ -52,10 +52,11 @@ function mapBackendProduct(raw: any): Product {
     values: a.values,
   }));
 
-  // Compute stock from variants if available
-  const totalStock = variants.length > 0
-    ? variants.filter(v => v.is_active).reduce((sum, v) => sum + v.stock, 0)
-    : 100; // default if no variants
+  // Compute stock based on product type
+  const isSimple = !raw.product_type || raw.product_type === 'simple';
+  const totalStock = isSimple
+    ? (raw.stock_quantity ?? 0)
+    : variants.filter(v => v.is_active).reduce((sum, v) => sum + v.stock, 0);
 
   return {
     id: raw.id,
@@ -71,6 +72,7 @@ function mapBackendProduct(raw: any): Product {
       is_primary: i === 0,
     })),
     category: { id: raw.category_id || '', name: '', slug: '' },
+    product_type: raw.product_type || 'simple',
     rating: raw.rating_avg || 0,
     review_count: raw.rating_count || 0,
     in_stock: totalStock > 0,

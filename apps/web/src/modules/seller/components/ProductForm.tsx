@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Package, Settings2 } from 'lucide-react';
 
 const productSchema = z.object({
   name: z.string().min(1, 'Product name is required'),
@@ -12,7 +12,8 @@ const productSchema = z.object({
   price: z.coerce.number().min(1, 'Price is required'),
   compare_at_price: z.coerce.number().optional(),
   category_id: z.string().min(1, 'Category is required'),
-  stock_quantity: z.coerce.number().min(0, 'Stock must be 0 or more'),
+  product_type: z.string().default('simple'),
+  stock_quantity: z.coerce.number().min(0, 'Stock must be 0 or more').default(0),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -22,6 +23,7 @@ interface ProductFormProps {
   onSubmit: (data: ProductFormValues) => void;
   isPending?: boolean;
   submitLabel?: string;
+  showProductTypeSelector?: boolean;
 }
 
 export function ProductForm({
@@ -29,18 +31,81 @@ export function ProductForm({
   onSubmit,
   isPending,
   submitLabel = 'Save Product',
+  showProductTypeSelector = false,
 }: ProductFormProps) {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
-    defaultValues,
+    defaultValues: {
+      product_type: 'simple',
+      stock_quantity: 0,
+      ...defaultValues,
+    },
   });
+
+  const productType = watch('product_type');
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {/* Product Type Selector */}
+      {showProductTypeSelector && (
+        <div className="space-y-2">
+          <Label>Product Type</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setValue('product_type', 'simple')}
+              className={`flex items-start gap-3 rounded-lg border-2 p-4 text-left transition-all ${
+                productType === 'simple'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-muted hover:border-muted-foreground/30'
+              }`}
+            >
+              <Package className={`mt-0.5 h-5 w-5 flex-shrink-0 ${productType === 'simple' ? 'text-primary' : 'text-muted-foreground'}`} />
+              <div>
+                <p className="font-medium">Simple Product</p>
+                <p className="text-xs text-muted-foreground">
+                  A single product with its own price and stock
+                </p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setValue('product_type', 'configurable')}
+              className={`flex items-start gap-3 rounded-lg border-2 p-4 text-left transition-all ${
+                productType === 'configurable'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-muted hover:border-muted-foreground/30'
+              }`}
+            >
+              <Settings2 className={`mt-0.5 h-5 w-5 flex-shrink-0 ${productType === 'configurable' ? 'text-primary' : 'text-muted-foreground'}`} />
+              <div>
+                <p className="font-medium">Configurable Product</p>
+                <p className="text-xs text-muted-foreground">
+                  Product with options (size, color) and variants
+                </p>
+              </div>
+            </button>
+          </div>
+          <input type="hidden" {...register('product_type')} />
+        </div>
+      )}
+
+      {/* Show current type badge when not selectable */}
+      {!showProductTypeSelector && defaultValues?.product_type && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>Type:</span>
+          <span className="rounded-md bg-muted px-2 py-0.5 font-medium capitalize">
+            {defaultValues.product_type}
+          </span>
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="name">Product Name</Label>
         <Input id="name" {...register('name')} />
@@ -60,19 +125,28 @@ export function ProductForm({
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
-          <Label htmlFor="price">Price (cents)</Label>
-          <Input id="price" type="number" {...register('price')} />
+          <Label htmlFor="price">Price ($)</Label>
+          <Input id="price" type="number" step="0.01" {...register('price')} />
           {errors.price && <p className="text-sm text-destructive">{errors.price.message}</p>}
         </div>
         <div className="space-y-2">
           <Label htmlFor="compare_at_price">Compare at Price</Label>
-          <Input id="compare_at_price" type="number" {...register('compare_at_price')} />
+          <Input id="compare_at_price" type="number" step="0.01" {...register('compare_at_price')} />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="stock_quantity">Stock Quantity</Label>
-          <Input id="stock_quantity" type="number" {...register('stock_quantity')} />
-          {errors.stock_quantity && <p className="text-sm text-destructive">{errors.stock_quantity.message}</p>}
-        </div>
+        {productType === 'simple' ? (
+          <div className="space-y-2">
+            <Label htmlFor="stock_quantity">Stock Quantity</Label>
+            <Input id="stock_quantity" type="number" {...register('stock_quantity')} />
+            {errors.stock_quantity && <p className="text-sm text-destructive">{errors.stock_quantity.message}</p>}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Label className="text-muted-foreground">Stock</Label>
+            <p className="flex h-10 items-center text-sm text-muted-foreground">
+              Managed per variant
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">

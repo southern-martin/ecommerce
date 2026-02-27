@@ -45,11 +45,20 @@ export default function ProductDetailPage() {
     });
   }, [product, selectedOptions]);
 
-  // Effective price: variant price or base product price
+  // Effective price/stock: for configurable products use the active variant; for simple use the product directly
+  const isSimple = !product?.product_type || product.product_type === 'simple';
   const effectivePrice = activeVariant ? activeVariant.price_cents : product?.price ?? 0;
   const effectiveCompareAt = activeVariant?.compare_at_cents;
-  const effectiveStock = activeVariant ? activeVariant.stock : product?.stock_quantity ?? 0;
-  const isInStock = activeVariant ? activeVariant.stock > 0 && activeVariant.is_active : product?.in_stock ?? false;
+  const effectiveStock = isSimple
+    ? (product?.stock_quantity ?? 0)
+    : activeVariant
+      ? activeVariant.stock
+      : 0;
+  const isInStock = isSimple
+    ? (product?.stock_quantity ?? 0) > 0
+    : activeVariant
+      ? activeVariant.stock > 0 && activeVariant.is_active
+      : product?.in_stock ?? false;
 
   if (isLoading) {
     return (
@@ -77,7 +86,8 @@ export default function ProductDetailPage() {
     );
   }
 
-  const hasOptions = product.options && product.options.length > 0;
+  const isConfigurable = product.product_type === 'configurable';
+  const hasOptions = isConfigurable && product.options && product.options.length > 0;
 
   return (
     <PageLayout
@@ -278,7 +288,7 @@ export default function ProductDetailPage() {
               </div>
               <Button
                 size="lg"
-                disabled={!isInStock || (hasOptions && !activeVariant)}
+                disabled={!isInStock || (!isSimple && hasOptions && !activeVariant)}
                 className="flex-1 rounded-xl"
                 onClick={() => {
                   addItem({
@@ -297,7 +307,7 @@ export default function ProductDetailPage() {
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 {!isInStock
                   ? 'Out of Stock'
-                  : hasOptions && !activeVariant
+                  : !isSimple && hasOptions && !activeVariant
                     ? 'Select Options'
                     : 'Add to Cart'}
               </Button>
@@ -325,6 +335,11 @@ export default function ProductDetailPage() {
               </Badge>
             ) : (
               <Badge variant="destructive">Out of Stock</Badge>
+            )}
+            {isSimple && effectiveStock > 0 && effectiveStock <= 5 && (
+              <span className="text-sm text-orange-500 font-medium">
+                Only {effectiveStock} left!
+              </span>
             )}
           </div>
         </div>

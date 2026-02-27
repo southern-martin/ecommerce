@@ -35,6 +35,8 @@ export default function SellerProductEditPage() {
     return <p className="text-center text-muted-foreground">Product not found</p>;
   }
 
+  const isConfigurable = product.product_type === 'configurable';
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Edit Product: {product.name}</h1>
@@ -42,7 +44,9 @@ export default function SellerProductEditPage() {
       <Tabs defaultValue="basic">
         <TabsList>
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
-          <TabsTrigger value="variants">Options & Variants</TabsTrigger>
+          {isConfigurable && (
+            <TabsTrigger value="variants">Options & Variants</TabsTrigger>
+          )}
           <TabsTrigger value="attributes">Attributes</TabsTrigger>
         </TabsList>
 
@@ -59,7 +63,8 @@ export default function SellerProductEditPage() {
                   price: product.base_price_cents ? product.base_price_cents / 100 : 0,
                   compare_at_price: 0,
                   category_id: product.category_id || '',
-                  stock_quantity: 0,
+                  product_type: product.product_type || 'simple',
+                  stock_quantity: product.stock_quantity ?? 0,
                 }}
                 onSubmit={(data) =>
                   updateProduct.mutate({
@@ -69,6 +74,7 @@ export default function SellerProductEditPage() {
                       description: data.description,
                       category_id: data.category_id,
                       base_price_cents: Math.round(data.price * 100),
+                      stock_quantity: product.product_type === 'simple' ? (data.stock_quantity ?? 0) : undefined,
                     },
                   })
                 }
@@ -79,32 +85,34 @@ export default function SellerProductEditPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="variants" className="mt-4 space-y-4">
-          <ProductOptionManager
-            productId={product.id}
-            options={product.options || []}
-          />
+        {isConfigurable && (
+          <TabsContent value="variants" className="mt-4 space-y-4">
+            <ProductOptionManager
+              productId={product.id}
+              options={product.options || []}
+            />
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Variants</CardTitle>
-              <Button
-                size="sm"
-                onClick={() => generateVariants.mutate(product.id)}
-                disabled={generateVariants.isPending}
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                {generateVariants.isPending ? 'Generating...' : 'Generate Variants'}
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <VariantTable
-                productId={product.id}
-                variants={product.variants || []}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Variants</CardTitle>
+                <Button
+                  size="sm"
+                  onClick={() => generateVariants.mutate(product.id)}
+                  disabled={generateVariants.isPending}
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  {generateVariants.isPending ? 'Generating...' : 'Generate Variants'}
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <VariantTable
+                  productId={product.id}
+                  variants={product.variants || []}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="attributes" className="mt-4">
           <ProductAttributeForm

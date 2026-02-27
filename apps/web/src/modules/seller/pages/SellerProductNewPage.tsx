@@ -16,6 +16,7 @@ export default function SellerProductNewPage() {
         </CardHeader>
         <CardContent>
           <ProductForm
+            showProductTypeSelector
             onSubmit={(data) =>
               createProduct.mutate(
                 {
@@ -23,6 +24,8 @@ export default function SellerProductNewPage() {
                   description: data.description,
                   category_id: data.category_id,
                   base_price_cents: Math.round(data.price * 100),
+                  product_type: data.product_type || 'simple',
+                  stock_quantity: data.product_type === 'simple' ? (data.stock_quantity ?? 0) : 0,
                   image_urls: [],
                 },
                 {
