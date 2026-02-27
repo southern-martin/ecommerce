@@ -343,3 +343,8 @@ func (uc *VariantUseCase) GetVariant(ctx context.Context, variantID string) (*do
 func (uc *VariantUseCase) ListVariantsByProduct(ctx context.Context, productID string) ([]domain.Variant, error) {
 	return uc.variantRepo.ListByProduct(ctx, productID)
 }
+
+// ListOptions returns all options for a product.
+func (uc *VariantUseCase) ListOptions(ctx context.Context, productID string) ([]domain.ProductOption, error) {
+	return uc.optionRepo.ListByProduct(ctx, productID)
+}

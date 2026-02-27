@@ -72,8 +72,14 @@ export function ProductOptionManager({ productId, options }: ProductOptionManage
                 <span className="font-medium">{option.name}:</span>
                 <span className="ml-2">
                   {option.values.map((v) => (
-                    <Badge key={v} variant="secondary" className="mr-1">
-                      {v}
+                    <Badge key={v.id || v.value} variant="secondary" className="mr-1">
+                      {v.color_hex && (
+                        <span
+                          className="mr-1 inline-block h-3 w-3 rounded-full border"
+                          style={{ backgroundColor: v.color_hex }}
+                        />
+                      )}
+                      {v.value}
                     </Badge>
                   ))}
                 </span>

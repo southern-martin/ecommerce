@@ -1,5 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { sellerVariantApi } from '../services/seller-variant.api';
+import { sellerProductApi } from '../services/seller-product.api';
 
 export function useAddOption() {
   const queryClient = useQueryClient();
@@ -51,6 +52,31 @@ export function useUpdateVariantStock() {
       sellerVariantApi.updateVariantStock(productId, variantId, stock),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['seller-products'] });
+    },
+  });
+}
+
+export function useProductAttributes(productId: string) {
+  return useQuery({
+    queryKey: ['seller-product-attributes', productId],
+    queryFn: () => sellerProductApi.getProductAttributes(productId),
+    enabled: !!productId,
+  });
+}
+
+export function useSetProductAttributes() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      productId,
+      attributes,
+    }: {
+      productId: string;
+      attributes: { attribute_id: string; value: string; values?: string[] }[];
+    }) => sellerProductApi.setProductAttributes(productId, attributes),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['seller-products'] });
+      queryClient.invalidateQueries({ queryKey: ['seller-product-attributes', variables.productId] });
     },
   });
 }

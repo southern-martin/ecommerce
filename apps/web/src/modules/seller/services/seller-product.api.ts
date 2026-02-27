@@ -1,42 +1,152 @@
 import apiClient from '@/shared/lib/api-client';
 import type { PaginatedResponse, ApiResponse } from '@/shared/types/api.types';
-import type { Product } from '@/modules/shop/types/shop.types';
+
+export interface SellerProduct {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  seller_id: string;
+  category_id: string;
+  base_price_cents: number;
+  currency: string;
+  status: string;
+  has_variants: boolean;
+  image_urls: string[];
+  tags: string[];
+  options?: SellerProductOption[];
+  variants?: SellerVariant[];
+  attributes?: SellerProductAttribute[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SellerProductOption {
+  id: string;
+  product_id: string;
+  name: string;
+  sort_order: number;
+  values: SellerProductOptionValue[];
+}
+
+export interface SellerProductOptionValue {
+  id: string;
+  option_id: string;
+  value: string;
+  color_hex?: string;
+  sort_order: number;
+}
+
+export interface SellerVariant {
+  id: string;
+  product_id: string;
+  sku: string;
+  name: string;
+  price_cents: number;
+  compare_at_cents: number;
+  cost_cents: number;
+  stock: number;
+  is_default: boolean;
+  is_active: boolean;
+  weight_grams: number;
+  barcode: string;
+  image_urls: string[];
+  option_values: { variant_id: string; option_id: string; option_value_id: string; option_name: string; value: string }[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SellerProductAttribute {
+  id: string;
+  product_id: string;
+  attribute_id: string;
+  attribute_name: string;
+  value: string;
+  values?: string[];
+}
 
 export interface CreateProductData {
   name: string;
   description: string;
-  price: number;
-  compare_at_price?: number;
+  base_price_cents: number;
+  currency?: string;
   category_id: string;
-  stock_quantity: number;
-  images: { url: string; alt: string; is_primary: boolean }[];
-  variants?: { name: string; value: string; price_modifier: number; stock_quantity: number }[];
+  tags?: string[];
+  image_urls?: string[];
+  attributes?: { attribute_id: string; value: string; values?: string[] }[];
 }
 
-export type UpdateProductData = Partial<CreateProductData>;
+export type UpdateProductData = Partial<CreateProductData> & {
+  status?: string;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapRawProduct(raw: any): SellerProduct {
+  return {
+    id: raw.id,
+    name: raw.name,
+    slug: raw.slug,
+    description: raw.description || '',
+    seller_id: raw.seller_id,
+    category_id: raw.category_id || '',
+    base_price_cents: raw.base_price_cents || 0,
+    currency: raw.currency || 'USD',
+    status: raw.status || 'draft',
+    has_variants: raw.has_variants || false,
+    image_urls: raw.image_urls || [],
+    tags: raw.tags || [],
+    options: raw.options || [],
+    variants: raw.variants || [],
+    attributes: raw.attributes || [],
+    created_at: raw.created_at || '',
+    updated_at: raw.updated_at || '',
+  };
+}
 
 export const sellerProductApi = {
-  getProducts: async (params: { page: number; page_size: number }): Promise<PaginatedResponse<Product>> => {
-    const response = await apiClient.get<PaginatedResponse<Product>>('/seller/products', { params });
-    return response.data;
+  getProducts: async (params: { page: number; page_size: number }): Promise<PaginatedResponse<SellerProduct>> => {
+    const response = await apiClient.get('/seller/products', { params });
+    const raw = response.data;
+    const products = (raw.products || raw.data || []).map(mapRawProduct);
+    return {
+      data: products,
+      total: raw.total || 0,
+      page: raw.page || 1,
+      page_size: raw.pageSize || raw.page_size || 20,
+    };
   },
 
-  getProductById: async (id: string): Promise<Product> => {
-    const response = await apiClient.get<ApiResponse<Product>>(`/seller/products/${id}`);
-    return response.data.data;
+  getProductById: async (id: string): Promise<SellerProduct> => {
+    const response = await apiClient.get(`/seller/products/${id}`);
+    const raw = response.data.data || response.data;
+    return mapRawProduct(raw);
   },
 
-  createProduct: async (data: CreateProductData): Promise<Product> => {
-    const response = await apiClient.post<ApiResponse<Product>>('/seller/products', data);
-    return response.data.data;
+  createProduct: async (data: CreateProductData): Promise<SellerProduct> => {
+    const response = await apiClient.post('/seller/products', data);
+    const raw = response.data.data || response.data;
+    return mapRawProduct(raw);
   },
 
-  updateProduct: async (id: string, data: UpdateProductData): Promise<Product> => {
-    const response = await apiClient.patch<ApiResponse<Product>>(`/seller/products/${id}`, data);
-    return response.data.data;
+  updateProduct: async (id: string, data: UpdateProductData): Promise<SellerProduct> => {
+    const response = await apiClient.patch(`/seller/products/${id}`, data);
+    const raw = response.data.data || response.data;
+    return mapRawProduct(raw);
   },
 
   deleteProduct: async (id: string): Promise<void> => {
     await apiClient.delete(`/seller/products/${id}`);
+  },
+
+  setProductAttributes: async (
+    productId: string,
+    attributes: { attribute_id: string; value: string; values?: string[] }[]
+  ): Promise<void> => {
+    await apiClient.put(`/seller/products/${productId}/attributes`, { attributes });
+  },
+
+  getProductAttributes: async (productId: string): Promise<SellerProductAttribute[]> => {
+    const response = await apiClient.get(`/seller/products/${productId}/attributes`);
+    return response.data.attributes || [];
   },
 };

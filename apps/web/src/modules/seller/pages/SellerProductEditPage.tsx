@@ -6,7 +6,8 @@ import { Button } from '@/shared/components/ui/button';
 import { ProductForm } from '../components/ProductForm';
 import { ProductOptionManager } from '../components/ProductOptionManager';
 import { VariantTable } from '../components/VariantTable';
-import { useSellerProducts, useUpdateProduct } from '../hooks/useSellerProducts';
+import { ProductAttributeForm } from '../components/ProductAttributeForm';
+import { useUpdateProduct } from '../hooks/useSellerProducts';
 import { useGenerateVariants } from '../hooks/useSellerVariants';
 import { useQuery } from '@tanstack/react-query';
 import { sellerProductApi } from '../services/seller-product.api';
@@ -42,6 +43,7 @@ export default function SellerProductEditPage() {
         <TabsList>
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="variants">Options & Variants</TabsTrigger>
+          <TabsTrigger value="attributes">Attributes</TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic" className="mt-4">
@@ -54,13 +56,21 @@ export default function SellerProductEditPage() {
                 defaultValues={{
                   name: product.name,
                   description: product.description || '',
-                  price: (product as any).price_cents ? (product as any).price_cents / 100 : (product as any).price || 0,
-                  compare_at_price: (product as any).compare_at_price_cents ? (product as any).compare_at_price_cents / 100 : 0,
-                  category_id: (product as any).category_id || '',
-                  stock_quantity: (product as any).stock_quantity || (product as any).stock || 0,
+                  price: product.base_price_cents ? product.base_price_cents / 100 : 0,
+                  compare_at_price: 0,
+                  category_id: product.category_id || '',
+                  stock_quantity: 0,
                 }}
                 onSubmit={(data) =>
-                  updateProduct.mutate({ id: product.id, data })
+                  updateProduct.mutate({
+                    id: product.id,
+                    data: {
+                      name: data.name,
+                      description: data.description,
+                      category_id: data.category_id,
+                      base_price_cents: Math.round(data.price * 100),
+                    },
+                  })
                 }
                 isPending={updateProduct.isPending}
                 submitLabel="Update Product"
@@ -72,7 +82,7 @@ export default function SellerProductEditPage() {
         <TabsContent value="variants" className="mt-4 space-y-4">
           <ProductOptionManager
             productId={product.id}
-            options={(product as any).options || []}
+            options={product.options || []}
           />
 
           <Card>
@@ -90,10 +100,17 @@ export default function SellerProductEditPage() {
             <CardContent>
               <VariantTable
                 productId={product.id}
-                variants={(product as any).variants || []}
+                variants={product.variants || []}
               />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="attributes" className="mt-4">
+          <ProductAttributeForm
+            productId={product.id}
+            categoryId={product.category_id}
+          />
         </TabsContent>
       </Tabs>
     </div>

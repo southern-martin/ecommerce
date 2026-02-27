@@ -129,20 +129,30 @@ func (uc *ProductUseCase) CreateProduct(ctx context.Context, input CreateProduct
 	return product, nil
 }
 
-// GetProduct retrieves a product by ID including options and variants.
+// GetProduct retrieves a product by ID including options, variants, and attributes.
 func (uc *ProductUseCase) GetProduct(ctx context.Context, id string) (*domain.Product, error) {
 	product, err := uc.productRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("product not found: %w", err)
 	}
+	// Enrich with attribute values (separate repo, not GORM association)
+	attrs, err := uc.attributeRepo.GetProductValues(ctx, product.ID)
+	if err == nil {
+		product.Attributes = attrs
+	}
 	return product, nil
 }
 
-// GetProductBySlug retrieves a product by slug.
+// GetProductBySlug retrieves a product by slug including options, variants, and attributes.
 func (uc *ProductUseCase) GetProductBySlug(ctx context.Context, slug string) (*domain.Product, error) {
 	product, err := uc.productRepo.GetBySlug(ctx, slug)
 	if err != nil {
 		return nil, fmt.Errorf("product not found: %w", err)
+	}
+	// Enrich with attribute values
+	attrs, err := uc.attributeRepo.GetProductValues(ctx, product.ID)
+	if err == nil {
+		product.Attributes = attrs
 	}
 	return product, nil
 }

@@ -1,10 +1,27 @@
 import apiClient from '@/shared/lib/api-client';
 
+export interface ProductOptionValue {
+  id: string;
+  option_id: string;
+  value: string;
+  color_hex?: string;
+  sort_order: number;
+}
+
 export interface ProductOption {
   id: string;
+  product_id?: string;
   name: string;
-  values: string[];
   sort_order: number;
+  values: ProductOptionValue[];
+}
+
+export interface VariantOptionValue {
+  variant_id: string;
+  option_id: string;
+  option_value_id: string;
+  option_name: string;
+  value: string;
 }
 
 export interface Variant {
@@ -16,8 +33,14 @@ export interface Variant {
   compare_at_cents: number;
   cost_cents: number;
   stock: number;
+  is_default: boolean;
   is_active: boolean;
-  option_values: { option_name: string; value: string }[];
+  weight_grams: number;
+  barcode: string;
+  image_urls: string[];
+  option_values: VariantOptionValue[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const sellerVariantApi = {
@@ -28,6 +51,16 @@ export const sellerVariantApi = {
 
   removeOption: async (productId: string, optionId: string): Promise<void> => {
     await apiClient.delete(`/seller/products/${productId}/options/${optionId}`);
+  },
+
+  getOptions: async (productId: string): Promise<ProductOption[]> => {
+    const response = await apiClient.get(`/seller/products/${productId}/options`);
+    return response.data.options || response.data.data || [];
+  },
+
+  getVariants: async (productId: string): Promise<Variant[]> => {
+    const response = await apiClient.get(`/seller/products/${productId}/variants`);
+    return response.data.variants || response.data.data || [];
   },
 
   generateVariants: async (productId: string): Promise<Variant[]> => {

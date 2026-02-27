@@ -11,10 +11,10 @@ import {
 } from '@/shared/components/ui/table';
 import { Edit, Trash2 } from 'lucide-react';
 import { formatPrice } from '@/shared/lib/utils';
-import type { Product } from '@/modules/shop/types/shop.types';
+import type { SellerProduct } from '../services/seller-product.api';
 
 interface SellerProductTableProps {
-  products: Product[];
+  products: SellerProduct[];
   onDelete?: (id: string) => void;
 }
 
@@ -25,8 +25,8 @@ export function SellerProductTable({ products, onDelete }: SellerProductTablePro
         <TableRow>
           <TableHead>Product</TableHead>
           <TableHead>Price</TableHead>
-          <TableHead>Stock</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead>Variants</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -35,20 +35,30 @@ export function SellerProductTable({ products, onDelete }: SellerProductTablePro
           <TableRow key={product.id}>
             <TableCell>
               <div className="flex items-center gap-3">
-                <img
-                  src={product.images[0]?.url}
-                  alt={product.name}
-                  className="h-10 w-10 rounded-md bg-muted object-cover"
-                />
+                {product.image_urls?.[0] ? (
+                  <img
+                    src={product.image_urls[0]}
+                    alt={product.name}
+                    className="h-10 w-10 rounded-md bg-muted object-cover"
+                  />
+                ) : (
+                  <div className="h-10 w-10 rounded-md bg-muted" />
+                )}
                 <span className="font-medium">{product.name}</span>
               </div>
             </TableCell>
-            <TableCell>{formatPrice(product.price)}</TableCell>
-            <TableCell>{product.stock_quantity}</TableCell>
+            <TableCell>{formatPrice(product.base_price_cents)}</TableCell>
             <TableCell>
-              <Badge variant={product.in_stock ? 'default' : 'destructive'}>
-                {product.in_stock ? 'Active' : 'Out of Stock'}
+              <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
+                {product.status}
               </Badge>
+            </TableCell>
+            <TableCell>
+              {product.has_variants ? (
+                <Badge variant="outline">{product.variants?.length || 0} variants</Badge>
+              ) : (
+                <span className="text-muted-foreground text-sm">None</span>
+              )}
             </TableCell>
             <TableCell className="text-right">
               <div className="flex justify-end gap-2">

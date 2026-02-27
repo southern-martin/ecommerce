@@ -17,9 +17,18 @@ export default function SellerProductNewPage() {
         <CardContent>
           <ProductForm
             onSubmit={(data) =>
-              createProduct.mutate({ ...data, images: [] }, {
-                onSuccess: (product) => navigate(`/seller/products/${product.id}/edit`),
-              })
+              createProduct.mutate(
+                {
+                  name: data.name,
+                  description: data.description,
+                  category_id: data.category_id,
+                  base_price_cents: Math.round(data.price * 100),
+                  image_urls: [],
+                },
+                {
+                  onSuccess: (product) => navigate(`/seller/products/${product.id}/edit`),
+                }
+              )
             }
             isPending={createProduct.isPending}
           />

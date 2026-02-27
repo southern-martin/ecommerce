@@ -26,6 +26,10 @@ type ProductModel struct {
 	RatingCount    int            `gorm:"not null;default:0"`
 	CreatedAt      time.Time      `gorm:"not null"`
 	UpdatedAt      time.Time      `gorm:"not null"`
+
+	// GORM associations – populated via Preload
+	Options  []ProductOptionModel `gorm:"foreignKey:ProductID;references:ID"`
+	Variants []VariantModel       `gorm:"foreignKey:ProductID;references:ID"`
 }
 
 func (ProductModel) TableName() string { return "products" }
@@ -35,7 +39,7 @@ func (m *ProductModel) ToDomain() *domain.Product {
 	if m.CategoryID != nil {
 		catID = *m.CategoryID
 	}
-	return &domain.Product{
+	p := &domain.Product{
 		ID:             m.ID,
 		SellerID:       m.SellerID,
 		CategoryID:     catID,
@@ -53,6 +57,13 @@ func (m *ProductModel) ToDomain() *domain.Product {
 		CreatedAt:      m.CreatedAt,
 		UpdatedAt:      m.UpdatedAt,
 	}
+	for _, opt := range m.Options {
+		p.Options = append(p.Options, opt.ToDomain())
+	}
+	for _, v := range m.Variants {
+		p.Variants = append(p.Variants, *v.ToDomain())
+	}
+	return p
 }
 
 func ProductModelFromDomain(p *domain.Product) *ProductModel {

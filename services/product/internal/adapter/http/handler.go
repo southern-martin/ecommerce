@@ -679,3 +679,100 @@ func (h *Handler) ListCategoryAttributes(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"attributes": attrs})
 }
+
+// --- Public Option & Variant Read Endpoints ---
+
+// ListProductOptions handles GET /api/v1/products/:id/options
+func (h *Handler) ListProductOptions(c *gin.Context) {
+	productID := c.Param("id")
+	options, err := h.variantUC.ListOptions(c.Request.Context(), productID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"options": options})
+}
+
+// ListProductVariants handles GET /api/v1/products/:id/variants
+func (h *Handler) ListProductVariants(c *gin.Context) {
+	productID := c.Param("id")
+	variants, err := h.variantUC.ListVariantsByProduct(c.Request.Context(), productID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"variants": variants})
+}
+
+// GetVariant handles GET /api/v1/products/:id/variants/:variantId
+func (h *Handler) GetVariant(c *gin.Context) {
+	variantID := c.Param("variantId")
+	variant, err := h.variantUC.GetVariant(c.Request.Context(), variantID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, variant)
+}
+
+// --- Product Attribute Value Endpoints ---
+
+type setProductAttributesRequest struct {
+	Attributes []attributeValueInputRequest `json:"attributes" binding:"required"`
+}
+
+// SetProductAttributes handles PUT /api/v1/seller/products/:id/attributes
+func (h *Handler) SetProductAttributes(c *gin.Context) {
+	sellerID := c.GetHeader("X-User-ID")
+	if sellerID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing X-User-ID header"})
+		return
+	}
+
+	productID := c.Param("id")
+
+	// Verify seller owns this product
+	product, err := h.productUC.GetProduct(c.Request.Context(), productID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
+		return
+	}
+	if product.SellerID != sellerID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized: product belongs to another seller"})
+		return
+	}
+
+	var req setProductAttributesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var values []domain.ProductAttributeValue
+	for _, a := range req.Attributes {
+		values = append(values, domain.ProductAttributeValue{
+			ProductID:   productID,
+			AttributeID: a.AttributeID,
+			Value:       a.Value,
+			Values:      a.Values,
+		})
+	}
+
+	if err := h.attributeUC.SetProductAttributeValues(c.Request.Context(), productID, values); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "attributes updated"})
+}
+
+// GetProductAttributes handles GET /api/v1/products/:id/attributes
+func (h *Handler) GetProductAttributes(c *gin.Context) {
+	productID := c.Param("id")
+	attrs, err := h.attributeUC.GetProductAttributeValues(c.Request.Context(), productID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"attributes": attrs})
+}

@@ -27,6 +27,10 @@ func NewRouter(h *Handler) *gin.Engine {
 			products.GET("", h.ListProducts)
 			products.GET("/:id", h.GetProduct)
 			products.GET("/slug/:slug", h.GetProductBySlug)
+			products.GET("/:id/options", h.ListProductOptions)
+			products.GET("/:id/variants", h.ListProductVariants)
+			products.GET("/:id/variants/:variantId", h.GetVariant)
+			products.GET("/:id/attributes", h.GetProductAttributes)
 		}
 
 		// Public category endpoints
@@ -38,6 +42,7 @@ func NewRouter(h *Handler) *gin.Engine {
 			sellerProducts := seller.Group("/products")
 			{
 				sellerProducts.POST("", h.CreateProduct)
+				sellerProducts.GET("/:id", h.GetProduct)
 				sellerProducts.PATCH("/:id", h.UpdateProduct)
 				sellerProducts.DELETE("/:id", h.DeleteProduct)
 				sellerProducts.POST("/:id/options", h.AddOption)
@@ -45,6 +50,10 @@ func NewRouter(h *Handler) *gin.Engine {
 				sellerProducts.POST("/:id/variants/generate", h.GenerateVariants)
 				sellerProducts.PATCH("/:id/variants/:variantId", h.UpdateVariant)
 				sellerProducts.PATCH("/:id/variants/:variantId/stock", h.UpdateVariantStock)
+				sellerProducts.GET("/:id/options", h.ListProductOptions)
+				sellerProducts.GET("/:id/variants", h.ListProductVariants)
+				sellerProducts.PUT("/:id/attributes", h.SetProductAttributes)
+				sellerProducts.GET("/:id/attributes", h.GetProductAttributes)
 			}
 		}
 

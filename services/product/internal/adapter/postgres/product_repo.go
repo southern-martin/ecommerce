@@ -26,7 +26,12 @@ func (r *ProductRepo) Create(ctx context.Context, p *domain.Product) error {
 
 func (r *ProductRepo) GetByID(ctx context.Context, id string) (*domain.Product, error) {
 	var model ProductModel
-	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&model).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Preload("Options", func(db *gorm.DB) *gorm.DB { return db.Order("sort_order ASC") }).
+		Preload("Options.Values", func(db *gorm.DB) *gorm.DB { return db.Order("sort_order ASC") }).
+		Preload("Variants", func(db *gorm.DB) *gorm.DB { return db.Order("is_default DESC, created_at ASC") }).
+		Preload("Variants.OptionValues").
+		Where("id = ?", id).First(&model).Error; err != nil {
 		return nil, fmt.Errorf("product not found: %w", err)
 	}
 	return model.ToDomain(), nil
@@ -34,7 +39,12 @@ func (r *ProductRepo) GetByID(ctx context.Context, id string) (*domain.Product, 
 
 func (r *ProductRepo) GetBySlug(ctx context.Context, slug string) (*domain.Product, error) {
 	var model ProductModel
-	if err := r.db.WithContext(ctx).Where("slug = ?", slug).First(&model).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Preload("Options", func(db *gorm.DB) *gorm.DB { return db.Order("sort_order ASC") }).
+		Preload("Options.Values", func(db *gorm.DB) *gorm.DB { return db.Order("sort_order ASC") }).
+		Preload("Variants", func(db *gorm.DB) *gorm.DB { return db.Order("is_default DESC, created_at ASC") }).
+		Preload("Variants.OptionValues").
+		Where("slug = ?", slug).First(&model).Error; err != nil {
 		return nil, fmt.Errorf("product not found: %w", err)
 	}
 	return model.ToDomain(), nil

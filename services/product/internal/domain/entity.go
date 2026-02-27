@@ -30,6 +30,11 @@ type Product struct {
 	RatingCount    int           `json:"rating_count"`
 	CreatedAt      time.Time     `json:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at"`
+
+	// Loaded via Preload / usecase enrichment
+	Options    []ProductOption         `json:"options,omitempty"`
+	Variants   []Variant               `json:"variants,omitempty"`
+	Attributes []ProductAttributeValue `json:"attributes,omitempty"`
 }
 
 // Category represents a product category with optional parent for hierarchy.

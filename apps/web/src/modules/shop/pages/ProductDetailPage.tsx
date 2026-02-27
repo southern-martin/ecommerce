@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
@@ -9,14 +9,47 @@ import { formatPrice } from '@/shared/lib/utils';
 import { PageLayout } from '@/shared/components/layout/PageLayout';
 import { useProduct } from '../hooks/useProduct';
 import { useCartStore } from '@/shared/stores/cart.store';
+import type { ProductVariant } from '../types/shop.types';
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const { data: product, isLoading } = useProduct(slug!);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const addItem = useCartStore((s) => s.addItem);
+
+  // Auto-select default variant options on load
+  useEffect(() => {
+    if (product?.options && product.variants) {
+      const defaultVariant = product.variants.find((v) => v.is_default) || product.variants[0];
+      if (defaultVariant?.option_values) {
+        const defaults: Record<string, string> = {};
+        defaultVariant.option_values.forEach((ov) => {
+          defaults[ov.option_name] = ov.option_value_id;
+        });
+        setSelectedOptions(defaults);
+      }
+    }
+  }, [product]);
+
+  // Find the variant matching the selected options
+  const activeVariant: ProductVariant | undefined = useMemo(() => {
+    if (!product?.variants || !product?.options) return undefined;
+    const optionCount = product.options.length;
+    return product.variants.find((v) => {
+      if (!v.option_values || v.option_values.length !== optionCount) return false;
+      return v.option_values.every(
+        (ov) => selectedOptions[ov.option_name] === ov.option_value_id
+      );
+    });
+  }, [product, selectedOptions]);
+
+  // Effective price: variant price or base product price
+  const effectivePrice = activeVariant ? activeVariant.price_cents : product?.price ?? 0;
+  const effectiveCompareAt = activeVariant?.compare_at_cents;
+  const effectiveStock = activeVariant ? activeVariant.stock : product?.stock_quantity ?? 0;
+  const isInStock = activeVariant ? activeVariant.stock > 0 && activeVariant.is_active : product?.in_stock ?? false;
 
   if (isLoading) {
     return (
@@ -43,6 +76,8 @@ export default function ProductDetailPage() {
       </PageLayout>
     );
   }
+
+  const hasOptions = product.options && product.options.length > 0;
 
   return (
     <PageLayout
@@ -91,7 +126,7 @@ export default function ProductDetailPage() {
             <div>
               <h1 className="text-3xl font-bold">{product.name}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Sold by {product.seller.name}
+                Sold by {product.seller.name || 'Seller'}
               </p>
             </div>
 
@@ -113,16 +148,17 @@ export default function ProductDetailPage() {
               </span>
             </div>
 
+            {/* Price */}
             <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-bold text-primary">{formatPrice(product.price)}</span>
-              {product.compare_at_price && product.compare_at_price > product.price && (
+              <span className="text-3xl font-bold text-primary">{formatPrice(effectivePrice)}</span>
+              {effectiveCompareAt && effectiveCompareAt > effectivePrice && (
                 <>
                   <span className="text-xl text-muted-foreground line-through">
-                    {formatPrice(product.compare_at_price)}
+                    {formatPrice(effectiveCompareAt)}
                   </span>
                   <Badge variant="destructive">
                     {Math.round(
-                      ((product.compare_at_price - product.price) / product.compare_at_price) * 100
+                      ((effectiveCompareAt - effectivePrice) / effectiveCompareAt) * 100
                     )}
                     % OFF
                   </Badge>
@@ -134,23 +170,91 @@ export default function ProductDetailPage() {
 
             <p className="leading-relaxed text-muted-foreground">{product.description}</p>
 
-            {/* Variants */}
-            {product.variants && product.variants.length > 0 && (
-              <div className="space-y-2">
-                <span className="text-sm font-medium">Options</span>
-                <div className="flex flex-wrap gap-2">
-                  {product.variants.map((variant) => (
-                    <Button
-                      key={variant.id}
-                      variant={selectedVariant === variant.id ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSelectedVariant(variant.id)}
-                    >
-                      {variant.value}
-                    </Button>
-                  ))}
-                </div>
+            {/* Option-based Variant Selector */}
+            {hasOptions && (
+              <div className="space-y-4">
+                {product.options!.map((option) => (
+                  <div key={option.id} className="space-y-2">
+                    <span className="text-sm font-medium">{option.name}</span>
+                    <div className="flex flex-wrap gap-2">
+                      {option.values.map((optVal) => {
+                        const isSelected = selectedOptions[option.name] === optVal.id;
+                        const isColor = !!optVal.color_hex;
+
+                        if (isColor) {
+                          return (
+                            <button
+                              key={optVal.id}
+                              title={optVal.value}
+                              onClick={() =>
+                                setSelectedOptions((prev) => ({ ...prev, [option.name]: optVal.id }))
+                              }
+                              className={`h-10 w-10 rounded-full border-2 transition-all ${
+                                isSelected
+                                  ? 'border-primary ring-2 ring-primary ring-offset-2'
+                                  : 'border-muted-foreground/30 hover:border-muted-foreground'
+                              }`}
+                              style={{ backgroundColor: optVal.color_hex }}
+                            />
+                          );
+                        }
+
+                        return (
+                          <Button
+                            key={optVal.id}
+                            variant={isSelected ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() =>
+                              setSelectedOptions((prev) => ({ ...prev, [option.name]: optVal.id }))
+                            }
+                          >
+                            {optVal.value}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Variant info */}
+                {activeVariant && (
+                  <div className="text-sm text-muted-foreground">
+                    SKU: {activeVariant.sku}
+                    {activeVariant.stock > 0 && activeVariant.stock <= 5 && (
+                      <span className="ml-3 text-orange-500 font-medium">
+                        Only {activeVariant.stock} left!
+                      </span>
+                    )}
+                  </div>
+                )}
+                {hasOptions && !activeVariant && Object.keys(selectedOptions).length > 0 && (
+                  <p className="text-sm text-destructive">
+                    This combination is not available.
+                  </p>
+                )}
               </div>
+            )}
+
+            {/* Product Attributes */}
+            {product.attributes && product.attributes.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <span className="text-sm font-medium">Specifications</span>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    {product.attributes.map((attr) => (
+                      <div key={attr.id} className="flex gap-2">
+                        <span className="text-muted-foreground">{attr.attribute_name}:</span>
+                        <span className="font-medium">
+                          {attr.values && attr.values.length > 0
+                            ? attr.values.join(', ')
+                            : attr.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
             )}
 
             {/* Quantity + Add to Cart */}
@@ -167,31 +271,35 @@ export default function ProductDetailPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setQuantity((q) => q + 1)}
+                  onClick={() => setQuantity((q) => Math.min(q + 1, effectiveStock || 99))}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
               <Button
                 size="lg"
-                disabled={!product.in_stock}
+                disabled={!isInStock || (hasOptions && !activeVariant)}
                 className="flex-1 rounded-xl"
                 onClick={() => {
                   addItem({
-                    id: `${product.id}-${selectedVariant || 'default'}`,
+                    id: `${product.id}-${activeVariant?.id || 'default'}`,
                     product_id: product.id,
                     product_name: product.name,
                     product_slug: product.slug,
-                    price_cents: product.price,
+                    price_cents: effectivePrice,
                     quantity,
                     image_url: (product.images || [])[0]?.url,
-                    variant_id: selectedVariant || undefined,
+                    variant_id: activeVariant?.id || undefined,
                     seller_id: product.seller?.id,
                   });
                 }}
               >
                 <ShoppingCart className="mr-2 h-5 w-5" />
-                {product.in_stock ? 'Add to Cart' : 'Out of Stock'}
+                {!isInStock
+                  ? 'Out of Stock'
+                  : hasOptions && !activeVariant
+                    ? 'Select Options'
+                    : 'Add to Cart'}
               </Button>
             </div>
 
@@ -211,8 +319,10 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {product.in_stock ? (
-              <Badge variant="secondary" className="text-green-600">In Stock</Badge>
+            {isInStock ? (
+              <Badge variant="secondary" className="text-green-600">
+                In Stock{effectiveStock > 0 ? ` (${effectiveStock})` : ''}
+              </Badge>
             ) : (
               <Badge variant="destructive">Out of Stock</Badge>
             )}

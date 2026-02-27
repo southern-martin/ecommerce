@@ -12,6 +12,8 @@ export interface Product {
   in_stock: boolean;
   stock_quantity: number;
   variants?: ProductVariant[];
+  options?: ProductOption[];
+  attributes?: ProductAttribute[];
   seller: { id: string; name: string };
   created_at: string;
 }
@@ -25,10 +27,51 @@ export interface ProductImage {
 
 export interface ProductVariant {
   id: string;
+  sku: string;
   name: string;
+  price_cents: number;
+  compare_at_cents?: number;
+  cost_cents?: number;
+  stock: number;
+  is_default: boolean;
+  is_active: boolean;
+  weight_grams?: number;
+  barcode?: string;
+  image_urls?: string[];
+  option_values: VariantOptionValue[];
+}
+
+export interface VariantOptionValue {
+  variant_id: string;
+  option_id: string;
+  option_value_id: string;
+  option_name: string;
   value: string;
-  price_modifier: number;
-  stock_quantity: number;
+}
+
+export interface ProductOption {
+  id: string;
+  product_id: string;
+  name: string;
+  sort_order: number;
+  values: ProductOptionValue[];
+}
+
+export interface ProductOptionValue {
+  id: string;
+  option_id: string;
+  value: string;
+  color_hex?: string;
+  sort_order: number;
+}
+
+export interface ProductAttribute {
+  id: string;
+  product_id: string;
+  attribute_id: string;
+  attribute_name: string;
+  value: string;
+  values?: string[];
 }
 
 export interface Category {
