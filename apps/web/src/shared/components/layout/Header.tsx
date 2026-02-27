@@ -10,6 +10,8 @@ import {
   LayoutDashboard,
   Shield,
   Zap,
+  Heart,
+  Store,
 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -47,12 +49,12 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center px-4">
+      <div className="container mx-auto flex h-16 items-center gap-4 px-4">
         {/* Mobile menu button */}
         <Button
           variant="ghost"
           size="icon"
-          className="mr-2 md:hidden"
+          className="shrink-0 md:hidden"
           onClick={() => setMobileMenuOpen(true)}
         >
           <Menu className="h-5 w-5" />
@@ -60,21 +62,33 @@ export function Header() {
         </Button>
 
         {/* Logo */}
-        <Link to="/" className="mr-6 flex items-center space-x-2">
-          <span className="text-xl font-bold">Store</span>
+        <Link to="/" className="flex shrink-0 items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Store className="h-4 w-4" />
+          </div>
+          <span className="text-xl font-bold tracking-tight">
+            <span className="text-primary">Market</span>
+            <span className="text-foreground">Hub</span>
+          </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+        <nav className="hidden items-center gap-1 md:flex">
           <Link
             to="/products"
-            className="transition-colors hover:text-foreground/80 text-foreground/60"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             Shop
           </Link>
           <Link
+            to="/categories"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            Categories
+          </Link>
+          <Link
             to="/promotions"
-            className="transition-colors hover:text-foreground/80 text-foreground/60 flex items-center gap-1"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-orange-600 transition-colors hover:bg-orange-50"
           >
             <Zap className="h-4 w-4" />
             Deals
@@ -84,27 +98,35 @@ export function Header() {
         {/* Search Bar */}
         <form
           onSubmit={handleSearch}
-          className="hidden md:flex flex-1 items-center mx-6"
+          className="hidden flex-1 md:flex"
         >
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <div className="relative w-full max-w-md mx-auto">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search products..."
-              className="pl-8"
+              placeholder="Search products, brands, categories..."
+              className="w-full rounded-full border-muted-foreground/20 bg-muted/50 pl-10 pr-4 focus-visible:ring-primary"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </form>
 
-        <div className="flex items-center space-x-2 ml-auto">
+        <div className="flex items-center gap-1 ml-auto">
+          {/* Wishlist */}
+          <Button variant="ghost" size="icon" asChild className="hidden sm:flex">
+            <Link to="/account/wishlist">
+              <Heart className="h-5 w-5" />
+              <span className="sr-only">Wishlist</span>
+            </Link>
+          </Button>
+
           {/* Cart */}
-          <Button variant="ghost" size="icon" asChild>
-            <Link to="/cart" className="relative">
+          <Button variant="ghost" size="icon" asChild className="relative">
+            <Link to="/cart">
               <ShoppingCart className="h-5 w-5" />
               {cartItemCount > 0 && (
-                <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                <Badge className="absolute -right-1 -top-1 h-5 min-w-5 rounded-full p-0 flex items-center justify-center text-[10px] font-bold">
                   {cartItemCount}
                 </Badge>
               )}
@@ -117,13 +139,16 @@ export function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
-                  <User className="h-5 w-5" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <User className="h-4 w-4" />
+                  </div>
                   <span className="sr-only">User menu</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-1.5 text-sm font-medium">
-                  {user?.email}
+                <div className="px-3 py-2">
+                  <p className="text-sm font-medium">{user?.email}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{user?.role || 'buyer'}</p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
@@ -136,6 +161,12 @@ export function Header() {
                   <Link to="/account/orders" className="flex items-center">
                     <Package className="mr-2 h-4 w-4" />
                     Orders
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/account/wishlist" className="flex items-center">
+                    <Heart className="mr-2 h-4 w-4" />
+                    Wishlist
                   </Link>
                 </DropdownMenuItem>
                 {(isSeller || isAdmin) && (
@@ -153,21 +184,26 @@ export function Header() {
                   <DropdownMenuItem asChild>
                     <Link to="/admin" className="flex items-center">
                       <Shield className="mr-2 h-4 w-4" />
-                      Admin
+                      Admin Panel
                     </Link>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="flex items-center cursor-pointer">
+                <DropdownMenuItem onClick={handleLogout} className="flex items-center cursor-pointer text-red-600 focus:text-red-600">
                   <LogOut className="mr-2 h-4 w-4" />
-                  Logout
+                  Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/login">Sign In</Link>
-            </Button>
+            <div className="flex items-center gap-2 ml-2">
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/login">Sign In</Link>
+              </Button>
+              <Button size="sm" asChild className="hidden sm:flex">
+                <Link to="/register">Sign Up</Link>
+              </Button>
+            </div>
           )}
         </div>
       </div>
