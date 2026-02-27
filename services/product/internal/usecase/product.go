@@ -240,6 +240,65 @@ func (uc *ProductUseCase) DeleteProduct(ctx context.Context, id string, sellerID
 	return nil
 }
 
+// AdminUpdateProduct updates a product without seller ownership check (admin only).
+func (uc *ProductUseCase) AdminUpdateProduct(ctx context.Context, id string, input UpdateProductInput) (*domain.Product, error) {
+	product, err := uc.productRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("product not found: %w", err)
+	}
+
+	if input.Name != nil {
+		product.Name = *input.Name
+		product.Slug = generateSlug(*input.Name)
+	}
+	if input.Description != nil {
+		product.Description = *input.Description
+	}
+	if input.BasePriceCents != nil {
+		product.BasePriceCents = *input.BasePriceCents
+	}
+	if input.Currency != nil {
+		product.Currency = *input.Currency
+	}
+	if input.Status != nil {
+		product.Status = *input.Status
+	}
+	if input.Tags != nil {
+		product.Tags = input.Tags
+	}
+	if input.ImageURLs != nil {
+		product.ImageURLs = input.ImageURLs
+	}
+	if input.CategoryID != nil {
+		product.CategoryID = *input.CategoryID
+	}
+	product.UpdatedAt = time.Now().UTC()
+
+	if err := uc.productRepo.Update(ctx, product); err != nil {
+		return nil, fmt.Errorf("failed to update product: %w", err)
+	}
+
+	_ = uc.eventPub.PublishProductUpdated(ctx, product)
+
+	return product, nil
+}
+
+// AdminDeleteProduct soft-deletes a product without seller ownership check (admin only).
+func (uc *ProductUseCase) AdminDeleteProduct(ctx context.Context, id string) error {
+	_, err := uc.productRepo.GetByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("product not found: %w", err)
+	}
+
+	if err := uc.productRepo.Delete(ctx, id); err != nil {
+		return fmt.Errorf("failed to delete product: %w", err)
+	}
+
+	_ = uc.eventPub.PublishProductDeleted(ctx, id)
+
+	return nil
+}
+
 // generateSlug creates a URL-friendly slug from a name with a short UUID suffix.
 func generateSlug(name string) string {
 	slug := strings.ToLower(name)

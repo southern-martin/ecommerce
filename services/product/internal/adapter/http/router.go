@@ -51,6 +51,14 @@ func NewRouter(h *Handler) *gin.Engine {
 		// Admin endpoints
 		admin := v1.Group("/admin")
 		{
+			// Admin product management (no seller ownership check)
+			adminProducts := admin.Group("/products")
+			{
+				adminProducts.GET("", h.AdminListProducts)
+				adminProducts.PATCH("/:id", h.AdminUpdateProduct)
+				adminProducts.DELETE("/:id", h.AdminDeleteProduct)
+			}
+
 			admin.POST("/categories", h.CreateCategory)
 			admin.POST("/attributes", h.CreateAttributeDefinition)
 			admin.GET("/attributes", h.ListAttributeDefinitions)

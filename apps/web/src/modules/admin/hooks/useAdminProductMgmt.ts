@@ -1,6 +1,10 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { adminProductMgmtApi } from '../services/admin-product-mgmt.api';
-import type { AdminProductFilter, CreateProductPayload } from '../services/admin-product-mgmt.api';
+import type {
+  AdminProductFilter,
+  CreateProductPayload,
+  AdminUpdateProductPayload,
+} from '../services/admin-product-mgmt.api';
 
 export function useAdminProductList(filters: AdminProductFilter = {}) {
   return useQuery({
@@ -23,7 +27,7 @@ export function useAdminCreateProduct() {
 export function useAdminUpdateProduct() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<CreateProductPayload> }) =>
+    mutationFn: ({ id, data }: { id: string; data: AdminUpdateProductPayload }) =>
       adminProductMgmtApi.updateProduct(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-product-list'] });

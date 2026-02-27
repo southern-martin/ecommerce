@@ -1,29 +1,34 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Badge } from '@/shared/components/ui/badge';
+import { Loader2, Plus, X, ImagePlus } from 'lucide-react';
 import { useCategories } from '../hooks/useAdminProducts';
 
 const adminProductSchema = z.object({
   name: z.string().min(1, 'Product name is required'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
-  price: z.coerce.number().min(1, 'Price is required'),
-  compare_at_price: z.coerce.number().optional(),
+  base_price_cents: z.coerce.number().min(1, 'Price is required'),
+  currency: z.string().optional(),
   category_id: z.string().min(1, 'Category is required'),
-  stock_quantity: z.coerce.number().min(0, 'Stock must be 0 or more'),
-  image_url: z.string().optional(),
+  status: z.enum(['draft', 'active', 'inactive', 'archived']).optional(),
 });
 
 type AdminProductFormValues = z.infer<typeof adminProductSchema>;
 
 interface AdminProductFormProps {
-  defaultValues?: Partial<AdminProductFormValues>;
-  onSubmit: (data: AdminProductFormValues) => void;
+  defaultValues?: Partial<AdminProductFormValues> & {
+    tags?: string[];
+    image_urls?: string[];
+  };
+  onSubmit: (data: AdminProductFormValues & { tags: string[]; image_urls: string[] }) => void;
   isPending?: boolean;
   submitLabel?: string;
+  isEditing?: boolean;
 }
 
 export function AdminProductForm({
@@ -31,25 +36,68 @@ export function AdminProductForm({
   onSubmit,
   isPending,
   submitLabel = 'Save Product',
+  isEditing = false,
 }: AdminProductFormProps) {
   const { data: categories } = useCategories();
+  const [tags, setTags] = useState<string[]>(defaultValues?.tags || []);
+  const [tagInput, setTagInput] = useState('');
+  const [imageUrls, setImageUrls] = useState<string[]>(defaultValues?.image_urls || []);
+  const [imageInput, setImageInput] = useState('');
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<AdminProductFormValues>({
     resolver: zodResolver(adminProductSchema),
-    defaultValues,
+    defaultValues: {
+      name: defaultValues?.name || '',
+      description: defaultValues?.description || '',
+      base_price_cents: defaultValues?.base_price_cents || 0,
+      currency: defaultValues?.currency || 'USD',
+      category_id: defaultValues?.category_id || '',
+      status: defaultValues?.status || 'draft',
+    },
   });
 
+  const handleAddTag = () => {
+    const trimmed = tagInput.trim();
+    if (trimmed && !tags.includes(trimmed)) {
+      setTags([...tags, trimmed]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setTags(tags.filter((t) => t !== tag));
+  };
+
+  const handleAddImage = () => {
+    const trimmed = imageInput.trim();
+    if (trimmed && !imageUrls.includes(trimmed)) {
+      setImageUrls([...imageUrls, trimmed]);
+      setImageInput('');
+    }
+  };
+
+  const handleRemoveImage = (url: string) => {
+    setImageUrls(imageUrls.filter((u) => u !== url));
+  };
+
+  const handleFormSubmit = (data: AdminProductFormValues) => {
+    onSubmit({ ...data, tags, image_urls: imageUrls });
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+      {/* Product Name */}
       <div className="space-y-2">
         <Label htmlFor="name">Product Name</Label>
         <Input id="name" {...register('name')} placeholder="e.g. Premium Wireless Headphones" />
         {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
       </div>
 
+      {/* Description */}
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>
         <textarea
@@ -62,23 +110,46 @@ export function AdminProductForm({
         {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
       </div>
 
+      {/* Price + Currency + Status */}
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
-          <Label htmlFor="price">Price (cents)</Label>
-          <Input id="price" type="number" {...register('price')} placeholder="9999" />
-          {errors.price && <p className="text-sm text-destructive">{errors.price.message}</p>}
+          <Label htmlFor="base_price_cents">Price (cents)</Label>
+          <Input id="base_price_cents" type="number" {...register('base_price_cents')} placeholder="9999" />
+          {errors.base_price_cents && (
+            <p className="text-sm text-destructive">{errors.base_price_cents.message}</p>
+          )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="compare_at_price">Compare at Price</Label>
-          <Input id="compare_at_price" type="number" {...register('compare_at_price')} placeholder="Optional" />
+          <Label htmlFor="currency">Currency</Label>
+          <select
+            id="currency"
+            {...register('currency')}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="AUD">AUD</option>
+          </select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="stock_quantity">Stock Quantity</Label>
-          <Input id="stock_quantity" type="number" {...register('stock_quantity')} placeholder="100" />
-          {errors.stock_quantity && <p className="text-sm text-destructive">{errors.stock_quantity.message}</p>}
-        </div>
+        {isEditing && (
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <select
+              id="status"
+              {...register('status')}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="draft">Draft</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+        )}
       </div>
 
+      {/* Category */}
       <div className="space-y-2">
         <Label htmlFor="category_id">Category</Label>
         <select
@@ -96,10 +167,92 @@ export function AdminProductForm({
         {errors.category_id && <p className="text-sm text-destructive">{errors.category_id.message}</p>}
       </div>
 
+      {/* Tags */}
       <div className="space-y-2">
-        <Label htmlFor="image_url">Image URL</Label>
-        <Input id="image_url" {...register('image_url')} placeholder="https://images.unsplash.com/..." />
-        <p className="text-xs text-muted-foreground">Enter a direct URL to the product image</p>
+        <Label>Tags</Label>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Add a tag..."
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddTag();
+              }
+            }}
+          />
+          <Button type="button" variant="outline" size="icon" onClick={handleAddTag}>
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {tags.map((tag) => (
+              <Badge key={tag} variant="secondary" className="gap-1 pr-1">
+                {tag}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTag(tag)}
+                  className="ml-1 rounded-full p-0.5 hover:bg-muted"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Image URLs */}
+      <div className="space-y-2">
+        <Label>Image URLs</Label>
+        <div className="flex gap-2">
+          <Input
+            placeholder="https://images.unsplash.com/..."
+            value={imageInput}
+            onChange={(e) => setImageInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddImage();
+              }
+            }}
+          />
+          <Button type="button" variant="outline" size="icon" onClick={handleAddImage}>
+            <ImagePlus className="h-4 w-4" />
+          </Button>
+        </div>
+        {imageUrls.length > 0 && (
+          <div className="grid grid-cols-4 gap-2 mt-2">
+            {imageUrls.map((url, idx) => (
+              <div key={idx} className="group relative aspect-square overflow-hidden rounded-lg border bg-muted">
+                <img
+                  src={url}
+                  alt={`Product image ${idx + 1}`}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '';
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveImage(url)}
+                  className="absolute right-1 top-1 rounded-full bg-destructive/80 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+                {idx === 0 && (
+                  <Badge className="absolute bottom-1 left-1 text-xs" variant="secondary">
+                    Primary
+                  </Badge>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">First image will be used as the primary product image</p>
       </div>
 
       <Button type="submit" disabled={isPending} className="w-full">

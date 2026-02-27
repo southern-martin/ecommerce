@@ -18,28 +18,80 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/shared/components/ui/dialog';
-import { Edit, Trash2, Search, Package, ExternalLink } from 'lucide-react';
+import {
+  Edit,
+  Trash2,
+  Search,
+  Package,
+  CheckCircle,
+  XCircle,
+  Archive,
+  FileText,
+  Eye,
+} from 'lucide-react';
 import { formatPrice } from '@/shared/lib/utils';
 import type { Product } from '@/modules/shop/types/shop.types';
+
+export type ProductStatus = 'draft' | 'active' | 'inactive' | 'archived';
+
+const STATUS_CONFIG: Record<ProductStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof CheckCircle }> = {
+  draft: { label: 'Draft', variant: 'secondary', icon: FileText },
+  active: { label: 'Active', variant: 'default', icon: CheckCircle },
+  inactive: { label: 'Inactive', variant: 'destructive', icon: XCircle },
+  archived: { label: 'Archived', variant: 'outline', icon: Archive },
+};
+
+const STATUS_FILTERS: { label: string; value: string }[] = [
+  { label: 'All', value: '' },
+  { label: 'Draft', value: 'draft' },
+  { label: 'Active', value: 'active' },
+  { label: 'Inactive', value: 'inactive' },
+  { label: 'Archived', value: 'archived' },
+];
 
 interface AdminProductTableProps {
   products: Product[];
   onEdit: (product: Product) => void;
   onDelete: (id: string) => void;
+  onStatusChange: (id: string, status: ProductStatus) => void;
   isDeleting?: boolean;
+  isUpdating?: boolean;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
+  statusFilter?: string;
+  onStatusFilterChange?: (status: string) => void;
+}
+
+// Helper to get status from the augmented product
+export function getProductStatus(product: Product): ProductStatus {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const status = (product as any)._status;
+  if (status && ['draft', 'active', 'inactive', 'archived'].includes(status)) {
+    return status as ProductStatus;
+  }
+  return product.in_stock ? 'active' : 'inactive';
+}
+
+// Helper to get tags from the augmented product
+export function getProductTags(product: Product): string[] {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (product as any)._tags || [];
 }
 
 export function AdminProductTable({
   products,
   onEdit,
   onDelete,
+  onStatusChange,
   isDeleting,
+  isUpdating,
   searchValue = '',
   onSearchChange,
+  statusFilter = '',
+  onStatusFilterChange,
 }: AdminProductTableProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [statusAction, setStatusAction] = useState<{ id: string; status: ProductStatus } | null>(null);
 
   const handleConfirmDelete = () => {
     if (deleteId) {
@@ -48,7 +100,14 @@ export function AdminProductTable({
     }
   };
 
-  if (products.length === 0 && !searchValue) {
+  const handleConfirmStatusChange = () => {
+    if (statusAction) {
+      onStatusChange(statusAction.id, statusAction.status);
+      setStatusAction(null);
+    }
+  };
+
+  if (products.length === 0 && !searchValue && !statusFilter) {
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
@@ -62,17 +121,36 @@ export function AdminProductTable({
 
   return (
     <div className="space-y-4">
-      {onSearchChange && (
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search products by name..."
-            value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      )}
+      {/* Search + Status Filter Bar */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {onSearchChange && (
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search products by name..."
+              value={searchValue}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        )}
+
+        {onStatusFilterChange && (
+          <div className="flex gap-1">
+            {STATUS_FILTERS.map((f) => (
+              <Button
+                key={f.value}
+                variant={statusFilter === f.value ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onStatusFilterChange(f.value)}
+                className="text-xs"
+              >
+                {f.label}
+              </Button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="rounded-xl border">
         <Table>
@@ -83,19 +161,25 @@ export function AdminProductTable({
               <TableHead>Seller</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Tags</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {products.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                  No products match your search.
+                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                  No products match your filters.
                 </TableCell>
               </TableRow>
             ) : (
               products.map((product) => {
                 const primaryImage = product.images?.find((img) => img.is_primary) ?? product.images?.[0];
+                const status = getProductStatus(product);
+                const tags = getProductTags(product);
+                const statusCfg = STATUS_CONFIG[status];
+                const StatusIcon = statusCfg.icon;
+
                 return (
                   <TableRow key={product.id}>
                     <TableCell>
@@ -131,12 +215,80 @@ export function AdminProductTable({
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={product.in_stock ? 'default' : 'destructive'} className="text-xs">
-                        {product.in_stock ? 'Active' : 'Out of Stock'}
+                      <Badge variant={statusCfg.variant} className="inline-flex items-center gap-1 text-xs">
+                        <StatusIcon className="h-3 w-3" />
+                        {statusCfg.label}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {tags.length > 0 ? (
+                          tags.slice(0, 3).map((tag) => (
+                            <Badge key={tag} variant="outline" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-xs text-muted-foreground">{'\u2014'}</span>
+                        )}
+                        {tags.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{tags.length - 3}
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        {/* Quick status actions */}
+                        {status === 'draft' && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-green-600 hover:text-green-700"
+                            onClick={() => setStatusAction({ id: product.id, status: 'active' })}
+                            title="Activate product"
+                            disabled={isUpdating}
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {status === 'active' && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-orange-600 hover:text-orange-700"
+                            onClick={() => setStatusAction({ id: product.id, status: 'inactive' })}
+                            title="Deactivate product"
+                            disabled={isUpdating}
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {status === 'inactive' && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-green-600 hover:text-green-700"
+                              onClick={() => setStatusAction({ id: product.id, status: 'active' })}
+                              title="Reactivate product"
+                              disabled={isUpdating}
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground"
+                              onClick={() => setStatusAction({ id: product.id, status: 'archived' })}
+                              title="Archive product"
+                              disabled={isUpdating}
+                            >
+                              <Archive className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -144,7 +296,7 @@ export function AdminProductTable({
                           onClick={() => window.open(`/products/${product.slug}`, '_blank')}
                           title="View in store"
                         >
-                          <ExternalLink className="h-4 w-4" />
+                          <Eye className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -173,6 +325,49 @@ export function AdminProductTable({
           </TableBody>
         </Table>
       </div>
+
+      {/* Status Change Confirmation Dialog */}
+      <Dialog open={!!statusAction} onOpenChange={(open) => !open && setStatusAction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Product Status</DialogTitle>
+            <DialogDescription>
+              {statusAction && (
+                <>
+                  Are you sure you want to change this product&apos;s status to{' '}
+                  <Badge variant={STATUS_CONFIG[statusAction.status].variant} className="mx-1">
+                    {STATUS_CONFIG[statusAction.status].label}
+                  </Badge>
+                  ?
+                  {statusAction.status === 'active' && (
+                    <span className="mt-2 block text-sm">
+                      This will make the product visible to customers in the storefront.
+                    </span>
+                  )}
+                  {statusAction.status === 'inactive' && (
+                    <span className="mt-2 block text-sm">
+                      This will hide the product from the storefront.
+                    </span>
+                  )}
+                  {statusAction.status === 'archived' && (
+                    <span className="mt-2 block text-sm">
+                      Archived products are hidden and cannot be purchased.
+                    </span>
+                  )}
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStatusAction(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmStatusChange} disabled={isUpdating}>
+              {isUpdating ? 'Updating...' : 'Confirm'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>

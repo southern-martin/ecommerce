@@ -14,8 +14,10 @@ import { CategoryTable } from '../components/CategoryTable';
 import { CategoryForm } from '../components/CategoryForm';
 import { AttributeTable } from '../components/AttributeTable';
 import { AttributeForm } from '../components/AttributeForm';
-import { AdminProductTable } from '../components/AdminProductTable';
+import { AdminProductTable, getProductStatus, getProductTags } from '../components/AdminProductTable';
+import type { ProductStatus } from '../components/AdminProductTable';
 import { AdminProductForm } from '../components/AdminProductForm';
+import { CategoryAttributeManager } from '../components/CategoryAttributeManager';
 import {
   useCategories,
   useCreateCategory,
@@ -36,14 +38,19 @@ import type { Product } from '@/modules/shop/types/shop.types';
 export default function AdminProductsPage() {
   // Category state
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [managingCategory, setManagingCategory] = useState<{ id: string; name: string } | null>(null);
+
   // Attribute state
   const [attributeDialogOpen, setAttributeDialogOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editingAttribute, setEditingAttribute] = useState<any>(null);
+
   // Product state
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productPage, setProductPage] = useState(1);
   const [productSearch, setProductSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   // Category hooks
   const { data: categories, isLoading: categoriesLoading } = useCategories();
@@ -60,6 +67,7 @@ export default function AdminProductsPage() {
     page: productPage,
     page_size: 20,
     search: productSearch || undefined,
+    status: statusFilter || undefined,
   });
   const createProduct = useAdminCreateProduct();
   const updateProduct = useAdminUpdateProduct();
@@ -68,10 +76,16 @@ export default function AdminProductsPage() {
   const totalProductPages = productData ? Math.ceil(productData.total / 20) : 0;
 
   // Category handlers
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleCreateCategory = (data: any) => {
     createCategory.mutate(data, {
       onSuccess: () => setCategoryDialogOpen(false),
     });
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleManageAttributes = (category: any) => {
+    setManagingCategory({ id: category.id, name: category.name });
   };
 
   // Attribute handlers
@@ -89,43 +103,49 @@ export default function AdminProductsPage() {
     );
   };
 
-  const handleManageAttributes = (_category: any) => {
-    // Placeholder for category attribute management navigation
-  };
-
   // Product handlers
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleCreateProduct = (data: any) => {
     const payload = {
       name: data.name,
       description: data.description,
-      price: data.price,
-      compare_at_price: data.compare_at_price,
+      base_price_cents: data.base_price_cents,
+      currency: data.currency || 'USD',
       category_id: data.category_id,
-      stock_quantity: data.stock_quantity,
-      images: data.image_url ? [{ url: data.image_url, alt: data.name, is_primary: true }] : [],
+      tags: data.tags || [],
+      image_urls: data.image_urls || [],
     };
     createProduct.mutate(payload, {
       onSuccess: () => setProductDialogOpen(false),
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleUpdateProduct = (data: any) => {
     if (!editingProduct) return;
-    const payload: any = {
-      name: data.name,
-      description: data.description,
-      price: data.price,
-      compare_at_price: data.compare_at_price,
-      category_id: data.category_id,
-      stock_quantity: data.stock_quantity,
-    };
-    if (data.image_url) {
-      payload.images = [{ url: data.image_url, alt: data.name, is_primary: true }];
-    }
     updateProduct.mutate(
-      { id: editingProduct.id, data: payload },
+      {
+        id: editingProduct.id,
+        data: {
+          name: data.name,
+          description: data.description,
+          base_price_cents: data.base_price_cents,
+          currency: data.currency,
+          status: data.status,
+          category_id: data.category_id,
+          tags: data.tags || [],
+          image_urls: data.image_urls || [],
+        },
+      },
       { onSuccess: () => setEditingProduct(null) }
     );
+  };
+
+  const handleStatusChange = (id: string, status: ProductStatus) => {
+    updateProduct.mutate({
+      id,
+      data: { status },
+    });
   };
 
   const handleDeleteProduct = (id: string) => {
@@ -160,7 +180,7 @@ export default function AdminProductsPage() {
                   Add Product
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                   <DialogTitle>Create Product</DialogTitle>
                 </DialogHeader>
@@ -185,9 +205,13 @@ export default function AdminProductsPage() {
                 products={productData?.data ?? []}
                 onEdit={handleEditProduct}
                 onDelete={handleDeleteProduct}
+                onStatusChange={handleStatusChange}
                 isDeleting={deleteProduct.isPending}
+                isUpdating={updateProduct.isPending}
                 searchValue={productSearch}
                 onSearchChange={setProductSearch}
+                statusFilter={statusFilter}
+                onStatusFilterChange={setStatusFilter}
               />
 
               {totalProductPages > 1 && (
@@ -221,20 +245,22 @@ export default function AdminProductsPage() {
             open={!!editingProduct}
             onOpenChange={(open) => !open && setEditingProduct(null)}
           >
-            <DialogContent>
+            <DialogContent className="sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle>Edit Product</DialogTitle>
               </DialogHeader>
               {editingProduct && (
                 <AdminProductForm
+                  isEditing
                   defaultValues={{
                     name: editingProduct.name,
                     description: editingProduct.description,
-                    price: editingProduct.price,
-                    compare_at_price: editingProduct.compare_at_price,
+                    base_price_cents: editingProduct.price,
+                    currency: (editingProduct as any)._currency || 'USD',
                     category_id: editingProduct.category?.id || '',
-                    stock_quantity: editingProduct.stock_quantity,
-                    image_url: editingProduct.images?.[0]?.url || '',
+                    status: getProductStatus(editingProduct),
+                    tags: getProductTags(editingProduct),
+                    image_urls: editingProduct.images?.map((img) => img.url) || [],
                   }}
                   onSubmit={handleUpdateProduct}
                   isPending={updateProduct.isPending}
@@ -274,6 +300,16 @@ export default function AdminProductsPage() {
             <CategoryTable
               categories={categories || []}
               onManageAttributes={handleManageAttributes}
+            />
+          )}
+
+          {/* Category Attribute Manager Dialog */}
+          {managingCategory && (
+            <CategoryAttributeManager
+              categoryId={managingCategory.id}
+              categoryName={managingCategory.name}
+              open={!!managingCategory}
+              onOpenChange={(open) => !open && setManagingCategory(null)}
             />
           )}
         </TabsContent>

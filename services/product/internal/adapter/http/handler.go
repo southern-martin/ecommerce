@@ -421,6 +421,95 @@ func (h *Handler) UpdateVariantStock(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "stock updated"})
 }
 
+// --- Admin Product Endpoints ---
+
+// AdminListProducts handles GET /api/v1/admin/products — lists ALL products (all statuses, all sellers).
+func (h *Handler) AdminListProducts(c *gin.Context) {
+	filter := domain.ProductFilter{
+		SellerID:   c.Query("seller_id"),
+		CategoryID: c.Query("category_id"),
+		Status:     c.Query("status"), // admin can filter by any status; empty = all statuses
+		Query:      c.Query("q"),
+		SortBy:     c.Query("sort_by"),
+	}
+
+	if v := c.Query("min_price"); v != "" {
+		if price, err := strconv.ParseInt(v, 10, 64); err == nil {
+			filter.MinPrice = price
+		}
+	}
+	if v := c.Query("max_price"); v != "" {
+		if price, err := strconv.ParseInt(v, 10, 64); err == nil {
+			filter.MaxPrice = price
+		}
+	}
+	if v := c.Query("page"); v != "" {
+		if page, err := strconv.Atoi(v); err == nil {
+			filter.Page = page
+		}
+	}
+	if v := c.Query("page_size"); v != "" {
+		if ps, err := strconv.Atoi(v); err == nil {
+			filter.PageSize = ps
+		}
+	}
+
+	// Admin sees ALL statuses by default (no forced "active" filter)
+
+	products, total, err := h.productUC.ListProducts(c.Request.Context(), filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"products": products,
+		"total":    total,
+		"page":     filter.Page,
+		"pageSize": filter.PageSize,
+	})
+}
+
+// AdminUpdateProduct handles PATCH /api/v1/admin/products/:id — updates any product regardless of seller.
+func (h *Handler) AdminUpdateProduct(c *gin.Context) {
+	id := c.Param("id")
+	var req updateProductRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	input := usecase.UpdateProductInput{
+		Name:           req.Name,
+		Description:    req.Description,
+		BasePriceCents: req.BasePriceCents,
+		Currency:       req.Currency,
+		Status:         req.Status,
+		Tags:           req.Tags,
+		ImageURLs:      req.ImageURLs,
+		CategoryID:     req.CategoryID,
+	}
+
+	product, err := h.productUC.AdminUpdateProduct(c.Request.Context(), id, input)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, product)
+}
+
+// AdminDeleteProduct handles DELETE /api/v1/admin/products/:id — deletes any product regardless of seller.
+func (h *Handler) AdminDeleteProduct(c *gin.Context) {
+	id := c.Param("id")
+	if err := h.productUC.AdminDeleteProduct(c.Request.Context(), id); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "product deleted"})
+}
+
 // --- Admin Category Endpoints ---
 
 type createCategoryRequest struct {

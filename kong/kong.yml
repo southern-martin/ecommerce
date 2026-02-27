@@ -1,8 +1,8 @@
 _format_version: "3.0"
 
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------
 # Global Plugins
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------
 
 plugins:
   - name: cors
@@ -22,6 +22,7 @@ plugins:
         - Content-Type
         - X-Request-ID
         - X-User-ID
+        - X-User-Role
       exposed_headers:
         - X-Request-ID
       credentials: true
@@ -47,9 +48,42 @@ plugins:
     config:
       path: /dev/stdout
 
-# ─────────────────────────────────────────────────────────────
+  # Global JWT claim extraction -> sets X-User-ID + X-User-Role headers.
+  # NOTE: This only runs on routes that do NOT have their own post-function.
+  # Routes with role-checking post-functions inline their own JWT extraction.
+  - name: post-function
+    config:
+      access:
+        - |
+          local function extract_jwt_claims()
+            local auth = kong.request.get_header("Authorization")
+            if not auth then return end
+            local token = auth:match("Bearer%s+(.+)")
+            if not token then return end
+            local parts = {}
+            for part in token:gmatch("[^%.]+") do
+              table.insert(parts, part)
+            end
+            if #parts < 2 then return end
+            local payload = parts[2]
+            local rem = #payload % 4
+            if rem > 0 then
+              payload = payload .. string.rep("=", 4 - rem)
+            end
+            payload = payload:gsub("-", "+"):gsub("_", "/")
+            local decoded = ngx.decode_base64(payload)
+            if not decoded then return end
+            local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+            if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+            local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+            kong.service.request.set_header("X-User-ID", uid)
+            kong.service.request.set_header("X-User-Role", role)
+          end
+          extract_jwt_claims()
+
+# -----------------------------------------------------------------
 # Consumers
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------
 
 consumers:
   - username: ecommerce-app
@@ -58,12 +92,12 @@ consumers:
         algorithm: HS256
         secret: change-this-to-a-256-bit-secret-in-production
 
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------
 # Services & Routes
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------
 
 services:
-  # ── Auth Service ──────────────────────────────────────────
+  # == Auth Service ==================================================
   - name: auth-service
     url: http://auth:8090
     routes:
@@ -104,7 +138,7 @@ services:
         plugins:
           - name: jwt
 
-  # ── User Service ──────────────────────────────────────────
+  # == User Service ==================================================
   - name: user-service
     url: http://user:8091
     routes:
@@ -137,11 +171,36 @@ services:
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "admin" then
+                      return kong.response.exit(403, { message = "Admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
-  # ── Product Service ───────────────────────────────────────
+  # == Product Service ===============================================
   - name: product-service
     url: http://product:8081
     routes:
@@ -155,20 +214,105 @@ services:
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [seller, admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "seller" and role ~= "admin" then
+                      return kong.response.exit(403, { message = "Seller or admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
       - name: admin-products
-        paths: [/api/v1/admin/products, /api/v1/admin/categories]
+        paths: [/api/v1/admin/products, /api/v1/admin/categories, /api/v1/admin/attributes]
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "admin" then
+                      return kong.response.exit(403, { message = "Admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
-  # ── Cart Service ──────────────────────────────────────────
+      - name: category-attributes
+        paths: [/api/v1/categories]
+        methods: [POST, DELETE]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: post-function
+            config:
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "admin" then
+                      return kong.response.exit(403, { message = "Admin access required" })
+                    end
+                  end
+                  extract_and_check()
+
+  # == Cart Service ==================================================
   - name: cart-service
     url: http://cart:8082
     routes:
@@ -178,7 +322,7 @@ services:
         plugins:
           - name: jwt
 
-  # ── Order Service ─────────────────────────────────────────
+  # == Order Service =================================================
   - name: order-service
     url: http://order:8083
     routes:
@@ -193,11 +337,36 @@ services:
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [seller, admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "seller" and role ~= "admin" then
+                      return kong.response.exit(403, { message = "Seller or admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
-  # ── Payment Service ───────────────────────────────────────
+  # == Payment Service ===============================================
   - name: payment-service
     url: http://payment:8084
     routes:
@@ -207,7 +376,7 @@ services:
         plugins:
           - name: jwt
 
-  # ── Shipping Service ──────────────────────────────────────
+  # == Shipping Service ==============================================
   - name: shipping-service
     url: http://shipping:8095
     routes:
@@ -234,20 +403,70 @@ services:
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [seller, admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "seller" and role ~= "admin" then
+                      return kong.response.exit(403, { message = "Seller or admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
       - name: admin-carriers
         paths: [/api/v1/admin/carriers]
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "admin" then
+                      return kong.response.exit(403, { message = "Admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
-  # ── Return Service ────────────────────────────────────────
+  # == Return Service ================================================
   - name: return-service
     url: http://return:8094
     routes:
@@ -262,9 +481,34 @@ services:
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [seller, admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "seller" and role ~= "admin" then
+                      return kong.response.exit(403, { message = "Seller or admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
       - name: disputes
         paths: [/api/v1/disputes]
@@ -277,11 +521,36 @@ services:
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "admin" then
+                      return kong.response.exit(403, { message = "Admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
-  # ── Search Service ────────────────────────────────────────
+  # == Search Service ================================================
   - name: search-service
     url: http://search:8085
     routes:
@@ -295,11 +564,36 @@ services:
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "admin" then
+                      return kong.response.exit(403, { message = "Admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
-  # ── Review Service ────────────────────────────────────────
+  # == Review Service ================================================
   - name: review-service
     url: http://review:8086
     routes:
@@ -320,11 +614,36 @@ services:
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "admin" then
+                      return kong.response.exit(403, { message = "Admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
-  # ── Media Service ─────────────────────────────────────────
+  # == Media Service =================================================
   - name: media-service
     url: http://media:8089
     routes:
@@ -337,7 +656,7 @@ services:
             config:
               allowed_payload_size: 50
 
-  # ── Notification Service ──────────────────────────────────
+  # == Notification Service ==========================================
   - name: notification-service
     url: http://notification:8087
     routes:
@@ -347,7 +666,7 @@ services:
         plugins:
           - name: jwt
 
-  # ── Promotion Service ─────────────────────────────────────
+  # == Promotion Service =============================================
   - name: promotion-service
     url: http://promotion:8093
     routes:
@@ -368,20 +687,70 @@ services:
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [seller, admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Seller or admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "seller" and role ~= "admin" then
+                      return kong.response.exit(403, { message = "Seller or admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
       - name: admin-promotions
         paths: [/api/v1/admin/promotions]
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "admin" then
+                      return kong.response.exit(403, { message = "Admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
-  # ── Chat Service ──────────────────────────────────────────
+  # == Chat Service ==================================================
   - name: chat-service
     url: http://chat:8088
     routes:
@@ -391,7 +760,7 @@ services:
         plugins:
           - name: jwt
 
-  # ── Loyalty Service ───────────────────────────────────────
+  # == Loyalty Service ===============================================
   - name: loyalty-service
     url: http://loyalty:8096
     routes:
@@ -401,7 +770,7 @@ services:
         plugins:
           - name: jwt
 
-  # ── Affiliate Service ─────────────────────────────────────
+  # == Affiliate Service =============================================
   - name: affiliate-service
     url: http://affiliate:8097
     routes:
@@ -421,11 +790,36 @@ services:
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "admin" then
+                      return kong.response.exit(403, { message = "Admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
-  # ── Tax Service ───────────────────────────────────────────
+  # == Tax Service ===================================================
   - name: tax-service
     url: http://tax:8098
     routes:
@@ -446,11 +840,36 @@ services:
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "admin" then
+                      return kong.response.exit(403, { message = "Admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
-  # ── CMS Service ───────────────────────────────────────────
+  # == CMS Service ===================================================
   - name: cms-service
     url: http://cms:8099
     routes:
@@ -464,29 +883,104 @@ services:
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "admin" then
+                      return kong.response.exit(403, { message = "Admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
       - name: admin-pages
         paths: [/api/v1/admin/pages]
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "admin" then
+                      return kong.response.exit(403, { message = "Admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
       - name: admin-content-schedule
         paths: [/api/v1/admin/content]
         strip_path: false
         plugins:
           - name: jwt
-          - name: acl
+          - name: post-function
             config:
-              allow: [admin]
+              access:
+                - |
+                  local function extract_and_check()
+                    local auth = kong.request.get_header("Authorization")
+                    if not auth then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local token = auth:match("Bearer%s+(.+)")
+                    if not token then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local parts = {}
+                    for part in token:gmatch("[^%.]+") do table.insert(parts, part) end
+                    if #parts < 2 then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local payload = parts[2]
+                    local rem = #payload % 4
+                    if rem > 0 then payload = payload .. string.rep("=", 4 - rem) end
+                    payload = payload:gsub("-", "+"):gsub("_", "/")
+                    local decoded = ngx.decode_base64(payload)
+                    if not decoded then return kong.response.exit(403, { message = "Admin access required" }) end
+                    local uid = decoded:match('"user_id"%s*:%s*"([^"]+)"')
+                    if not uid then uid = decoded:match('"sub"%s*:%s*"([^"]+)"') or "" end
+                    local role = decoded:match('"role"%s*:%s*"([^"]+)"') or ""
+                    kong.service.request.set_header("X-User-ID", uid)
+                    kong.service.request.set_header("X-User-Role", role)
+                    if role ~= "admin" then
+                      return kong.response.exit(403, { message = "Admin access required" })
+                    end
+                  end
+                  extract_and_check()
 
-  # ── AI Service ────────────────────────────────────────────
+  # == AI Service ====================================================
   - name: ai-service
     url: http://ai:8092
     routes:
