@@ -2,6 +2,8 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/southern-martin/ecommerce/pkg/metrics"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
 )
 
 // NewRouter creates and configures the Gin router with all chat service routes.
@@ -10,6 +12,10 @@ func NewRouter(handler *Handler) *gin.Engine {
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(gin.Logger())
+
+	router.Use(tracing.GinMiddleware("chat-service"))
+	router.Use(metrics.GinMiddleware("chat-service"))
+	router.GET("/metrics", metrics.Handler())
 
 	// Health check
 	router.GET("/health", handler.Health)

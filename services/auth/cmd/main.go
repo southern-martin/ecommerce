@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"log"
+	"os"
 
 	"github.com/nats-io/nats.go"
 	"google.golang.org/grpc"
@@ -9,7 +11,9 @@ import (
 	"github.com/southern-martin/ecommerce/pkg/auth"
 	"github.com/southern-martin/ecommerce/pkg/events"
 	"github.com/southern-martin/ecommerce/pkg/logger"
+	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/server"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
 
 	authgrpc "github.com/southern-martin/ecommerce/services/auth/internal/adapter/grpc"
 	authhttp "github.com/southern-martin/ecommerce/services/auth/internal/adapter/http"
@@ -28,6 +32,14 @@ func main() {
 
 	// Init logger
 	l := logger.New(cfg.LogLevel, "auth-service")
+
+	// Init tracer
+	tracerShutdown, err := tracing.InitTracer("auth-service", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"), os.Getenv("ENVIRONMENT"))
+	if err != nil {
+		l.Warn().Err(err).Msg("failed to init tracer")
+	} else {
+		defer tracerShutdown(context.Background())
+	}
 
 	// Connect to Postgres
 	db, err := database.NewPostgresDB(cfg)
@@ -90,7 +102,12 @@ func main() {
 	router := authhttp.SetupRouter(handler)
 
 	// Setup gRPC server
-	grpcSrv := grpc.NewServer()
+	grpcSrv := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			tracing.GRPCUnaryInterceptor(),
+			metrics.GRPCUnaryInterceptor("auth-service"),
+		),
+	)
 	authGRPCServer := authgrpc.NewAuthServiceServer(cfg.JWTSecret, updateRoleUC, l)
 	authGRPCServer.Register(grpcSrv)
 

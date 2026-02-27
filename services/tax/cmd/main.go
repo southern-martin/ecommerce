@@ -14,6 +14,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
+	"github.com/southern-martin/ecommerce/pkg/metrics"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
+
 	"github.com/southern-martin/ecommerce/services/tax/internal/adapter/postgres"
 	"github.com/southern-martin/ecommerce/services/tax/internal/domain"
 	"github.com/southern-martin/ecommerce/services/tax/internal/infrastructure/config"
@@ -35,6 +38,14 @@ func main() {
 	level, err := zerolog.ParseLevel(cfg.LogLevel)
 	if err == nil {
 		zerolog.SetGlobalLevel(level)
+	}
+
+	// Init tracer
+	tracerShutdown, tracerErr := tracing.InitTracer("tax-service", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"), os.Getenv("ENVIRONMENT"))
+	if tracerErr != nil {
+		log.Warn().Err(tracerErr).Msg("failed to init tracer")
+	} else {
+		defer tracerShutdown(context.Background())
 	}
 
 	log.Info().Msg("Starting Tax Service")
@@ -68,7 +79,12 @@ func main() {
 	router := httpAdapter.NewRouter(handler)
 
 	// Setup gRPC server
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			tracing.GRPCUnaryInterceptor(),
+			metrics.GRPCUnaryInterceptor("tax-service"),
+		),
+	)
 	taxGRPCServer := grpcAdapter.NewServer(calculateTaxUC, manageRulesUC, manageZonesUC)
 	grpcServer.RegisterService(&grpcAdapter.ServiceDesc, taxGRPCServer)
 

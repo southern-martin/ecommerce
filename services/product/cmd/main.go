@@ -11,6 +11,10 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	googlegrpc "google.golang.org/grpc"
+
+	"github.com/southern-martin/ecommerce/pkg/metrics"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
 
 	"github.com/southern-martin/ecommerce/services/product/internal/adapter/grpc"
 	producthttp "github.com/southern-martin/ecommerce/services/product/internal/adapter/http"
@@ -32,6 +36,14 @@ func main() {
 	}
 	zerolog.SetGlobalLevel(level)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
+
+	// Init tracer
+	tracerShutdown, err := tracing.InitTracer("product-service", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"), os.Getenv("ENVIRONMENT"))
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to init tracer")
+	} else {
+		defer tracerShutdown(context.Background())
+	}
 
 	log.Info().Msg("Starting product service...")
 
@@ -99,7 +111,12 @@ func main() {
 	// Start gRPC server
 	grpcServer := grpc.NewServer(productUC, variantUC)
 	go func() {
-		if err := grpcServer.Start(cfg.GRPCPort); err != nil {
+		if err := grpcServer.Start(cfg.GRPCPort,
+			googlegrpc.ChainUnaryInterceptor(
+				tracing.GRPCUnaryInterceptor(),
+				metrics.GRPCUnaryInterceptor("product-service"),
+			),
+		); err != nil {
 			log.Fatal().Err(err).Msg("gRPC server failed")
 		}
 	}()

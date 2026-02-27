@@ -286,13 +286,13 @@ func _ProductService_ListVariantsByProduct_Handler(srv interface{}, ctx context.
 }
 
 // Start starts the gRPC server on the given port.
-func (s *Server) Start(port string) error {
+func (s *Server) Start(port string, opts ...grpc.ServerOption) error {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	if err != nil {
 		return fmt.Errorf("failed to listen on port %s: %w", port, err)
 	}
 
-	s.server = grpc.NewServer()
+	s.server = grpc.NewServer(opts...)
 	s.server.RegisterService(&_ProductService_serviceDesc, s)
 	reflection.Register(s.server)
 

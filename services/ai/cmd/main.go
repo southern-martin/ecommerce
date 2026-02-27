@@ -11,6 +11,9 @@ import (
 	"github.com/rs/zerolog/log"
 	googlegrpc "google.golang.org/grpc"
 
+	"github.com/southern-martin/ecommerce/pkg/metrics"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
+
 	aigrpc "github.com/southern-martin/ecommerce/services/ai/internal/adapter/grpc"
 	handler "github.com/southern-martin/ecommerce/services/ai/internal/adapter/http"
 	"github.com/southern-martin/ecommerce/services/ai/internal/adapter/postgres"
@@ -34,6 +37,13 @@ func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	log.Info().Msg("starting AI service")
+
+	tracerShutdown, err := tracing.InitTracer("ai-service", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"), os.Getenv("ENVIRONMENT"))
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to init tracer")
+	} else {
+		defer tracerShutdown(context.Background())
+	}
 
 	// Connect to database
 	db, err := database.NewPostgresDB(cfg.Postgres)
@@ -87,7 +97,12 @@ func main() {
 	}()
 
 	// Setup gRPC server
-	grpcServer := googlegrpc.NewServer()
+	grpcServer := googlegrpc.NewServer(
+		googlegrpc.ChainUnaryInterceptor(
+			tracing.GRPCUnaryInterceptor(),
+			metrics.GRPCUnaryInterceptor("ai-service"),
+		),
+	)
 	aiGRPCServer := aigrpc.NewServer(embeddingUC, recommendationUC, contentUC)
 	aigrpc.RegisterAIServiceServer(grpcServer, aiGRPCServer)
 

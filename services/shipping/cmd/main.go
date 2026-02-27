@@ -16,6 +16,8 @@ import (
 	"google.golang.org/grpc"
 	"gorm.io/gorm"
 
+	"github.com/southern-martin/ecommerce/pkg/metrics"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
 	grpcAdapter "github.com/southern-martin/ecommerce/services/shipping/internal/adapter/grpc"
 	httpAdapter "github.com/southern-martin/ecommerce/services/shipping/internal/adapter/http"
 	"github.com/southern-martin/ecommerce/services/shipping/internal/adapter/postgres"
@@ -30,6 +32,13 @@ func main() {
 	setupLogger(cfg.LogLevel)
 
 	log.Info().Msg("starting shipping service")
+
+	tracerShutdown, err := tracing.InitTracer("shipping-service", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"), os.Getenv("ENVIRONMENT"))
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to init tracer")
+	} else {
+		defer tracerShutdown(context.Background())
+	}
 
 	// Initialize database
 	db, err := database.NewPostgresDB(cfg.Postgres)
@@ -89,7 +98,12 @@ func main() {
 	}()
 
 	// Start gRPC server
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			tracing.GRPCUnaryInterceptor(),
+			metrics.GRPCUnaryInterceptor("shipping-service"),
+		),
+	)
 	grpcSrv := grpcAdapter.NewServer(rateUC, shipmentUC)
 	grpcAdapter.RegisterShippingServiceServer(grpcServer, grpcSrv)
 

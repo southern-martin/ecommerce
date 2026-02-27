@@ -133,6 +133,8 @@ services:
       HTTP_PORT: "8090"
       GRPC_PORT: "9090"
       LOG_LEVEL: debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -162,6 +164,8 @@ services:
       GRPC_PORT: "9091"
       LOG_LEVEL: debug
       AUTH_GRPC_ADDR: auth:9090
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -196,6 +200,8 @@ services:
       HTTP_PORT: "8081"
       GRPC_PORT: "9081"
       LOG_LEVEL: debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -223,6 +229,8 @@ services:
       HTTP_PORT: "8082"
       GRPC_PORT: "9082"
       LOG_LEVEL: debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -251,6 +259,8 @@ services:
       HTTP_PORT: "8083"
       GRPC_PORT: "9083"
       LOG_LEVEL: debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -280,6 +290,8 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_mock}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_mock}
       PLATFORM_COMMISSION_RATE: "0.10"
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -305,6 +317,8 @@ services:
       HTTP_PORT: "8098"
       GRPC_PORT: "9098"
       LOG_LEVEL: debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -333,6 +347,8 @@ services:
       HTTP_PORT: "8085"
       GRPC_PORT: "9085"
       LOG_LEVEL: debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -359,6 +375,8 @@ services:
       HTTP_PORT: "8086"
       GRPC_PORT: "9086"
       LOG_LEVEL: debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -390,6 +408,8 @@ services:
       HTTP_PORT: "8087"
       GRPC_PORT: "9087"
       LOG_LEVEL: debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -418,6 +438,8 @@ services:
       HTTP_PORT: "8088"
       GRPC_PORT: "9088"
       LOG_LEVEL: debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -449,6 +471,8 @@ services:
       HTTP_PORT: "8089"
       GRPC_PORT: "9089"
       LOG_LEVEL: debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -479,6 +503,8 @@ services:
       HTTP_PORT: "8092"
       GRPC_PORT: "9092"
       LOG_LEVEL: debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -505,6 +531,8 @@ services:
       HTTP_PORT: "8099"
       GRPC_PORT: "9099"
       LOG_LEVEL: debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -535,6 +563,8 @@ services:
       HTTP_PORT: "8093"
       GRPC_PORT: "9093"
       LOG_LEVEL: debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -561,6 +591,8 @@ services:
       HTTP_PORT: "8096"
       GRPC_PORT: "9096"
       LOG_LEVEL: debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -587,6 +619,8 @@ services:
       HTTP_PORT: "8097"
       GRPC_PORT: "9097"
       LOG_LEVEL: debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -617,6 +651,8 @@ services:
       HTTP_PORT: "8094"
       GRPC_PORT: "9094"
       LOG_LEVEL: debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy
@@ -644,6 +680,8 @@ services:
       GRPC_PORT: "9095"
       LOG_LEVEL: debug
       AI_PYTHON_SERVICE_URL: http://ai-python:8000
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      ENVIRONMENT: development
     depends_on:
       postgres:
         condition: service_healthy

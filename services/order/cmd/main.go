@@ -14,6 +14,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
+	"github.com/southern-martin/ecommerce/pkg/metrics"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
+
 	grpcAdapter "github.com/southern-martin/ecommerce/services/order/internal/adapter/grpc"
 	httpAdapter "github.com/southern-martin/ecommerce/services/order/internal/adapter/http"
 	"github.com/southern-martin/ecommerce/services/order/internal/adapter/postgres"
@@ -29,6 +32,14 @@ func main() {
 
 	// Setup logger
 	setupLogger(cfg.LogLevel)
+
+	// Init tracer
+	tracerShutdown, err := tracing.InitTracer("order-service", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"), os.Getenv("ENVIRONMENT"))
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to init tracer")
+	} else {
+		defer tracerShutdown(context.Background())
+	}
 
 	log.Info().Msg("starting order service")
 
@@ -73,7 +84,12 @@ func main() {
 	}()
 
 	// Start gRPC server
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			tracing.GRPCUnaryInterceptor(),
+			metrics.GRPCUnaryInterceptor("order-service"),
+		),
+	)
 	grpcSrv := grpcAdapter.NewServer(getOrderUC, updateStatusUC)
 	grpcAdapter.RegisterOrderServiceServer(grpcServer, grpcSrv)
 

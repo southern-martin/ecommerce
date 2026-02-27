@@ -1,5 +1,4 @@
 # Development overrides — use with: docker compose -f docker-compose.yml -f docker-compose.override.yml up
-version: "3.8"
 services:
   # OpenTelemetry Collector
   otel-collector:
@@ -10,6 +9,8 @@ services:
       - "55679:55679" # zpages
     volumes:
       - ./deploy/otel-collector-config.yaml:/etc/otelcol/config.yaml
+    networks:
+      - ecommerce-network
 
   # Jaeger for trace visualization
   jaeger:
@@ -19,19 +20,30 @@ services:
       - "14268:14268" # Collector HTTP
     environment:
       COLLECTOR_OTLP_ENABLED: "true"
+    networks:
+      - ecommerce-network
 
   # Prometheus for metrics
   prometheus:
     image: prom/prometheus:latest
     ports:
-      - "9090:9090"
+      - "9190:9090"
     volumes:
-      - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - ecommerce-network
 
   # Grafana for dashboards
   grafana:
     image: grafana/grafana:latest
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+      - jaeger
+    networks:
+      - ecommerce-network

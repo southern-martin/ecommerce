@@ -21,6 +21,7 @@ plugins:
         - Authorization
         - Content-Type
         - X-Request-ID
+        - X-User-ID
       credentials: true
       max_age: 3600
 
@@ -65,53 +66,38 @@ services:
     url: http://auth:8090
     routes:
       - name: auth-register
-        paths:
-          - /api/v1/auth/register
-        methods:
-          - POST
+        paths: [/api/v1/auth/register]
+        methods: [POST]
         strip_path: false
 
       - name: auth-login
-        paths:
-          - /api/v1/auth/login
-        methods:
-          - POST
+        paths: [/api/v1/auth/login]
+        methods: [POST]
         strip_path: false
 
       - name: auth-refresh
-        paths:
-          - /api/v1/auth/refresh
-        methods:
-          - POST
+        paths: [/api/v1/auth/refresh]
+        methods: [POST]
         strip_path: false
 
       - name: auth-forgot-password
-        paths:
-          - /api/v1/auth/forgot-password
-        methods:
-          - POST
+        paths: [/api/v1/auth/forgot-password]
+        methods: [POST]
         strip_path: false
 
       - name: auth-reset-password
-        paths:
-          - /api/v1/auth/reset-password
-        methods:
-          - POST
+        paths: [/api/v1/auth/reset-password]
+        methods: [POST]
         strip_path: false
 
       - name: auth-oauth
-        paths:
-          - /api/v1/auth/oauth
-        methods:
-          - GET
-          - POST
+        paths: [/api/v1/auth/oauth]
+        methods: [GET, POST]
         strip_path: false
 
       - name: auth-logout
-        paths:
-          - /api/v1/auth/logout
-        methods:
-          - POST
+        paths: [/api/v1/auth/logout]
+        methods: [POST]
         strip_path: false
         plugins:
           - name: jwt
@@ -121,33 +107,389 @@ services:
     url: http://user:8091
     routes:
       - name: user-profile
-        paths:
-          - /api/v1/users
+        paths: [/api/v1/users]
         strip_path: false
         plugins:
           - name: jwt
 
       - name: user-addresses
-        paths:
-          - /api/v1/users/me/addresses
+        paths: [/api/v1/users/me/addresses]
         strip_path: false
         plugins:
           - name: jwt
 
       - name: sellers
-        paths:
-          - /api/v1/sellers
+        paths: [/api/v1/sellers]
         strip_path: false
         plugins:
           - name: jwt
 
       - name: admin-sellers
-        paths:
-          - /api/v1/admin/sellers
+        paths: [/api/v1/admin/sellers]
         strip_path: false
         plugins:
           - name: jwt
           - name: acl
             config:
-              allow:
-                - admin
+              allow: [admin]
+
+  # ── Product Service ───────────────────────────────────────
+  - name: product-service
+    url: http://product:8081
+    routes:
+      - name: products-public
+        paths: [/api/v1/products, /api/v1/categories]
+        methods: [GET]
+        strip_path: false
+
+      - name: seller-products
+        paths: [/api/v1/seller/products]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow: [seller, admin]
+
+      - name: admin-products
+        paths: [/api/v1/admin/products, /api/v1/admin/categories]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow: [admin]
+
+  # ── Cart Service ──────────────────────────────────────────
+  - name: cart-service
+    url: http://cart:8082
+    routes:
+      - name: cart
+        paths: [/api/v1/cart]
+        strip_path: false
+        plugins:
+          - name: jwt
+
+  # ── Order Service ─────────────────────────────────────────
+  - name: order-service
+    url: http://order:8083
+    routes:
+      - name: orders
+        paths: [/api/v1/orders]
+        strip_path: false
+        plugins:
+          - name: jwt
+
+      - name: seller-orders
+        paths: [/api/v1/seller/orders]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow: [seller, admin]
+
+  # ── Payment Service ───────────────────────────────────────
+  - name: payment-service
+    url: http://payment:8084
+    routes:
+      - name: payments
+        paths: [/api/v1/payments]
+        strip_path: false
+        plugins:
+          - name: jwt
+
+  # ── Shipping Service ──────────────────────────────────────
+  - name: shipping-service
+    url: http://shipping:8085
+    routes:
+      - name: shipping-rates
+        paths: [/api/v1/shipping/rates]
+        methods: [POST]
+        strip_path: false
+        plugins:
+          - name: jwt
+
+      - name: shipments
+        paths: [/api/v1/shipments]
+        strip_path: false
+        plugins:
+          - name: jwt
+
+      - name: tracking-public
+        paths: [/api/v1/tracking]
+        methods: [GET]
+        strip_path: false
+
+      - name: seller-shipments
+        paths: [/api/v1/seller/shipments, /api/v1/seller/carriers]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow: [seller, admin]
+
+      - name: admin-carriers
+        paths: [/api/v1/admin/carriers]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow: [admin]
+
+  # ── Return Service ────────────────────────────────────────
+  - name: return-service
+    url: http://return:8086
+    routes:
+      - name: returns
+        paths: [/api/v1/returns]
+        strip_path: false
+        plugins:
+          - name: jwt
+
+      - name: seller-returns
+        paths: [/api/v1/seller/returns]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow: [seller, admin]
+
+      - name: disputes
+        paths: [/api/v1/disputes]
+        strip_path: false
+        plugins:
+          - name: jwt
+
+      - name: admin-disputes
+        paths: [/api/v1/admin/disputes]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow: [admin]
+
+  # ── Search Service ────────────────────────────────────────
+  - name: search-service
+    url: http://search:8087
+    routes:
+      - name: search-public
+        paths: [/api/v1/search]
+        methods: [GET]
+        strip_path: false
+
+      - name: admin-search-index
+        paths: [/api/v1/admin/search]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow: [admin]
+
+  # ── Review Service ────────────────────────────────────────
+  - name: review-service
+    url: http://review:8088
+    routes:
+      - name: reviews-read
+        paths: [/api/v1/reviews, /api/v1/products]
+        methods: [GET]
+        strip_path: false
+
+      - name: reviews-write
+        paths: [/api/v1/reviews]
+        methods: [POST, PUT, PATCH, DELETE]
+        strip_path: false
+        plugins:
+          - name: jwt
+
+      - name: admin-reviews
+        paths: [/api/v1/admin/reviews]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow: [admin]
+
+  # ── Media Service ─────────────────────────────────────────
+  - name: media-service
+    url: http://media:8089
+    routes:
+      - name: media
+        paths: [/api/v1/media]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: request-size-limiting
+            config:
+              allowed_payload_size: 50
+
+  # ── Notification Service ──────────────────────────────────
+  - name: notification-service
+    url: http://notification:8092
+    routes:
+      - name: notifications
+        paths: [/api/v1/notifications]
+        strip_path: false
+        plugins:
+          - name: jwt
+
+  # ── Promotion Service ─────────────────────────────────────
+  - name: promotion-service
+    url: http://promotion:8093
+    routes:
+      - name: promotions-public
+        paths: [/api/v1/coupons/validate, /api/v1/flash-sales, /api/v1/bundles]
+        methods: [GET]
+        strip_path: false
+
+      - name: coupons-apply
+        paths: [/api/v1/coupons]
+        methods: [POST]
+        strip_path: false
+        plugins:
+          - name: jwt
+
+      - name: seller-coupons
+        paths: [/api/v1/seller/coupons]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow: [seller, admin]
+
+      - name: admin-promotions
+        paths: [/api/v1/admin/promotions]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow: [admin]
+
+  # ── Chat Service ──────────────────────────────────────────
+  - name: chat-service
+    url: http://chat:8095
+    routes:
+      - name: conversations
+        paths: [/api/v1/conversations]
+        strip_path: false
+        plugins:
+          - name: jwt
+
+  # ── Loyalty Service ───────────────────────────────────────
+  - name: loyalty-service
+    url: http://loyalty:8096
+    routes:
+      - name: loyalty
+        paths: [/api/v1/loyalty]
+        strip_path: false
+        plugins:
+          - name: jwt
+
+  # ── Affiliate Service ─────────────────────────────────────
+  - name: affiliate-service
+    url: http://affiliate:8097
+    routes:
+      - name: affiliate
+        paths: [/api/v1/affiliate]
+        strip_path: false
+        plugins:
+          - name: jwt
+
+      - name: referral-redirect
+        paths: [/api/v1/r]
+        methods: [GET]
+        strip_path: false
+
+      - name: admin-affiliates
+        paths: [/api/v1/admin/affiliates]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow: [admin]
+
+  # ── Tax Service ───────────────────────────────────────────
+  - name: tax-service
+    url: http://tax:8098
+    routes:
+      - name: tax-calculate
+        paths: [/api/v1/tax/calculate]
+        methods: [POST]
+        strip_path: false
+        plugins:
+          - name: jwt
+
+      - name: tax-zones-public
+        paths: [/api/v1/tax/zones]
+        methods: [GET]
+        strip_path: false
+
+      - name: admin-tax
+        paths: [/api/v1/admin/tax]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow: [admin]
+
+  # ── CMS Service ───────────────────────────────────────────
+  - name: cms-service
+    url: http://cms:8099
+    routes:
+      - name: cms-public
+        paths: [/api/v1/banners, /api/v1/pages]
+        methods: [GET]
+        strip_path: false
+
+      - name: admin-banners
+        paths: [/api/v1/admin/banners]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow: [admin]
+
+      - name: admin-pages
+        paths: [/api/v1/admin/pages]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow: [admin]
+
+      - name: admin-content-schedule
+        paths: [/api/v1/admin/content]
+        strip_path: false
+        plugins:
+          - name: jwt
+          - name: acl
+            config:
+              allow: [admin]
+
+  # ── AI Service ────────────────────────────────────────────
+  - name: ai-service
+    url: http://ai:8095
+    routes:
+      - name: ai
+        paths: [/api/v1/ai]
+        strip_path: false
+        plugins:
+          - name: jwt
+
+      - name: image-search
+        paths: [/api/v1/search/image]
+        strip_path: false
+        plugins:
+          - name: jwt

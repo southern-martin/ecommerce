@@ -1,14 +1,18 @@
 package main
 
 import (
+	"context"
 	"log"
+	"os"
 
 	"github.com/nats-io/nats.go"
 	"google.golang.org/grpc"
 
 	"github.com/southern-martin/ecommerce/pkg/events"
 	"github.com/southern-martin/ecommerce/pkg/logger"
+	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/server"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
 
 	usergrpc "github.com/southern-martin/ecommerce/services/user/internal/adapter/grpc"
 	userhttp "github.com/southern-martin/ecommerce/services/user/internal/adapter/http"
@@ -25,6 +29,14 @@ func main() {
 
 	// Initialize logger
 	l := logger.New(cfg.LogLevel, "user-service")
+
+	// Init tracer
+	tracerShutdown, err := tracing.InitTracer("user-service", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"), os.Getenv("ENVIRONMENT"))
+	if err != nil {
+		l.Warn().Err(err).Msg("failed to init tracer")
+	} else {
+		defer tracerShutdown(context.Background())
+	}
 
 	// Connect to Postgres
 	db, err := database.NewPostgresDB(cfg)
@@ -74,7 +86,12 @@ func main() {
 	router := userhttp.NewRouter(handler)
 
 	// Setup gRPC server
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			tracing.GRPCUnaryInterceptor(),
+			metrics.GRPCUnaryInterceptor("user-service"),
+		),
+	)
 	userServiceServer := usergrpc.NewUserServiceServer(profileUC, sellerUC)
 	usergrpc.RegisterServer(grpcServer, userServiceServer)
 

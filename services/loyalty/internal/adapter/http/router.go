@@ -2,6 +2,8 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/southern-martin/ecommerce/pkg/metrics"
+	"github.com/southern-martin/ecommerce/pkg/tracing"
 )
 
 // NewRouter creates and configures the Gin router with all loyalty service routes.
@@ -10,6 +12,10 @@ func NewRouter(handler *Handler) *gin.Engine {
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(gin.Logger())
+
+	router.Use(tracing.GinMiddleware("loyalty-service"))
+	router.Use(metrics.GinMiddleware("loyalty-service"))
+	router.GET("/metrics", metrics.Handler())
 
 	// Health check
 	router.GET("/health", handler.Health)
