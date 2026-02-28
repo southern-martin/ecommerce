@@ -61,6 +61,7 @@ func main() {
 		&postgres.ProductModel{},
 		&postgres.CategoryModel{},
 		&postgres.AttributeDefinitionModel{},
+		&postgres.AttributeOptionValueModel{},
 		&postgres.CategoryAttributeModel{},
 		&postgres.ProductAttributeValueModel{},
 		&postgres.ProductOptionModel{},

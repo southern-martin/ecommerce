@@ -392,8 +392,8 @@ function AttributesTab({ productId, attributeGroupId, isConfigurable }: { produc
   // These are managed on the Variations tab, not as product-wide specs.
   const isVariationEligible = (attr: Attribute) =>
     (attr.type === 'select' || attr.type === 'multi_select' || attr.type === 'color') &&
-    attr.options &&
-    attr.options.length > 0;
+    attr.option_values &&
+    attr.option_values.length > 0;
 
   const attrs = isConfigurable
     ? allAttrs.filter((attr) => !isVariationEligible(attr))
@@ -405,11 +405,30 @@ function AttributesTab({ productId, attributeGroupId, isConfigurable }: { produc
 
   const handleSave = () => {
     setSaveMessage(null);
-    const attrPayload = attrs.map((attr) => ({
-      attribute_id: attr.id,
-      value: values[attr.id] || '',
-      values: multiValues[attr.id] || undefined,
-    }));
+    const attrPayload = attrs.map((attr) => {
+      const val = values[attr.id] || '';
+      const mvals = multiValues[attr.id] || undefined;
+      // For select types with option_values, resolve option_value_id from the selected value
+      let option_value_id: string | undefined;
+      let option_value_ids: string[] | undefined;
+      if (attr.option_values && attr.option_values.length > 0) {
+        if (attr.type === 'select' || attr.type === 'color') {
+          const ov = attr.option_values.find((o) => o.value === val);
+          option_value_id = ov?.id;
+        } else if (attr.type === 'multi_select' && mvals) {
+          option_value_ids = mvals
+            .map((v) => attr.option_values!.find((o) => o.value === v)?.id)
+            .filter((id): id is string => !!id);
+        }
+      }
+      return {
+        attribute_id: attr.id,
+        value: val,
+        values: mvals,
+        option_value_id,
+        option_value_ids,
+      };
+    });
     setAttributes.mutate(
       { productId, attributes: attrPayload },
       {
@@ -452,20 +471,20 @@ function AttributesTab({ productId, attributeGroupId, isConfigurable }: { produc
                   <span className="ml-1 text-xs text-muted-foreground">({attr.unit})</span>
                 )}
               </Label>
-              {attr.type === 'select' && attr.options ? (
+              {attr.type === 'select' && attr.option_values && attr.option_values.length > 0 ? (
                 <select
                   value={values[attr.id] || ''}
                   onChange={(e) => setValues({ ...values, [attr.id]: e.target.value })}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
                   <option value="">Select...</option>
-                  {attr.options.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
+                  {attr.option_values.map((ov) => (
+                    <option key={ov.id} value={ov.value}>
+                      {ov.value}
                     </option>
                   ))}
                 </select>
-              ) : attr.type === 'multi_select' && attr.options ? (
+              ) : attr.type === 'multi_select' && attr.option_values && attr.option_values.length > 0 ? (
                 <div className="space-y-2">
                   <div className="flex flex-wrap gap-1.5">
                     {(multiValues[attr.id] || []).map((val) => (
@@ -500,11 +519,11 @@ function AttributesTab({ productId, attributeGroupId, isConfigurable }: { produc
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   >
                     <option value="">Add a value...</option>
-                    {attr.options
-                      .filter((opt) => !(multiValues[attr.id] || []).includes(opt))
-                      .map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
+                    {attr.option_values
+                      .filter((ov) => !(multiValues[attr.id] || []).includes(ov.value))
+                      .map((ov) => (
+                        <option key={ov.id} value={ov.value}>
+                          {ov.value}
                         </option>
                       ))}
                   </select>
@@ -593,8 +612,8 @@ function VariationsTab({ productId, product, attributeGroupId }: { productId: st
   const variationAttributes = (groupAttributes || []).filter(
     (attr: Attribute) =>
       (attr.type === 'select' || attr.type === 'multi_select' || attr.type === 'color') &&
-      attr.options &&
-      attr.options.length > 0
+      attr.option_values &&
+      attr.option_values.length > 0
   );
 
   // Check if an option with the given name already exists
@@ -617,7 +636,8 @@ function VariationsTab({ productId, product, attributeGroupId }: { productId: st
 
   // Add attribute as a product option
   const handleAddAttrAsOption = (attr: Attribute) => {
-    const selected = selectedAttrValues[attr.name] ?? attr.options ?? [];
+    const attrOptionValues = (attr.option_values || []).map((ov) => ov.value);
+    const selected = selectedAttrValues[attr.name] ?? attrOptionValues;
     if (selected.length === 0) return;
 
     addOption.mutate({
@@ -686,7 +706,7 @@ function VariationsTab({ productId, product, attributeGroupId }: { productId: st
               </p>
               {variationAttributes.map((attr: Attribute) => {
                 const alreadyAdded = isOptionAlreadyAdded(attr.name);
-                const attrOptions = attr.options || [];
+                const attrOptions = (attr.option_values || []).map((ov) => ov.value);
                 const selected = selectedAttrValues[attr.name] ?? attrOptions;
 
                 return (

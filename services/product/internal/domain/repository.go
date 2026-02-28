@@ -46,6 +46,9 @@ type AttributeRepository interface {
 	ListByCategory(ctx context.Context, categoryID string) ([]*AttributeDefinition, error)
 	SetProductValues(ctx context.Context, productID string, values []ProductAttributeValue) error
 	GetProductValues(ctx context.Context, productID string) ([]ProductAttributeValue, error)
+	// Attribute option values
+	SetOptionValues(ctx context.Context, attributeID string, opts []AttributeOptionValue) error
+	ListOptionValues(ctx context.Context, attributeID string) ([]AttributeOptionValue, error)
 }
 
 // AttributeGroupRepository defines persistence operations for attribute groups.

@@ -138,7 +138,7 @@ export function useAdminProductAttributes(productId: string) {
 export function useAdminSetProductAttributes() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ productId, attributes }: { productId: string; attributes: { attribute_id: string; value: string; values?: string[] }[] }) =>
+    mutationFn: ({ productId, attributes }: { productId: string; attributes: { attribute_id: string; value: string; values?: string[]; option_value_id?: string; option_value_ids?: string[] }[] }) =>
       adminProductMgmtApi.setProductAttributes(productId, attributes),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-product-attributes', variables.productId] });

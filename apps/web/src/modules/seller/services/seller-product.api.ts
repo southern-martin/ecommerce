@@ -68,6 +68,8 @@ export interface SellerProductAttribute {
   attribute_name: string;
   value: string;
   values?: string[];
+  option_value_id?: string;
+  option_value_ids?: string[];
 }
 
 export interface AttributeGroupSummary {
@@ -159,7 +161,7 @@ export const sellerProductApi = {
 
   setProductAttributes: async (
     productId: string,
-    attributes: { attribute_id: string; value: string; values?: string[] }[]
+    attributes: { attribute_id: string; value: string; values?: string[]; option_value_id?: string; option_value_ids?: string[] }[]
   ): Promise<void> => {
     await apiClient.put(`/seller/products/${productId}/attributes`, { attributes });
   },

@@ -84,28 +84,41 @@ const (
 	AttributeTypeBool        AttributeType = "bool"
 )
 
+// AttributeOptionValue represents a predefined option value for a select/multi_select/color attribute.
+type AttributeOptionValue struct {
+	ID          string    `json:"id"`
+	AttributeID string    `json:"attribute_id"`
+	Value       string    `json:"value"`
+	ColorHex    string    `json:"color_hex,omitempty"`
+	SortOrder   int       `json:"sort_order"`
+	IsActive    bool      `json:"is_active"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
 // AttributeDefinition defines a product attribute schema.
 type AttributeDefinition struct {
-	ID         string        `json:"id"`
-	Name       string        `json:"name"`
-	Slug       string        `json:"slug"`
-	Type       AttributeType `json:"type"`
-	Required   bool          `json:"required"`
-	Filterable bool          `json:"filterable"`
-	Options    []string      `json:"options,omitempty"`
-	Unit       string        `json:"unit,omitempty"`
-	SortOrder  int           `json:"sort_order"`
-	CreatedAt  time.Time     `json:"created_at"`
+	ID           string                 `json:"id"`
+	Name         string                 `json:"name"`
+	Slug         string                 `json:"slug"`
+	Type         AttributeType          `json:"type"`
+	Required     bool                   `json:"required"`
+	Filterable   bool                   `json:"filterable"`
+	OptionValues []AttributeOptionValue `json:"option_values,omitempty"`
+	Unit         string                 `json:"unit,omitempty"`
+	SortOrder    int                    `json:"sort_order"`
+	CreatedAt    time.Time              `json:"created_at"`
 }
 
 // ProductAttributeValue holds the value of an attribute for a specific product.
 type ProductAttributeValue struct {
-	ID            string   `json:"id"`
-	ProductID     string   `json:"product_id"`
-	AttributeID   string   `json:"attribute_id"`
-	AttributeName string   `json:"attribute_name"`
-	Value         string   `json:"value"`
-	Values        []string `json:"values,omitempty"`
+	ID             string   `json:"id"`
+	ProductID      string   `json:"product_id"`
+	AttributeID    string   `json:"attribute_id"`
+	AttributeName  string   `json:"attribute_name"`
+	Value          string   `json:"value"`
+	Values         []string `json:"values,omitempty"`
+	OptionValueID  string   `json:"option_value_id,omitempty"`
+	OptionValueIDs []string `json:"option_value_ids,omitempty"`
 }
 
 // ProductOption defines an option group for a product (e.g., Size, Color).

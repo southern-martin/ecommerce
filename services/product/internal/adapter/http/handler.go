@@ -146,9 +146,11 @@ type createProductRequest struct {
 }
 
 type attributeValueInputRequest struct {
-	AttributeID string   `json:"attribute_id"`
-	Value       string   `json:"value"`
-	Values      []string `json:"values"`
+	AttributeID    string   `json:"attribute_id"`
+	Value          string   `json:"value"`
+	Values         []string `json:"values"`
+	OptionValueID  string   `json:"option_value_id"`
+	OptionValueIDs []string `json:"option_value_ids"`
 }
 
 // CreateProduct handles POST /api/v1/seller/products
@@ -602,14 +604,20 @@ func (h *Handler) DeleteCategory(c *gin.Context) {
 
 // --- Admin Attribute Endpoints ---
 
+type optionValueInput struct {
+	Value     string `json:"value" binding:"required"`
+	ColorHex  string `json:"color_hex"`
+	SortOrder int    `json:"sort_order"`
+}
+
 type createAttributeRequest struct {
-	Name       string              `json:"name" binding:"required"`
-	Type       domain.AttributeType `json:"type" binding:"required"`
-	Required   bool                `json:"required"`
-	Filterable bool                `json:"filterable"`
-	Options    []string            `json:"options"`
-	Unit       string              `json:"unit"`
-	SortOrder  int                 `json:"sort_order"`
+	Name         string               `json:"name" binding:"required"`
+	Type         domain.AttributeType `json:"type" binding:"required"`
+	Required     bool                 `json:"required"`
+	Filterable   bool                 `json:"filterable"`
+	OptionValues []optionValueInput   `json:"option_values"`
+	Unit         string               `json:"unit"`
+	SortOrder    int                  `json:"sort_order"`
 }
 
 // CreateAttributeDefinition handles POST /api/v1/admin/attributes
@@ -620,14 +628,23 @@ func (h *Handler) CreateAttributeDefinition(c *gin.Context) {
 		return
 	}
 
+	var ovInputs []usecase.AttributeOptionValueInput
+	for _, ov := range req.OptionValues {
+		ovInputs = append(ovInputs, usecase.AttributeOptionValueInput{
+			Value:     ov.Value,
+			ColorHex:  ov.ColorHex,
+			SortOrder: ov.SortOrder,
+		})
+	}
+
 	attr, err := h.attributeUC.CreateAttributeDefinition(c.Request.Context(), usecase.CreateAttributeInput{
-		Name:       req.Name,
-		Type:       req.Type,
-		Required:   req.Required,
-		Filterable: req.Filterable,
-		Options:    req.Options,
-		Unit:       req.Unit,
-		SortOrder:  req.SortOrder,
+		Name:         req.Name,
+		Type:         req.Type,
+		Required:     req.Required,
+		Filterable:   req.Filterable,
+		OptionValues: ovInputs,
+		Unit:         req.Unit,
+		SortOrder:    req.SortOrder,
 	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -648,13 +665,13 @@ func (h *Handler) ListAttributeDefinitions(c *gin.Context) {
 }
 
 type updateAttributeRequest struct {
-	Name       *string  `json:"name"`
-	Type       *string  `json:"type"`
-	Required   *bool    `json:"required"`
-	Filterable *bool    `json:"filterable"`
-	Options    []string `json:"options"`
-	Unit       *string  `json:"unit"`
-	SortOrder  *int     `json:"sort_order"`
+	Name         *string            `json:"name"`
+	Type         *string            `json:"type"`
+	Required     *bool              `json:"required"`
+	Filterable   *bool              `json:"filterable"`
+	OptionValues []optionValueInput `json:"option_values"`
+	Unit         *string            `json:"unit"`
+	SortOrder    *int               `json:"sort_order"`
 }
 
 // UpdateAttributeDefinition handles PATCH /api/v1/admin/attributes/:id
@@ -666,14 +683,23 @@ func (h *Handler) UpdateAttributeDefinition(c *gin.Context) {
 		return
 	}
 
+	var ovInputs []usecase.AttributeOptionValueInput
+	for _, ov := range req.OptionValues {
+		ovInputs = append(ovInputs, usecase.AttributeOptionValueInput{
+			Value:     ov.Value,
+			ColorHex:  ov.ColorHex,
+			SortOrder: ov.SortOrder,
+		})
+	}
+
 	attr, err := h.attributeUC.UpdateAttributeDefinition(c.Request.Context(), id, usecase.UpdateAttributeInput{
-		Name:       req.Name,
-		Type:       req.Type,
-		Required:   req.Required,
-		Filterable: req.Filterable,
-		Options:    req.Options,
-		Unit:       req.Unit,
-		SortOrder:  req.SortOrder,
+		Name:         req.Name,
+		Type:         req.Type,
+		Required:     req.Required,
+		Filterable:   req.Filterable,
+		OptionValues: ovInputs,
+		Unit:         req.Unit,
+		SortOrder:    req.SortOrder,
 	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -812,10 +838,12 @@ func (h *Handler) SetProductAttributes(c *gin.Context) {
 	var values []domain.ProductAttributeValue
 	for _, a := range req.Attributes {
 		values = append(values, domain.ProductAttributeValue{
-			ProductID:   productID,
-			AttributeID: a.AttributeID,
-			Value:       a.Value,
-			Values:      a.Values,
+			ProductID:      productID,
+			AttributeID:    a.AttributeID,
+			Value:          a.Value,
+			Values:         a.Values,
+			OptionValueID:  a.OptionValueID,
+			OptionValueIDs: a.OptionValueIDs,
 		})
 	}
 
@@ -1127,10 +1155,12 @@ func (h *Handler) AdminSetProductAttributes(c *gin.Context) {
 	var values []domain.ProductAttributeValue
 	for _, a := range req.Attributes {
 		values = append(values, domain.ProductAttributeValue{
-			ProductID:   productID,
-			AttributeID: a.AttributeID,
-			Value:       a.Value,
-			Values:      a.Values,
+			ProductID:      productID,
+			AttributeID:    a.AttributeID,
+			Value:          a.Value,
+			Values:         a.Values,
+			OptionValueID:  a.OptionValueID,
+			OptionValueIDs: a.OptionValueIDs,
 		})
 	}
 
