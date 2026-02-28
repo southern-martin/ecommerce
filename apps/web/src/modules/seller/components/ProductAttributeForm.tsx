@@ -6,22 +6,22 @@ import { Label } from '@/shared/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
 import { Loader2, Save } from 'lucide-react';
-import { adminProductApi, type CategoryAttribute } from '@/modules/admin/services/admin-product.api';
+import { adminProductApi, type Attribute } from '@/modules/admin/services/admin-product.api';
 import { useProductAttributes, useSetProductAttributes } from '../hooks/useSellerVariants';
 
 interface ProductAttributeFormProps {
   productId: string;
-  categoryId: string;
+  attributeGroupId: string;
 }
 
-export function ProductAttributeForm({ productId, categoryId }: ProductAttributeFormProps) {
+export function ProductAttributeForm({ productId, attributeGroupId }: ProductAttributeFormProps) {
   const [values, setValues] = useState<Record<string, { value: string; values: string[] }>>({});
 
-  // Load category attributes (what attributes this category requires)
-  const { data: categoryAttributes = [], isLoading: loadingCategoryAttrs } = useQuery({
-    queryKey: ['category-attributes', categoryId],
-    queryFn: () => adminProductApi.getCategoryAttributes(categoryId),
-    enabled: !!categoryId,
+  // Load attribute group attributes (what attributes this group defines)
+  const { data: groupAttributes = [], isLoading: loadingGroupAttrs } = useQuery({
+    queryKey: ['group-attributes', attributeGroupId],
+    queryFn: () => adminProductApi.getGroupAttributes(attributeGroupId),
+    enabled: !!attributeGroupId,
   });
 
   // Load existing product attribute values
@@ -43,13 +43,13 @@ export function ProductAttributeForm({ productId, categoryId }: ProductAttribute
     }
   }, [productAttributes]);
 
-  const isLoading = loadingCategoryAttrs || loadingProductAttrs;
+  const isLoading = loadingGroupAttrs || loadingProductAttrs;
 
-  if (!categoryId) {
+  if (!attributeGroupId) {
     return (
       <Card>
         <CardContent className="py-6 text-center text-muted-foreground">
-          Please select a category first to see available attributes.
+          Please select an attribute group first to see available attributes.
         </CardContent>
       </Card>
     );
@@ -63,22 +63,22 @@ export function ProductAttributeForm({ productId, categoryId }: ProductAttribute
     );
   }
 
-  if (categoryAttributes.length === 0) {
+  if (groupAttributes.length === 0) {
     return (
       <Card>
         <CardContent className="py-6 text-center text-muted-foreground">
-          No attributes defined for this category.
+          No attributes defined for this attribute group.
         </CardContent>
       </Card>
     );
   }
 
   const handleSave = () => {
-    const attrs = categoryAttributes
-      .map((ca) => ({
-        attribute_id: ca.attribute_id,
-        value: values[ca.attribute_id]?.value || '',
-        values: values[ca.attribute_id]?.values || [],
+    const attrs = groupAttributes
+      .map((attr) => ({
+        attribute_id: attr.id,
+        value: values[attr.id]?.value || '',
+        values: values[attr.id]?.values || [],
       }))
       .filter((a) => a.value || a.values.length > 0);
 
@@ -119,8 +119,7 @@ export function ProductAttributeForm({ productId, categoryId }: ProductAttribute
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        {categoryAttributes.map((ca: CategoryAttribute) => {
-          const attr = ca.attribute;
+        {groupAttributes.map((attr: Attribute) => {
           const attrType = attr.type;
           const currentValue = values[attr.id]?.value || '';
           const currentValues = values[attr.id]?.values || [];

@@ -20,11 +20,24 @@ const (
 	ProductTypeConfigurable ProductType = "configurable"
 )
 
+// AttributeGroup groups related attributes together (e.g., "Clothing Specs", "Electronics").
+type AttributeGroup struct {
+	ID          string                `json:"id"`
+	Name        string                `json:"name"`
+	Slug        string                `json:"slug"`
+	Description string                `json:"description,omitempty"`
+	SortOrder   int                   `json:"sort_order"`
+	Attributes  []AttributeDefinition `json:"attributes,omitempty"`
+	CreatedAt   time.Time             `json:"created_at"`
+	UpdatedAt   time.Time             `json:"updated_at"`
+}
+
 // Product represents a product in the catalog.
 type Product struct {
-	ID             string        `json:"id"`
-	SellerID       string        `json:"seller_id"`
-	CategoryID     string        `json:"category_id"`
+	ID               string        `json:"id"`
+	SellerID         string        `json:"seller_id"`
+	CategoryID       string        `json:"category_id"`
+	AttributeGroupID string        `json:"attribute_group_id,omitempty"`
 	Name           string        `json:"name"`
 	Slug           string        `json:"slug"`
 	Description    string        `json:"description"`

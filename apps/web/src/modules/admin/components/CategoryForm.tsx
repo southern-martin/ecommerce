@@ -25,8 +25,10 @@ type CategoryFormValues = z.infer<typeof categorySchema>;
 
 interface CategoryFormProps {
   categories?: { id: string; name: string }[];
+  defaultValues?: Partial<CategoryFormValues>;
   onSubmit: (data: CategoryFormValues) => void;
   isPending?: boolean;
+  submitLabel?: string;
 }
 
 function generateSlug(name: string): string {
@@ -36,7 +38,7 @@ function generateSlug(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
-export function CategoryForm({ categories = [], onSubmit, isPending }: CategoryFormProps) {
+export function CategoryForm({ categories = [], defaultValues, onSubmit, isPending, submitLabel = 'Create Category' }: CategoryFormProps) {
   const {
     register,
     handleSubmit,
@@ -45,16 +47,21 @@ export function CategoryForm({ categories = [], onSubmit, isPending }: CategoryF
     formState: { errors },
   } = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
-    defaultValues: { name: '', slug: '', description: '', parent_id: '' },
+    defaultValues: {
+      name: defaultValues?.name || '',
+      slug: defaultValues?.slug || '',
+      description: defaultValues?.description || '',
+      parent_id: defaultValues?.parent_id || '',
+    },
   });
 
   const name = watch('name');
 
   useEffect(() => {
-    if (name) {
+    if (name && !defaultValues?.slug) {
       setValue('slug', generateSlug(name));
     }
-  }, [name, setValue]);
+  }, [name, setValue, defaultValues?.slug]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -82,7 +89,10 @@ export function CategoryForm({ categories = [], onSubmit, isPending }: CategoryF
 
       <div className="space-y-2">
         <Label>Parent Category</Label>
-        <Select onValueChange={(value) => setValue('parent_id', value === 'none' ? '' : value)}>
+        <Select
+          defaultValue={defaultValues?.parent_id || 'none'}
+          onValueChange={(value) => setValue('parent_id', value === 'none' ? '' : value)}
+        >
           <SelectTrigger>
             <SelectValue placeholder="None (top-level)" />
           </SelectTrigger>
@@ -99,7 +109,7 @@ export function CategoryForm({ categories = [], onSubmit, isPending }: CategoryF
 
       <Button type="submit" disabled={isPending}>
         {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Create Category
+        {submitLabel}
       </Button>
     </form>
   );

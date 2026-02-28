@@ -60,6 +60,59 @@ func (uc *CategoryUseCase) CreateCategory(ctx context.Context, input CreateCateg
 	return category, nil
 }
 
+// UpdateCategoryInput holds the input for updating a category.
+type UpdateCategoryInput struct {
+	Name      *string
+	ParentID  *string
+	SortOrder *int
+	ImageURL  *string
+	IsActive  *bool
+}
+
+// UpdateCategory updates an existing category.
+func (uc *CategoryUseCase) UpdateCategory(ctx context.Context, id string, input UpdateCategoryInput) (*domain.Category, error) {
+	cat, err := uc.categoryRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("category not found: %w", err)
+	}
+
+	if input.Name != nil {
+		cat.Name = *input.Name
+		cat.Slug = generateSlug(*input.Name)
+	}
+	if input.ParentID != nil {
+		if *input.ParentID != "" && *input.ParentID != cat.ID {
+			if _, err := uc.categoryRepo.GetByID(ctx, *input.ParentID); err != nil {
+				return nil, fmt.Errorf("parent category not found: %w", err)
+			}
+		}
+		cat.ParentID = *input.ParentID
+	}
+	if input.SortOrder != nil {
+		cat.SortOrder = *input.SortOrder
+	}
+	if input.ImageURL != nil {
+		cat.ImageURL = *input.ImageURL
+	}
+	if input.IsActive != nil {
+		cat.IsActive = *input.IsActive
+	}
+
+	if err := uc.categoryRepo.Update(ctx, cat); err != nil {
+		return nil, fmt.Errorf("failed to update category: %w", err)
+	}
+
+	return cat, nil
+}
+
+// DeleteCategory deletes a category by ID.
+func (uc *CategoryUseCase) DeleteCategory(ctx context.Context, id string) error {
+	if _, err := uc.categoryRepo.GetByID(ctx, id); err != nil {
+		return fmt.Errorf("category not found: %w", err)
+	}
+	return uc.categoryRepo.Delete(ctx, id)
+}
+
 // GetCategories lists all categories.
 func (uc *CategoryUseCase) GetCategories(ctx context.Context) ([]*domain.Category, error) {
 	return uc.categoryRepo.List(ctx)

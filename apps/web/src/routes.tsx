@@ -66,6 +66,7 @@ const AdminCarriersPage = lazy(() => import('@/modules/admin/pages/AdminCarriers
 const AdminAffiliatePage = lazy(() => import('@/modules/admin/pages/AdminAffiliatePage'));
 const AdminTaxPage = lazy(() => import('@/modules/admin/pages/AdminTaxPage'));
 const AdminSettingsPage = lazy(() => import('@/modules/admin/pages/AdminSettingsPage'));
+const AdminProductEditPage = lazy(() => import('@/modules/admin/pages/AdminProductEditPage'));
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<LoadingSpinner message="Loading..." />}>{children}</Suspense>;
@@ -425,6 +426,14 @@ export const router = createBrowserRouter([
         element: (
           <SuspenseWrapper>
             <AdminProductsPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'products/:id/edit',
+        element: (
+          <SuspenseWrapper>
+            <AdminProductEditPage />
           </SuspenseWrapper>
         ),
       },

@@ -48,6 +48,18 @@ type AttributeRepository interface {
 	GetProductValues(ctx context.Context, productID string) ([]ProductAttributeValue, error)
 }
 
+// AttributeGroupRepository defines persistence operations for attribute groups.
+type AttributeGroupRepository interface {
+	Create(ctx context.Context, group *AttributeGroup) error
+	GetByID(ctx context.Context, id string) (*AttributeGroup, error)
+	List(ctx context.Context) ([]*AttributeGroup, error)
+	Update(ctx context.Context, group *AttributeGroup) error
+	Delete(ctx context.Context, id string) error
+	AddAttribute(ctx context.Context, groupID, attributeID string, sortOrder int) error
+	RemoveAttribute(ctx context.Context, groupID, attributeID string) error
+	ListAttributes(ctx context.Context, groupID string) ([]*AttributeDefinition, error)
+}
+
 // OptionRepository defines persistence operations for product options.
 type OptionRepository interface {
 	CreateOption(ctx context.Context, option *ProductOption) error

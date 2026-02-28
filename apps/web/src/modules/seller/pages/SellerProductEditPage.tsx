@@ -84,6 +84,7 @@ export default function SellerProductEditPage() {
                   price: product.base_price_cents ? product.base_price_cents / 100 : 0,
                   compare_at_price: 0,
                   category_id: product.category_id || '',
+                  attribute_group_id: product.attribute_group_id || '',
                   product_type: product.product_type || 'simple',
                   stock_quantity: product.stock_quantity ?? 0,
                 }}
@@ -94,6 +95,7 @@ export default function SellerProductEditPage() {
                       name: data.name,
                       description: data.description,
                       category_id: data.category_id,
+                      attribute_group_id: data.attribute_group_id || undefined,
                       base_price_cents: Math.round(data.price * 100),
                       stock_quantity: product.product_type === 'simple' ? (data.stock_quantity ?? 0) : undefined,
                     },
@@ -157,14 +159,14 @@ export default function SellerProductEditPage() {
               <CardTitle>Product Attributes</CardTitle>
               <CardDescription>
                 Set specification attributes for this product (e.g., Brand, Material, Weight).
-                Available attributes depend on the product&apos;s category.
-                {!product.category_id && ' Assign a category first in the Basic Info tab.'}
+                Available attributes depend on the product&apos;s attribute group.
+                {!product.attribute_group_id && ' Select an attribute group first in the Basic Info tab.'}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ProductAttributeForm
                 productId={product.id}
-                categoryId={product.category_id}
+                attributeGroupId={product.attribute_group_id}
               />
             </CardContent>
           </Card>

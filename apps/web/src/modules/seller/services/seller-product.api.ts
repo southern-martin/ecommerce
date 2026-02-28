@@ -1,5 +1,5 @@
 import apiClient from '@/shared/lib/api-client';
-import type { PaginatedResponse, ApiResponse } from '@/shared/types/api.types';
+import type { PaginatedResponse } from '@/shared/types/api.types';
 
 export type ProductType = 'simple' | 'configurable' | string;
 
@@ -10,6 +10,7 @@ export interface SellerProduct {
   description: string;
   seller_id: string;
   category_id: string;
+  attribute_group_id: string;
   base_price_cents: number;
   currency: string;
   status: string;
@@ -69,12 +70,21 @@ export interface SellerProductAttribute {
   values?: string[];
 }
 
+export interface AttributeGroupSummary {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  attribute_count?: number;
+}
+
 export interface CreateProductData {
   name: string;
   description: string;
   base_price_cents: number;
   currency?: string;
   category_id: string;
+  attribute_group_id?: string;
   product_type?: ProductType;
   stock_quantity?: number;
   tags?: string[];
@@ -95,6 +105,7 @@ function mapRawProduct(raw: any): SellerProduct {
     description: raw.description || '',
     seller_id: raw.seller_id,
     category_id: raw.category_id || '',
+    attribute_group_id: raw.attribute_group_id || '',
     base_price_cents: raw.base_price_cents || 0,
     currency: raw.currency || 'USD',
     status: raw.status || 'draft',
@@ -156,5 +167,10 @@ export const sellerProductApi = {
   getProductAttributes: async (productId: string): Promise<SellerProductAttribute[]> => {
     const response = await apiClient.get(`/seller/products/${productId}/attributes`);
     return response.data.attributes || [];
+  },
+
+  getAttributeGroups: async (): Promise<AttributeGroupSummary[]> => {
+    const response = await apiClient.get('/attribute-groups');
+    return response.data.attribute_groups || [];
   },
 };

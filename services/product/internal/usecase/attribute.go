@@ -72,6 +72,7 @@ func (uc *AttributeUseCase) ListAttributeDefinitions(ctx context.Context) ([]*do
 // UpdateAttributeInput holds input for updating an attribute definition.
 type UpdateAttributeInput struct {
 	Name       *string
+	Type       *string
 	Required   *bool
 	Filterable *bool
 	Options    []string
@@ -89,6 +90,9 @@ func (uc *AttributeUseCase) UpdateAttributeDefinition(ctx context.Context, id st
 	if input.Name != nil {
 		attr.Name = *input.Name
 		attr.Slug = generateSlug(*input.Name)
+	}
+	if input.Type != nil {
+		attr.Type = domain.AttributeType(*input.Type)
 	}
 	if input.Required != nil {
 		attr.Required = *input.Required

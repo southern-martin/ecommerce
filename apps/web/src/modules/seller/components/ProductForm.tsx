@@ -1,10 +1,12 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Loader2, Package, Settings2 } from 'lucide-react';
+import { sellerProductApi } from '../services/seller-product.api';
 
 const productSchema = z.object({
   name: z.string().min(1, 'Product name is required'),
@@ -12,6 +14,7 @@ const productSchema = z.object({
   price: z.coerce.number().min(1, 'Price is required'),
   compare_at_price: z.coerce.number().optional(),
   category_id: z.string().min(1, 'Category is required'),
+  attribute_group_id: z.string().optional(),
   product_type: z.string().default('simple'),
   stock_quantity: z.coerce.number().min(0, 'Stock must be 0 or more').default(0),
 });
@@ -33,6 +36,11 @@ export function ProductForm({
   submitLabel = 'Save Product',
   showProductTypeSelector = false,
 }: ProductFormProps) {
+  const { data: attributeGroups = [] } = useQuery({
+    queryKey: ['attribute-groups'],
+    queryFn: () => sellerProductApi.getAttributeGroups(),
+  });
+
   const {
     register,
     handleSubmit,
@@ -153,6 +161,25 @@ export function ProductForm({
         <Label htmlFor="category_id">Category ID</Label>
         <Input id="category_id" {...register('category_id')} />
         {errors.category_id && <p className="text-sm text-destructive">{errors.category_id.message}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="attribute_group_id">Attribute Group</Label>
+        <select
+          id="attribute_group_id"
+          {...register('attribute_group_id')}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <option value="">No attribute group</option>
+          {attributeGroups.map((group) => (
+            <option key={group.id} value={group.id}>
+              {group.name}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-muted-foreground">
+          Determines which specification attributes are available for this product.
+        </p>
       </div>
 
       <Button type="submit" disabled={isPending}>
