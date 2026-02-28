@@ -354,3 +354,169 @@ func (uc *VariantUseCase) ListVariantsByProduct(ctx context.Context, productID s
 func (uc *VariantUseCase) ListOptions(ctx context.Context, productID string) ([]domain.ProductOption, error) {
 	return uc.optionRepo.ListByProduct(ctx, productID)
 }
+
+// --- Admin methods (no seller ownership check) ---
+
+// AdminAddOption adds an option group to a product (admin — no seller check).
+func (uc *VariantUseCase) AdminAddOption(ctx context.Context, productID string, input AddOptionInput) (*domain.ProductOption, error) {
+	product, err := uc.productRepo.GetByID(ctx, productID)
+	if err != nil {
+		return nil, fmt.Errorf("product not found: %w", err)
+	}
+	if product.ProductType != domain.ProductTypeConfigurable {
+		return nil, fmt.Errorf("cannot add options to a %s product; only configurable products support options", product.ProductType)
+	}
+
+	if input.Name == "" {
+		return nil, fmt.Errorf("option name is required")
+	}
+
+	option := &domain.ProductOption{
+		ID:        uuid.New().String(),
+		ProductID: productID,
+		Name:      input.Name,
+		SortOrder: input.SortOrder,
+	}
+
+	for _, v := range input.Values {
+		option.Values = append(option.Values, domain.ProductOptionValue{
+			ID:        uuid.New().String(),
+			OptionID:  option.ID,
+			Value:     v.Value,
+			ColorHex:  v.ColorHex,
+			SortOrder: v.SortOrder,
+		})
+	}
+
+	if err := uc.optionRepo.CreateOption(ctx, option); err != nil {
+		return nil, fmt.Errorf("failed to create option: %w", err)
+	}
+
+	if !product.HasVariants {
+		product.HasVariants = true
+		product.UpdatedAt = time.Now().UTC()
+		_ = uc.productRepo.Update(ctx, product)
+	}
+
+	return option, nil
+}
+
+// AdminRemoveOption removes an option (admin — no seller check).
+func (uc *VariantUseCase) AdminRemoveOption(ctx context.Context, optionID string) error {
+	if err := uc.optionRepo.DeleteOption(ctx, optionID); err != nil {
+		return fmt.Errorf("failed to delete option: %w", err)
+	}
+	return nil
+}
+
+// AdminGenerateVariants creates variants as the cartesian product of all option values (admin — no seller check).
+func (uc *VariantUseCase) AdminGenerateVariants(ctx context.Context, productID string) ([]domain.Variant, error) {
+	product, err := uc.productRepo.GetByID(ctx, productID)
+	if err != nil {
+		return nil, fmt.Errorf("product not found: %w", err)
+	}
+	if product.ProductType != domain.ProductTypeConfigurable {
+		return nil, fmt.Errorf("cannot generate variants for a %s product; only configurable products support variants", product.ProductType)
+	}
+
+	options, err := uc.optionRepo.ListByProduct(ctx, productID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list options: %w", err)
+	}
+	if len(options) == 0 {
+		return nil, fmt.Errorf("no options defined for this product")
+	}
+
+	combos := cartesianProduct(options)
+
+	now := time.Now().UTC()
+	var variants []domain.Variant
+	for i, combo := range combos {
+		sku := fmt.Sprintf("%s-%d", product.Slug, i+1)
+		variantID := uuid.New().String()
+
+		var names []string
+		var optValues []domain.VariantOptionValue
+		for _, ov := range combo {
+			names = append(names, ov.Value)
+			optValues = append(optValues, domain.VariantOptionValue{
+				VariantID:     variantID,
+				OptionID:      ov.OptionID,
+				OptionValueID: ov.ID,
+				OptionName:    ov.OptionName,
+				Value:         ov.Value,
+			})
+		}
+
+		variant := domain.Variant{
+			ID:           variantID,
+			ProductID:    productID,
+			SKU:          sku,
+			Name:         joinNames(names),
+			PriceCents:   product.BasePriceCents,
+			Stock:        0,
+			IsDefault:    i == 0,
+			IsActive:     true,
+			OptionValues: optValues,
+			CreatedAt:    now,
+			UpdatedAt:    now,
+		}
+		variants = append(variants, variant)
+	}
+
+	if err := uc.variantRepo.BulkCreate(ctx, variants); err != nil {
+		return nil, fmt.Errorf("failed to bulk create variants: %w", err)
+	}
+
+	product.HasVariants = true
+	product.UpdatedAt = now
+	_ = uc.productRepo.Update(ctx, product)
+
+	return variants, nil
+}
+
+// AdminUpdateVariant updates a variant's details (admin — no seller check).
+func (uc *VariantUseCase) AdminUpdateVariant(ctx context.Context, productID string, variantID string, input UpdateVariantInput) (*domain.Variant, error) {
+	variant, err := uc.variantRepo.GetByID(ctx, variantID)
+	if err != nil {
+		return nil, fmt.Errorf("variant not found: %w", err)
+	}
+	if variant.ProductID != productID {
+		return nil, fmt.Errorf("variant does not belong to this product")
+	}
+
+	if input.Name != nil {
+		variant.Name = *input.Name
+	}
+	if input.PriceCents != nil {
+		variant.PriceCents = *input.PriceCents
+	}
+	if input.CompareAtCents != nil {
+		variant.CompareAtCents = *input.CompareAtCents
+	}
+	if input.CostCents != nil {
+		variant.CostCents = *input.CostCents
+	}
+	if input.WeightGrams != nil {
+		variant.WeightGrams = *input.WeightGrams
+	}
+	if input.IsActive != nil {
+		variant.IsActive = *input.IsActive
+	}
+	if input.ImageURLs != nil {
+		variant.ImageURLs = input.ImageURLs
+	}
+	if input.Barcode != nil {
+		variant.Barcode = *input.Barcode
+	}
+	if input.LowStockAlert != nil {
+		variant.LowStockAlert = *input.LowStockAlert
+	}
+	variant.UpdatedAt = time.Now().UTC()
+
+	if err := uc.variantRepo.Update(ctx, variant); err != nil {
+		return nil, fmt.Errorf("failed to update variant: %w", err)
+	}
+
+	return variant, nil
+}

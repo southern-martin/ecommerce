@@ -31,7 +31,8 @@ function mapBackendProduct(raw: any): Product {
     _currency: raw.currency || 'USD',
     _has_variants: raw.has_variants || false,
     _product_type: raw.product_type || 'simple',
-  } as Product & { _status: string; _tags: string[]; _currency: string; _has_variants: boolean; _product_type: string };
+    _attribute_group_id: raw.attribute_group_id || '',
+  } as Product & { _status: string; _tags: string[]; _currency: string; _has_variants: boolean; _product_type: string; _attribute_group_id: string };
 }
 
 export interface AdminProductFilter {
@@ -53,6 +54,7 @@ export interface AdminUpdateProductPayload {
   tags?: string[];
   image_urls?: string[];
   category_id?: string;
+  attribute_group_id?: string;
 }
 
 export interface CreateProductPayload {
@@ -61,6 +63,9 @@ export interface CreateProductPayload {
   base_price_cents: number;
   currency?: string;
   category_id: string;
+  attribute_group_id?: string;
+  product_type?: string;
+  stock_quantity?: number;
   tags?: string[];
   image_urls?: string[];
 }
@@ -103,5 +108,58 @@ export const adminProductMgmtApi = {
   // Admin delete — uses dedicated admin endpoint (no seller ownership check)
   deleteProduct: async (id: string): Promise<void> => {
     await apiClient.delete(`/admin/products/${id}`);
+  },
+
+  // Get single admin product with full preload
+  getProduct: async (id: string): Promise<Product> => {
+    const response = await apiClient.get(`/admin/products/${id}`);
+    return mapBackendProduct(response.data);
+  },
+
+  // Options
+  getOptions: async (productId: string) => {
+    const response = await apiClient.get(`/admin/products/${productId}/options`);
+    return response.data.options || [];
+  },
+
+  addOption: async (productId: string, data: { name: string; sort_order?: number; values: { value: string; color_hex?: string; sort_order?: number }[] }) => {
+    const response = await apiClient.post(`/admin/products/${productId}/options`, data);
+    return response.data;
+  },
+
+  removeOption: async (productId: string, optionId: string) => {
+    await apiClient.delete(`/admin/products/${productId}/options/${optionId}`);
+  },
+
+  // Variants
+  getVariants: async (productId: string) => {
+    const response = await apiClient.get(`/admin/products/${productId}/variants`);
+    return response.data.variants || [];
+  },
+
+  generateVariants: async (productId: string) => {
+    const response = await apiClient.post(`/admin/products/${productId}/variants/generate`);
+    return response.data.variants || [];
+  },
+
+  updateVariant: async (productId: string, variantId: string, data: Record<string, unknown>) => {
+    const response = await apiClient.patch(`/admin/products/${productId}/variants/${variantId}`, data);
+    return response.data;
+  },
+
+  updateVariantStock: async (productId: string, variantId: string, delta: number) => {
+    const response = await apiClient.patch(`/admin/products/${productId}/variants/${variantId}/stock`, { delta });
+    return response.data;
+  },
+
+  // Attributes
+  getProductAttributes: async (productId: string) => {
+    const response = await apiClient.get(`/admin/products/${productId}/attributes`);
+    return response.data.attributes || [];
+  },
+
+  setProductAttributes: async (productId: string, attributes: { attribute_id: string; value: string; values?: string[] }[]) => {
+    const response = await apiClient.put(`/admin/products/${productId}/attributes`, { attributes });
+    return response.data;
   },
 };

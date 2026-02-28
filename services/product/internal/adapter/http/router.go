@@ -57,6 +57,14 @@ func NewRouter(h *Handler) *gin.Engine {
 			}
 		}
 
+		// Public attribute group endpoints
+		attrGroups := v1.Group("/attribute-groups")
+		{
+			attrGroups.GET("", h.ListAttributeGroups)
+			attrGroups.GET("/:id", h.GetAttributeGroup)
+			attrGroups.GET("/:id/attributes", h.ListGroupAttributes)
+		}
+
 		// Admin endpoints
 		admin := v1.Group("/admin")
 		{
@@ -64,18 +72,43 @@ func NewRouter(h *Handler) *gin.Engine {
 			adminProducts := admin.Group("/products")
 			{
 				adminProducts.GET("", h.AdminListProducts)
+				adminProducts.GET("/:id", h.AdminGetProduct)
 				adminProducts.PATCH("/:id", h.AdminUpdateProduct)
 				adminProducts.DELETE("/:id", h.AdminDeleteProduct)
+				adminProducts.GET("/:id/options", h.AdminListOptions)
+				adminProducts.POST("/:id/options", h.AdminAddOption)
+				adminProducts.DELETE("/:id/options/:optionId", h.AdminRemoveOption)
+				adminProducts.GET("/:id/variants", h.AdminListVariants)
+				adminProducts.POST("/:id/variants/generate", h.AdminGenerateVariants)
+				adminProducts.PATCH("/:id/variants/:variantId", h.AdminUpdateVariant)
+				adminProducts.PATCH("/:id/variants/:variantId/stock", h.AdminUpdateVariantStock)
+				adminProducts.PUT("/:id/attributes", h.AdminSetProductAttributes)
+				adminProducts.GET("/:id/attributes", h.AdminGetProductAttributes)
 			}
 
 			admin.POST("/categories", h.CreateCategory)
+			admin.PATCH("/categories/:id", h.UpdateCategory)
+			admin.DELETE("/categories/:id", h.DeleteCategory)
 			admin.POST("/attributes", h.CreateAttributeDefinition)
 			admin.GET("/attributes", h.ListAttributeDefinitions)
 			admin.PATCH("/attributes/:id", h.UpdateAttributeDefinition)
 			admin.DELETE("/attributes/:id", h.DeleteAttributeDefinition)
+
+			// Admin attribute group management
+			adminAttrGroups := admin.Group("/attribute-groups")
+			{
+				adminAttrGroups.POST("", h.CreateAttributeGroup)
+				adminAttrGroups.GET("", h.ListAttributeGroups)
+				adminAttrGroups.GET("/:id", h.GetAttributeGroup)
+				adminAttrGroups.PATCH("/:id", h.UpdateAttributeGroup)
+				adminAttrGroups.DELETE("/:id", h.DeleteAttributeGroup)
+				adminAttrGroups.POST("/:id/attributes", h.AddAttributeToGroup)
+				adminAttrGroups.DELETE("/:id/attributes/:attrId", h.RemoveAttributeFromGroup)
+				adminAttrGroups.GET("/:id/attributes", h.ListGroupAttributes)
+			}
 		}
 
-		// Category attribute assignment endpoints
+		// Category attribute assignment endpoints (legacy — kept for backward compatibility)
 		categories := v1.Group("/categories")
 		{
 			categories.POST("/:id/attributes", h.AssignAttributeToCategory)

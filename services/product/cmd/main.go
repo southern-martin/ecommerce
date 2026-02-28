@@ -67,6 +67,8 @@ func main() {
 		&postgres.ProductOptionValueModel{},
 		&postgres.VariantModel{},
 		&postgres.VariantOptionValueModel{},
+		&postgres.AttributeGroupModel{},
+		&postgres.AttributeGroupItemModel{},
 	); err != nil {
 		log.Fatal().Err(err).Msg("Failed to auto-migrate database")
 	}
@@ -104,12 +106,14 @@ func main() {
 	attributeRepo := postgres.NewAttributeRepo(db)
 	optionRepo := postgres.NewOptionRepo(db)
 	variantRepo := postgres.NewVariantRepo(db)
+	attributeGroupRepo := postgres.NewAttributeGroupRepo(db)
 
 	// Initialize use cases
 	productUC := usecase.NewProductUseCase(productRepo, categoryRepo, attributeRepo, optionRepo, variantRepo, publisher)
 	categoryUC := usecase.NewCategoryUseCase(categoryRepo)
 	attributeUC := usecase.NewAttributeUseCase(attributeRepo, categoryRepo)
 	variantUC := usecase.NewVariantUseCase(productRepo, optionRepo, variantRepo, publisher)
+	attributeGroupUC := usecase.NewAttributeGroupUseCase(attributeGroupRepo, attributeRepo)
 
 	// Start NATS subscriber for order.created events (stock decrement)
 	if jsSub != nil {
@@ -121,7 +125,7 @@ func main() {
 	}
 
 	// Initialize HTTP handler and router
-	handler := producthttp.NewHandler(productUC, categoryUC, attributeUC, variantUC)
+	handler := producthttp.NewHandler(productUC, categoryUC, attributeUC, variantUC, attributeGroupUC)
 	router := producthttp.NewRouter(handler)
 
 	// Start HTTP server

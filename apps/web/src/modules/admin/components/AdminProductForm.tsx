@@ -7,7 +7,7 @@ import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Badge } from '@/shared/components/ui/badge';
 import { Loader2, Plus, X, ImagePlus, Package, Settings2 } from 'lucide-react';
-import { useCategories } from '../hooks/useAdminProducts';
+import { useCategories, useAttributeGroups } from '../hooks/useAdminProducts';
 
 const adminProductSchema = z.object({
   name: z.string().min(1, 'Product name is required'),
@@ -15,6 +15,7 @@ const adminProductSchema = z.object({
   base_price_cents: z.coerce.number().min(1, 'Price is required'),
   currency: z.string().optional(),
   category_id: z.string().min(1, 'Category is required'),
+  attribute_group_id: z.string().optional(),
   status: z.enum(['draft', 'active', 'inactive', 'archived']).optional(),
   product_type: z.string().optional(),
   stock_quantity: z.coerce.number().min(0).optional(),
@@ -28,6 +29,7 @@ interface AdminProductFormProps {
     image_urls?: string[];
     product_type?: string;
     stock_quantity?: number;
+    attribute_group_id?: string;
   };
   onSubmit: (data: AdminProductFormValues & { tags: string[]; image_urls: string[]; product_type: string; stock_quantity: number }) => void;
   isPending?: boolean;
@@ -43,6 +45,7 @@ export function AdminProductForm({
   isEditing = false,
 }: AdminProductFormProps) {
   const { data: categories } = useCategories();
+  const { data: attributeGroups } = useAttributeGroups();
   const [tags, setTags] = useState<string[]>(defaultValues?.tags || []);
   const [tagInput, setTagInput] = useState('');
   const [imageUrls, setImageUrls] = useState<string[]>(defaultValues?.image_urls || []);
@@ -62,6 +65,7 @@ export function AdminProductForm({
       base_price_cents: defaultValues?.base_price_cents || 0,
       currency: defaultValues?.currency || 'USD',
       category_id: defaultValues?.category_id || '',
+      attribute_group_id: defaultValues?.attribute_group_id || '',
       status: defaultValues?.status || 'draft',
       product_type: defaultValues?.product_type || 'simple',
       stock_quantity: defaultValues?.stock_quantity ?? 0,
@@ -181,6 +185,26 @@ export function AdminProductForm({
           ))}
         </select>
         {errors.category_id && <p className="text-sm text-destructive">{errors.category_id.message}</p>}
+      </div>
+
+      {/* Attribute Group */}
+      <div className="space-y-2">
+        <Label htmlFor="attribute_group_id">Attribute Group</Label>
+        <select
+          id="attribute_group_id"
+          {...register('attribute_group_id')}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <option value="">No attribute group</option>
+          {(attributeGroups || []).map((group) => (
+            <option key={group.id} value={group.id}>
+              {group.name}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-muted-foreground">
+          Determines which specification attributes are available for this product.
+        </p>
       </div>
 
       {/* Product Type (create only) */}

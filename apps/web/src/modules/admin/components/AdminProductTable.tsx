@@ -208,7 +208,7 @@ export function AdminProductTable({
                         </div>
                         <div className="min-w-0">
                           <Link
-                            to={`/seller/products/${product.id}/edit`}
+                            to={`/admin/products/${product.id}/edit`}
                             className="truncate font-medium hover:underline"
                           >
                             {product.name}
@@ -291,7 +291,7 @@ export function AdminProductTable({
                           </>
                         )}
                         <Button asChild variant="ghost" size="sm" className="h-8">
-                          <Link to={`/seller/products/${product.id}/edit`} title="Manage product details, options, variants & attributes">
+                          <Link to={`/admin/products/${product.id}/edit`} title="Manage product details, options, variants & attributes">
                             <Settings2 className="mr-1 h-4 w-4" />
                             Manage
                           </Link>

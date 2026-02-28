@@ -12,7 +12,8 @@ import (
 type ProductModel struct {
 	ID             string         `gorm:"type:uuid;primaryKey"`
 	SellerID       string         `gorm:"type:uuid;not null;index"`
-	CategoryID     *string        `gorm:"type:uuid;index"`
+	CategoryID       *string        `gorm:"type:uuid;index"`
+	AttributeGroupID *string        `gorm:"type:uuid;index"`
 	Name           string         `gorm:"type:varchar(500);not null"`
 	Slug           string         `gorm:"type:varchar(600);uniqueIndex;not null"`
 	Description    string         `gorm:"type:text"`
@@ -41,10 +42,15 @@ func (m *ProductModel) ToDomain() *domain.Product {
 	if m.CategoryID != nil {
 		catID = *m.CategoryID
 	}
+	agID := ""
+	if m.AttributeGroupID != nil {
+		agID = *m.AttributeGroupID
+	}
 	p := &domain.Product{
-		ID:             m.ID,
-		SellerID:       m.SellerID,
-		CategoryID:     catID,
+		ID:               m.ID,
+		SellerID:         m.SellerID,
+		CategoryID:       catID,
+		AttributeGroupID: agID,
 		Name:           m.Name,
 		Slug:           m.Slug,
 		Description:    m.Description,
@@ -75,10 +81,15 @@ func ProductModelFromDomain(p *domain.Product) *ProductModel {
 	if p.CategoryID != "" {
 		catID = &p.CategoryID
 	}
+	var agID *string
+	if p.AttributeGroupID != "" {
+		agID = &p.AttributeGroupID
+	}
 	return &ProductModel{
-		ID:             p.ID,
-		SellerID:       p.SellerID,
-		CategoryID:     catID,
+		ID:               p.ID,
+		SellerID:         p.SellerID,
+		CategoryID:       catID,
+		AttributeGroupID: agID,
 		Name:           p.Name,
 		Slug:           p.Slug,
 		Description:    p.Description,
@@ -368,3 +379,49 @@ func (m *VariantOptionValueModel) ToDomain() domain.VariantOptionValue {
 		Value:         m.Value,
 	}
 }
+
+// AttributeGroupModel is the GORM model for the attribute_groups table.
+type AttributeGroupModel struct {
+	ID          string    `gorm:"type:uuid;primaryKey"`
+	Name        string    `gorm:"type:varchar(255);not null"`
+	Slug        string    `gorm:"type:varchar(300);uniqueIndex;not null"`
+	Description string    `gorm:"type:text"`
+	SortOrder   int       `gorm:"not null;default:0"`
+	CreatedAt   time.Time `gorm:"not null"`
+	UpdatedAt   time.Time `gorm:"not null"`
+}
+
+func (AttributeGroupModel) TableName() string { return "attribute_groups" }
+
+func (m *AttributeGroupModel) ToDomain() *domain.AttributeGroup {
+	return &domain.AttributeGroup{
+		ID:          m.ID,
+		Name:        m.Name,
+		Slug:        m.Slug,
+		Description: m.Description,
+		SortOrder:   m.SortOrder,
+		CreatedAt:   m.CreatedAt,
+		UpdatedAt:   m.UpdatedAt,
+	}
+}
+
+func AttributeGroupModelFromDomain(g *domain.AttributeGroup) *AttributeGroupModel {
+	return &AttributeGroupModel{
+		ID:          g.ID,
+		Name:        g.Name,
+		Slug:        g.Slug,
+		Description: g.Description,
+		SortOrder:   g.SortOrder,
+		CreatedAt:   g.CreatedAt,
+		UpdatedAt:   g.UpdatedAt,
+	}
+}
+
+// AttributeGroupItemModel is the GORM model for the attribute_group_items join table.
+type AttributeGroupItemModel struct {
+	GroupID     string `gorm:"type:uuid;primaryKey"`
+	AttributeID string `gorm:"type:uuid;primaryKey"`
+	SortOrder   int    `gorm:"not null;default:0"`
+}
+
+func (AttributeGroupItemModel) TableName() string { return "attribute_group_items" }

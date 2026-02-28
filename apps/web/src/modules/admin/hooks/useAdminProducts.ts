@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminProductApi } from '../services/admin-product.api';
-import type { CreateCategoryData, CreateAttributeData } from '../services/admin-product.api';
+import type { CreateCategoryData, CreateAttributeData, CreateAttributeGroupData } from '../services/admin-product.api';
 
 export function useCategories() {
   return useQuery({
@@ -13,6 +13,27 @@ export function useCreateCategory() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateCategoryData) => adminProductApi.createCategory(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    },
+  });
+}
+
+export function useUpdateCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<CreateCategoryData & { is_active?: boolean }> }) =>
+      adminProductApi.updateCategory(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    },
+  });
+}
+
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminProductApi.deleteCategory(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
@@ -57,32 +78,80 @@ export function useDeleteAttribute() {
   });
 }
 
-export function useCategoryAttributes(categoryId: string) {
+// Attribute Groups
+export function useAttributeGroups() {
   return useQuery({
-    queryKey: ['category-attributes', categoryId],
-    queryFn: () => adminProductApi.getCategoryAttributes(categoryId),
-    enabled: !!categoryId,
+    queryKey: ['attribute-groups'],
+    queryFn: () => adminProductApi.getAttributeGroups(),
   });
 }
 
-export function useAssignAttribute() {
+export function useCreateAttributeGroup() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ categoryId, attribute_id }: { categoryId: string; attribute_id: string }) =>
-      adminProductApi.assignAttribute(categoryId, { attribute_id }),
+    mutationFn: (data: CreateAttributeGroupData) => adminProductApi.createAttributeGroup(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['category-attributes'] });
+      queryClient.invalidateQueries({ queryKey: ['attribute-groups'] });
     },
   });
 }
 
-export function useRemoveAttribute() {
+export function useUpdateAttributeGroup() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ categoryId, attrId }: { categoryId: string; attrId: string }) =>
-      adminProductApi.removeAttribute(categoryId, attrId),
+    mutationFn: ({ id, data }: { id: string; data: Partial<CreateAttributeGroupData> }) =>
+      adminProductApi.updateAttributeGroup(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['category-attributes'] });
+      queryClient.invalidateQueries({ queryKey: ['attribute-groups'] });
+    },
+  });
+}
+
+export function useDeleteAttributeGroup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminProductApi.deleteAttributeGroup(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attribute-groups'] });
+    },
+  });
+}
+
+export function useGroupAttributes(groupId: string) {
+  return useQuery({
+    queryKey: ['group-attributes', groupId],
+    queryFn: () => adminProductApi.getGroupAttributes(groupId),
+    enabled: !!groupId,
+  });
+}
+
+export function useAssignAttributeToGroup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      groupId,
+      attribute_id,
+      sort_order,
+    }: {
+      groupId: string;
+      attribute_id: string;
+      sort_order?: number;
+    }) => adminProductApi.addAttributeToGroup(groupId, { attribute_id, sort_order }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['group-attributes'] });
+      queryClient.invalidateQueries({ queryKey: ['attribute-groups'] });
+    },
+  });
+}
+
+export function useRemoveAttributeFromGroup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ groupId, attrId }: { groupId: string; attrId: string }) =>
+      adminProductApi.removeAttributeFromGroup(groupId, attrId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['group-attributes'] });
+      queryClient.invalidateQueries({ queryKey: ['attribute-groups'] });
     },
   });
 }

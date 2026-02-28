@@ -43,17 +43,18 @@ func NewProductUseCase(
 
 // CreateProductInput holds the input for creating a product.
 type CreateProductInput struct {
-	SellerID       string
-	CategoryID     string
-	Name           string
-	Description    string
-	BasePriceCents int64
-	Currency       string
-	ProductType    domain.ProductType
-	StockQuantity  int
-	Tags           []string
-	ImageURLs      []string
-	Attributes     []AttributeValueInput
+	SellerID         string
+	CategoryID       string
+	AttributeGroupID string
+	Name             string
+	Description      string
+	BasePriceCents   int64
+	Currency         string
+	ProductType      domain.ProductType
+	StockQuantity    int
+	Tags             []string
+	ImageURLs        []string
+	Attributes       []AttributeValueInput
 }
 
 // AttributeValueInput holds attribute values for product creation.
@@ -90,22 +91,23 @@ func (uc *ProductUseCase) CreateProduct(ctx context.Context, input CreateProduct
 
 	now := time.Now().UTC()
 	product := &domain.Product{
-		ID:             uuid.New().String(),
-		SellerID:       input.SellerID,
-		CategoryID:     input.CategoryID,
-		Name:           input.Name,
-		Slug:           generateSlug(input.Name),
-		Description:    input.Description,
-		BasePriceCents: input.BasePriceCents,
-		Currency:       input.Currency,
-		Status:         domain.ProductStatusDraft,
-		ProductType:    productType,
-		HasVariants:    productType == domain.ProductTypeConfigurable,
-		StockQuantity:  input.StockQuantity,
-		Tags:           input.Tags,
-		ImageURLs:      input.ImageURLs,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		ID:               uuid.New().String(),
+		SellerID:         input.SellerID,
+		CategoryID:       input.CategoryID,
+		AttributeGroupID: input.AttributeGroupID,
+		Name:             input.Name,
+		Slug:             generateSlug(input.Name),
+		Description:      input.Description,
+		BasePriceCents:   input.BasePriceCents,
+		Currency:         input.Currency,
+		Status:           domain.ProductStatusDraft,
+		ProductType:      productType,
+		HasVariants:      productType == domain.ProductTypeConfigurable,
+		StockQuantity:    input.StockQuantity,
+		Tags:             input.Tags,
+		ImageURLs:        input.ImageURLs,
+		CreatedAt:        now,
+		UpdatedAt:        now,
 	}
 
 	if product.Currency == "" {
@@ -182,15 +184,16 @@ func (uc *ProductUseCase) ListProducts(ctx context.Context, filter domain.Produc
 
 // UpdateProductInput holds the input for updating a product.
 type UpdateProductInput struct {
-	Name           *string
-	Description    *string
-	BasePriceCents *int64
-	Currency       *string
-	Status         *domain.ProductStatus
-	StockQuantity  *int
-	Tags           []string
-	ImageURLs      []string
-	CategoryID     *string
+	Name             *string
+	Description      *string
+	BasePriceCents   *int64
+	Currency         *string
+	Status           *domain.ProductStatus
+	StockQuantity    *int
+	Tags             []string
+	ImageURLs        []string
+	CategoryID       *string
+	AttributeGroupID *string
 }
 
 // UpdateProduct updates an existing product.
@@ -228,6 +231,9 @@ func (uc *ProductUseCase) UpdateProduct(ctx context.Context, id string, sellerID
 	}
 	if input.CategoryID != nil {
 		product.CategoryID = *input.CategoryID
+	}
+	if input.AttributeGroupID != nil {
+		product.AttributeGroupID = *input.AttributeGroupID
 	}
 	if input.StockQuantity != nil {
 		product.StockQuantity = *input.StockQuantity
@@ -294,6 +300,9 @@ func (uc *ProductUseCase) AdminUpdateProduct(ctx context.Context, id string, inp
 	}
 	if input.CategoryID != nil {
 		product.CategoryID = *input.CategoryID
+	}
+	if input.AttributeGroupID != nil {
+		product.AttributeGroupID = *input.AttributeGroupID
 	}
 	if input.StockQuantity != nil {
 		product.StockQuantity = *input.StockQuantity
