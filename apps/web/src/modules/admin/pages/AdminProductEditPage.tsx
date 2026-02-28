@@ -924,7 +924,7 @@ function VariantRow({ variant, productId, onUpdate }: { variant: any; productId:
       {
         productId,
         variantId: variant.id,
-        data: { price_cents: price, name: variant.name, image_urls: variantImages },
+        data: { price_cents: price, stock, name: variant.name, image_urls: variantImages },
       },
       { onSuccess: () => setEditing(false) }
     );
@@ -941,67 +941,74 @@ function VariantRow({ variant, productId, onUpdate }: { variant: any; productId:
   };
 
   return (
-    <div className="rounded-lg border p-3 space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div>
-            <p className="font-medium text-sm">{variant.name}</p>
-            <div className="flex gap-1 mt-0.5">
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {(variant.option_values || []).map((ov: any) => (
-                <Badge key={ov.option_value_id} variant="outline" className="text-xs">
-                  {ov.option_name}: {ov.value}
-                </Badge>
-              ))}
-            </div>
+    <div className="rounded-lg border p-3 space-y-3">
+      {/* Row 1: Variant name + option badges */}
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="font-medium text-sm">{variant.name}</p>
+          <div className="flex flex-wrap gap-1 mt-0.5">
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {(variant.option_values || []).map((ov: any) => (
+              <Badge key={ov.option_value_id} variant="outline" className="text-xs">
+                {ov.option_name}: {ov.value}
+              </Badge>
+            ))}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {!editing ? (
-            <>
-              <span className="text-sm font-mono">${(variant.price_cents / 100).toFixed(2)}</span>
-              <Badge variant={variant.stock > 0 ? 'secondary' : 'destructive'} className="text-xs">
-                Stock: {variant.stock}
-              </Badge>
-              <Badge variant={variant.is_active ? 'default' : 'outline'} className="text-xs">
-                {variant.is_active ? 'Active' : 'Inactive'}
-              </Badge>
-              <Button variant="ghost" size="sm" onClick={() => setShowImages(!showImages)}>
-                <ImageIcon className="h-3.5 w-3.5 mr-1" />
-                {variantImages.length > 0 ? variantImages.length : ''}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
-                Edit
-              </Button>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  value={price}
-                  onChange={(e) => setPrice(Number(e.target.value))}
-                  className="w-24 h-8 text-sm"
-                  placeholder="Price (cents)"
-                />
-                <Input
-                  type="number"
-                  value={stock}
-                  onChange={(e) => setStock(Number(e.target.value))}
-                  className="w-20 h-8 text-sm"
-                  placeholder="Stock"
-                />
-              </div>
-              <Button size="sm" onClick={handleSave} disabled={onUpdate.isPending}>
-                Save
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
-                Cancel
-              </Button>
-            </>
-          )}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setShowImages(!showImages)}>
+            <ImageIcon className="h-3.5 w-3.5" />
+            {variantImages.length > 0 && <span className="ml-1 text-xs">{variantImages.length}</span>}
+          </Button>
+          <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setEditing(!editing)}>
+            {editing ? 'Cancel' : 'Edit'}
+          </Button>
         </div>
       </div>
+
+      {/* Row 2: Price, stock, status display */}
+      {!editing ? (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-mono">${(variant.price_cents / 100).toFixed(2)}</span>
+          <Badge variant={variant.stock > 0 ? 'secondary' : 'destructive'} className="text-xs">
+            Stock: {variant.stock}
+          </Badge>
+          <Badge variant={variant.is_active ? 'default' : 'outline'} className="text-xs">
+            {variant.is_active ? 'Active' : 'Inactive'}
+          </Badge>
+        </div>
+      ) : (
+        <div className="space-y-2 pt-1 border-t">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Price (cents)</Label>
+              <Input
+                type="number"
+                value={price}
+                onChange={(e) => setPrice(Number(e.target.value))}
+                className="h-8 text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Stock</Label>
+              <Input
+                type="number"
+                value={stock}
+                onChange={(e) => setStock(Number(e.target.value))}
+                className="h-8 text-sm"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button size="sm" onClick={handleSave} disabled={onUpdate.isPending}>
+              {onUpdate.isPending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+              Save
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Collapsible image uploader */}
       {showImages && (
         <div className="pt-2 border-t">
           <ImageUploader
