@@ -236,6 +236,7 @@ type UpdateVariantInput struct {
 	PriceCents     *int64
 	CompareAtCents *int64
 	CostCents      *int64
+	Stock          *int
 	WeightGrams    *int
 	IsActive       *bool
 	ImageURLs      []string
@@ -272,6 +273,9 @@ func (uc *VariantUseCase) UpdateVariant(ctx context.Context, productID string, v
 	}
 	if input.CostCents != nil {
 		variant.CostCents = *input.CostCents
+	}
+	if input.Stock != nil {
+		variant.Stock = *input.Stock
 	}
 	if input.WeightGrams != nil {
 		variant.WeightGrams = *input.WeightGrams
@@ -496,6 +500,9 @@ func (uc *VariantUseCase) AdminUpdateVariant(ctx context.Context, productID stri
 	}
 	if input.CostCents != nil {
 		variant.CostCents = *input.CostCents
+	}
+	if input.Stock != nil {
+		variant.Stock = *input.Stock
 	}
 	if input.WeightGrams != nil {
 		variant.WeightGrams = *input.WeightGrams

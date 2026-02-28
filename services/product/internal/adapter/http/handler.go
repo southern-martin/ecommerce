@@ -360,6 +360,7 @@ type updateVariantRequest struct {
 	PriceCents     *int64   `json:"price_cents"`
 	CompareAtCents *int64   `json:"compare_at_cents"`
 	CostCents      *int64   `json:"cost_cents"`
+	Stock          *int     `json:"stock"`
 	WeightGrams    *int     `json:"weight_grams"`
 	IsActive       *bool    `json:"is_active"`
 	ImageURLs      []string `json:"image_urls"`
@@ -389,6 +390,7 @@ func (h *Handler) UpdateVariant(c *gin.Context) {
 		PriceCents:     req.PriceCents,
 		CompareAtCents: req.CompareAtCents,
 		CostCents:      req.CostCents,
+		Stock:          req.Stock,
 		WeightGrams:    req.WeightGrams,
 		IsActive:       req.IsActive,
 		ImageURLs:      req.ImageURLs,
@@ -1076,6 +1078,7 @@ func (h *Handler) AdminUpdateVariant(c *gin.Context) {
 		PriceCents:     req.PriceCents,
 		CompareAtCents: req.CompareAtCents,
 		CostCents:      req.CostCents,
+		Stock:          req.Stock,
 		WeightGrams:    req.WeightGrams,
 		IsActive:       req.IsActive,
 		ImageURLs:      req.ImageURLs,
