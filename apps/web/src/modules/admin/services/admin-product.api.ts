@@ -20,6 +20,15 @@ export interface CreateCategoryData {
   image_url?: string;
 }
 
+export interface AttributeOptionValue {
+  id: string;
+  attribute_id: string;
+  value: string;
+  color_hex?: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
 export interface Attribute {
   id: string;
   name: string;
@@ -27,17 +36,17 @@ export interface Attribute {
   type: 'text' | 'number' | 'select' | 'boolean' | 'multi_select' | 'color' | 'bool';
   required: boolean;
   filterable: boolean;
-  options?: string[];
+  option_values?: AttributeOptionValue[];
   unit?: string;
   created_at: string;
 }
 
 export interface CreateAttributeData {
   name: string;
-  type: 'text' | 'number' | 'select' | 'boolean';
+  type: 'text' | 'number' | 'select' | 'boolean' | 'multi_select' | 'color';
   required?: boolean;
   filterable?: boolean;
-  options?: string[];
+  option_values?: { value: string; color_hex?: string; sort_order?: number }[];
 }
 
 export interface AttributeGroup {

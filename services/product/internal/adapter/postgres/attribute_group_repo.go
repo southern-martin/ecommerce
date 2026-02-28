@@ -72,6 +72,9 @@ func (r *AttributeGroupRepo) RemoveAttribute(ctx context.Context, groupID, attri
 func (r *AttributeGroupRepo) ListAttributes(ctx context.Context, groupID string) ([]*domain.AttributeDefinition, error) {
 	var models []AttributeDefinitionModel
 	err := r.db.WithContext(ctx).
+		Preload("OptionValues", func(db *gorm.DB) *gorm.DB {
+			return db.Order("sort_order ASC")
+		}).
 		Joins("JOIN attribute_group_items agi ON agi.attribute_id = attribute_definitions.id").
 		Where("agi.group_id = ?", groupID).
 		Order("agi.sort_order ASC").

@@ -24,15 +24,22 @@ func NewAttributeUseCase(attributeRepo domain.AttributeRepository, categoryRepo 
 	}
 }
 
+// AttributeOptionValueInput holds input for creating/updating an attribute option value.
+type AttributeOptionValueInput struct {
+	Value     string
+	ColorHex  string
+	SortOrder int
+}
+
 // CreateAttributeInput holds input for creating an attribute definition.
 type CreateAttributeInput struct {
-	Name       string
-	Type       domain.AttributeType
-	Required   bool
-	Filterable bool
-	Options    []string
-	Unit       string
-	SortOrder  int
+	Name         string
+	Type         domain.AttributeType
+	Required     bool
+	Filterable   bool
+	OptionValues []AttributeOptionValueInput
+	Unit         string
+	SortOrder    int
 }
 
 // CreateAttributeDefinition creates a new attribute definition (admin only).
@@ -44,17 +51,36 @@ func (uc *AttributeUseCase) CreateAttributeDefinition(ctx context.Context, input
 		return nil, fmt.Errorf("attribute type is required")
 	}
 
+	attrID := uuid.New().String()
+	now := time.Now().UTC()
+
 	attr := &domain.AttributeDefinition{
-		ID:         uuid.New().String(),
+		ID:         attrID,
 		Name:       input.Name,
 		Slug:       generateSlug(input.Name),
 		Type:       input.Type,
 		Required:   input.Required,
 		Filterable: input.Filterable,
-		Options:    input.Options,
 		Unit:       input.Unit,
 		SortOrder:  input.SortOrder,
-		CreatedAt:  time.Now().UTC(),
+		CreatedAt:  now,
+	}
+
+	// Convert option value inputs to domain objects
+	for i, ov := range input.OptionValues {
+		attr.OptionValues = append(attr.OptionValues, domain.AttributeOptionValue{
+			ID:          uuid.New().String(),
+			AttributeID: attrID,
+			Value:       ov.Value,
+			ColorHex:    ov.ColorHex,
+			SortOrder:   i,
+			IsActive:    true,
+			CreatedAt:   now,
+		})
+		// Use explicit sort_order if provided
+		if ov.SortOrder > 0 {
+			attr.OptionValues[i].SortOrder = ov.SortOrder
+		}
 	}
 
 	if err := uc.attributeRepo.CreateDefinition(ctx, attr); err != nil {
@@ -71,13 +97,13 @@ func (uc *AttributeUseCase) ListAttributeDefinitions(ctx context.Context) ([]*do
 
 // UpdateAttributeInput holds input for updating an attribute definition.
 type UpdateAttributeInput struct {
-	Name       *string
-	Type       *string
-	Required   *bool
-	Filterable *bool
-	Options    []string
-	Unit       *string
-	SortOrder  *int
+	Name         *string
+	Type         *string
+	Required     *bool
+	Filterable   *bool
+	OptionValues []AttributeOptionValueInput
+	Unit         *string
+	SortOrder    *int
 }
 
 // UpdateAttributeDefinition updates an attribute definition.
@@ -100,9 +126,6 @@ func (uc *AttributeUseCase) UpdateAttributeDefinition(ctx context.Context, id st
 	if input.Filterable != nil {
 		attr.Filterable = *input.Filterable
 	}
-	if input.Options != nil {
-		attr.Options = input.Options
-	}
 	if input.Unit != nil {
 		attr.Unit = *input.Unit
 	}
@@ -112,6 +135,31 @@ func (uc *AttributeUseCase) UpdateAttributeDefinition(ctx context.Context, id st
 
 	if err := uc.attributeRepo.UpdateDefinition(ctx, attr); err != nil {
 		return nil, fmt.Errorf("failed to update attribute definition: %w", err)
+	}
+
+	// Update option values if provided
+	if input.OptionValues != nil {
+		now := time.Now().UTC()
+		var opts []domain.AttributeOptionValue
+		for i, ov := range input.OptionValues {
+			sortOrder := i
+			if ov.SortOrder > 0 {
+				sortOrder = ov.SortOrder
+			}
+			opts = append(opts, domain.AttributeOptionValue{
+				ID:          uuid.New().String(),
+				AttributeID: id,
+				Value:       ov.Value,
+				ColorHex:    ov.ColorHex,
+				SortOrder:   sortOrder,
+				IsActive:    true,
+				CreatedAt:   now,
+			})
+		}
+		if err := uc.attributeRepo.SetOptionValues(ctx, id, opts); err != nil {
+			return nil, fmt.Errorf("failed to update option values: %w", err)
+		}
+		attr.OptionValues = opts
 	}
 
 	return attr, nil

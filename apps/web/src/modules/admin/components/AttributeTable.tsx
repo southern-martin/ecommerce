@@ -17,7 +17,7 @@ interface Attribute {
   type: string;
   required: boolean;
   filterable: boolean;
-  options?: string[];
+  option_values?: { id: string; value: string; color_hex?: string }[];
 }
 
 interface AttributeTableProps {
@@ -65,7 +65,7 @@ export function AttributeTable({ attributes, onEdit, onDelete, isDeleting }: Att
                   )}
                 </div>
               </TableCell>
-              <TableCell>{attr.options?.length ?? 0}</TableCell>
+              <TableCell>{attr.option_values?.length ?? 0}</TableCell>
               <TableCell>
                 <div className="flex gap-1">
                   <Button variant="ghost" size="sm" onClick={() => onEdit(attr)}>

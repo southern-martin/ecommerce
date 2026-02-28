@@ -158,7 +158,7 @@ export const adminProductMgmtApi = {
     return response.data.attributes || [];
   },
 
-  setProductAttributes: async (productId: string, attributes: { attribute_id: string; value: string; values?: string[] }[]) => {
+  setProductAttributes: async (productId: string, attributes: { attribute_id: string; value: string; values?: string[]; option_value_id?: string; option_value_ids?: string[] }[]) => {
     const response = await apiClient.put(`/admin/products/${productId}/attributes`, { attributes });
     return response.data;
   },

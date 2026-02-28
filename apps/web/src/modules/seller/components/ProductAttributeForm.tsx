@@ -75,11 +75,29 @@ export function ProductAttributeForm({ productId, attributeGroupId }: ProductAtt
 
   const handleSave = () => {
     const attrs = groupAttributes
-      .map((attr) => ({
-        attribute_id: attr.id,
-        value: values[attr.id]?.value || '',
-        values: values[attr.id]?.values || [],
-      }))
+      .map((attr) => {
+        const val = values[attr.id]?.value || '';
+        const vals = values[attr.id]?.values || [];
+        let option_value_id: string | undefined;
+        let option_value_ids: string[] | undefined;
+        if (attr.option_values && attr.option_values.length > 0) {
+          if (attr.type === 'select' || attr.type === 'color') {
+            const ov = attr.option_values.find((o) => o.value === val);
+            option_value_id = ov?.id;
+          } else if (attr.type === 'multi_select' && vals.length > 0) {
+            option_value_ids = vals
+              .map((v) => attr.option_values!.find((o) => o.value === v)?.id)
+              .filter((id): id is string => !!id);
+          }
+        }
+        return {
+          attribute_id: attr.id,
+          value: val,
+          values: vals,
+          option_value_id,
+          option_value_ids,
+        };
+      })
       .filter((a) => a.value || a.values.length > 0);
 
     setProductAttributes.mutate({ productId, attributes: attrs });
@@ -147,33 +165,33 @@ export function ProductAttributeForm({ productId, attributeGroupId }: ProductAtt
                 />
               )}
 
-              {attrType === 'select' && attr.options && (
+              {attrType === 'select' && attr.option_values && attr.option_values.length > 0 && (
                 <select
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   value={currentValue}
                   onChange={(e) => updateValue(attr.id, e.target.value)}
                 >
                   <option value="">Select {attr.name}</option>
-                  {attr.options.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
+                  {attr.option_values.map((ov) => (
+                    <option key={ov.id} value={ov.value}>
+                      {ov.value}
                     </option>
                   ))}
                 </select>
               )}
 
-              {attrType === 'multi_select' && attr.options && (
+              {attrType === 'multi_select' && attr.option_values && attr.option_values.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {attr.options.map((opt) => {
-                    const isSelected = currentValues.includes(opt);
+                  {attr.option_values.map((ov) => {
+                    const isSelected = currentValues.includes(ov.value);
                     return (
                       <Button
-                        key={opt}
+                        key={ov.id}
                         variant={isSelected ? 'default' : 'outline'}
                         size="sm"
-                        onClick={() => toggleMultiValue(attr.id, opt)}
+                        onClick={() => toggleMultiValue(attr.id, ov.value)}
                       >
-                        {opt}
+                        {ov.value}
                       </Button>
                     );
                   })}

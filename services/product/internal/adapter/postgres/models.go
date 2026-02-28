@@ -156,35 +156,75 @@ func CategoryModelFromDomain(c *domain.Category) *CategoryModel {
 	}
 }
 
+// AttributeOptionValueModel is the GORM model for attribute_option_values table.
+type AttributeOptionValueModel struct {
+	ID          string    `gorm:"type:uuid;primaryKey"`
+	AttributeID string    `gorm:"type:uuid;not null;index"`
+	Value       string    `gorm:"type:varchar(255);not null"`
+	ColorHex    string    `gorm:"type:varchar(7)"`
+	SortOrder   int       `gorm:"not null;default:0"`
+	IsActive    bool      `gorm:"not null;default:true"`
+	CreatedAt   time.Time `gorm:"not null"`
+}
+
+func (AttributeOptionValueModel) TableName() string { return "attribute_option_values" }
+
+func (m *AttributeOptionValueModel) ToDomain() domain.AttributeOptionValue {
+	return domain.AttributeOptionValue{
+		ID:          m.ID,
+		AttributeID: m.AttributeID,
+		Value:       m.Value,
+		ColorHex:    m.ColorHex,
+		SortOrder:   m.SortOrder,
+		IsActive:    m.IsActive,
+		CreatedAt:   m.CreatedAt,
+	}
+}
+
+func AttributeOptionValueModelFromDomain(v domain.AttributeOptionValue) *AttributeOptionValueModel {
+	return &AttributeOptionValueModel{
+		ID:          v.ID,
+		AttributeID: v.AttributeID,
+		Value:       v.Value,
+		ColorHex:    v.ColorHex,
+		SortOrder:   v.SortOrder,
+		IsActive:    v.IsActive,
+		CreatedAt:   v.CreatedAt,
+	}
+}
+
 // AttributeDefinitionModel is the GORM model for attribute_definitions table.
 type AttributeDefinitionModel struct {
-	ID         string         `gorm:"type:uuid;primaryKey"`
-	Name       string         `gorm:"type:varchar(255);not null"`
-	Slug       string         `gorm:"type:varchar(300);uniqueIndex;not null"`
-	Type       string         `gorm:"type:varchar(20);not null"`
-	Required   bool           `gorm:"not null;default:false"`
-	Filterable bool           `gorm:"not null;default:false"`
-	Options    pq.StringArray `gorm:"type:text[]"`
-	Unit       string         `gorm:"type:varchar(50)"`
-	SortOrder  int            `gorm:"not null;default:0"`
-	CreatedAt  time.Time      `gorm:"not null"`
+	ID           string                      `gorm:"type:uuid;primaryKey"`
+	Name         string                      `gorm:"type:varchar(255);not null"`
+	Slug         string                      `gorm:"type:varchar(300);uniqueIndex;not null"`
+	Type         string                      `gorm:"type:varchar(20);not null"`
+	Required     bool                        `gorm:"not null;default:false"`
+	Filterable   bool                        `gorm:"not null;default:false"`
+	Unit         string                      `gorm:"type:varchar(50)"`
+	SortOrder    int                         `gorm:"not null;default:0"`
+	CreatedAt    time.Time                   `gorm:"not null"`
+	OptionValues []AttributeOptionValueModel `gorm:"foreignKey:AttributeID;references:ID"`
 }
 
 func (AttributeDefinitionModel) TableName() string { return "attribute_definitions" }
 
 func (m *AttributeDefinitionModel) ToDomain() *domain.AttributeDefinition {
-	return &domain.AttributeDefinition{
+	ad := &domain.AttributeDefinition{
 		ID:         m.ID,
 		Name:       m.Name,
 		Slug:       m.Slug,
 		Type:       domain.AttributeType(m.Type),
 		Required:   m.Required,
 		Filterable: m.Filterable,
-		Options:    m.Options,
 		Unit:       m.Unit,
 		SortOrder:  m.SortOrder,
 		CreatedAt:  m.CreatedAt,
 	}
+	for _, ov := range m.OptionValues {
+		ad.OptionValues = append(ad.OptionValues, ov.ToDomain())
+	}
+	return ad
 }
 
 func AttributeDefinitionModelFromDomain(a *domain.AttributeDefinition) *AttributeDefinitionModel {
@@ -195,7 +235,6 @@ func AttributeDefinitionModelFromDomain(a *domain.AttributeDefinition) *Attribut
 		Type:       string(a.Type),
 		Required:   a.Required,
 		Filterable: a.Filterable,
-		Options:    a.Options,
 		Unit:       a.Unit,
 		SortOrder:  a.SortOrder,
 		CreatedAt:  a.CreatedAt,
@@ -213,35 +252,49 @@ func (CategoryAttributeModel) TableName() string { return "category_attributes" 
 
 // ProductAttributeValueModel is the GORM model for product_attribute_values table.
 type ProductAttributeValueModel struct {
-	ID            string         `gorm:"type:uuid;primaryKey"`
-	ProductID     string         `gorm:"type:uuid;not null;index"`
-	AttributeID   string         `gorm:"type:uuid;not null"`
-	AttributeName string         `gorm:"type:varchar(255)"`
-	Value         string         `gorm:"type:text"`
-	Values        pq.StringArray `gorm:"type:text[]"`
+	ID             string         `gorm:"type:uuid;primaryKey"`
+	ProductID      string         `gorm:"type:uuid;not null;index"`
+	AttributeID    string         `gorm:"type:uuid;not null"`
+	AttributeName  string         `gorm:"type:varchar(255)"`
+	Value          string         `gorm:"type:text"`
+	Values         pq.StringArray `gorm:"type:text[]"`
+	OptionValueID  *string        `gorm:"type:uuid;column:option_value_id"`
+	OptionValueIDs pq.StringArray `gorm:"type:uuid[];column:option_value_ids"`
 }
 
 func (ProductAttributeValueModel) TableName() string { return "product_attribute_values" }
 
 func (m *ProductAttributeValueModel) ToDomain() domain.ProductAttributeValue {
+	ovID := ""
+	if m.OptionValueID != nil {
+		ovID = *m.OptionValueID
+	}
 	return domain.ProductAttributeValue{
-		ID:            m.ID,
-		ProductID:     m.ProductID,
-		AttributeID:   m.AttributeID,
-		AttributeName: m.AttributeName,
-		Value:         m.Value,
-		Values:        m.Values,
+		ID:             m.ID,
+		ProductID:      m.ProductID,
+		AttributeID:    m.AttributeID,
+		AttributeName:  m.AttributeName,
+		Value:          m.Value,
+		Values:         m.Values,
+		OptionValueID:  ovID,
+		OptionValueIDs: m.OptionValueIDs,
 	}
 }
 
 func ProductAttributeValueModelFromDomain(v domain.ProductAttributeValue) *ProductAttributeValueModel {
+	var ovID *string
+	if v.OptionValueID != "" {
+		ovID = &v.OptionValueID
+	}
 	return &ProductAttributeValueModel{
-		ID:            v.ID,
-		ProductID:     v.ProductID,
-		AttributeID:   v.AttributeID,
-		AttributeName: v.AttributeName,
-		Value:         v.Value,
-		Values:        v.Values,
+		ID:             v.ID,
+		ProductID:      v.ProductID,
+		AttributeID:    v.AttributeID,
+		AttributeName:  v.AttributeName,
+		Value:          v.Value,
+		Values:         v.Values,
+		OptionValueID:  ovID,
+		OptionValueIDs: v.OptionValueIDs,
 	}
 }
 
