@@ -3,6 +3,8 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"io"
+	"path/filepath"
 	"time"
 
 	"github.com/google/uuid"
@@ -121,6 +123,56 @@ func (uc *MediaUseCase) DeleteMedia(ctx context.Context, id string) error {
 	})
 
 	return nil
+}
+
+// UploadMediaRequest holds the parameters for direct file upload.
+type UploadMediaRequest struct {
+	OwnerID      string
+	OwnerType    string
+	OriginalName string
+	ContentType  string
+	SizeBytes    int64
+	Reader       io.Reader
+}
+
+// UploadMedia uploads a file directly to storage and creates the DB record.
+func (uc *MediaUseCase) UploadMedia(ctx context.Context, req UploadMediaRequest) (*domain.Media, error) {
+	id := uuid.New().String()
+	ext := filepath.Ext(req.OriginalName)
+	fileName := fmt.Sprintf("%s/%s/%s%s", req.OwnerType, req.OwnerID, id, ext)
+
+	if err := uc.storage.UploadFile(ctx, fileName, req.Reader, req.SizeBytes, req.ContentType); err != nil {
+		log.Error().Err(err).Str("id", id).Msg("failed to upload file to storage")
+		return nil, err
+	}
+
+	publicURL := uc.storage.GetPublicURL(fileName)
+
+	media := &domain.Media{
+		ID:           id,
+		OwnerID:      req.OwnerID,
+		OwnerType:    req.OwnerType,
+		FileName:     fileName,
+		OriginalName: req.OriginalName,
+		ContentType:  req.ContentType,
+		SizeBytes:    req.SizeBytes,
+		URL:          publicURL,
+		Status:       domain.MediaStatusProcessed,
+		CreatedAt:    time.Now(),
+	}
+
+	if err := uc.repo.Create(ctx, media); err != nil {
+		log.Error().Err(err).Str("id", id).Msg("failed to create media record")
+		return nil, err
+	}
+
+	_ = uc.publisher.Publish(ctx, "media.created", map[string]string{
+		"media_id":   id,
+		"owner_id":   req.OwnerID,
+		"owner_type": req.OwnerType,
+	})
+
+	return media, nil
 }
 
 // GenerateUploadURL generates a presigned upload URL for a given key.

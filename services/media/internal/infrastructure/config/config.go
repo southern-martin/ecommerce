@@ -31,11 +31,12 @@ type NATSConfig struct {
 
 // S3Config holds S3/MinIO storage configuration.
 type S3Config struct {
-	Endpoint  string
-	AccessKey string
-	SecretKey string
-	Bucket    string
-	Region    string
+	Endpoint       string
+	PublicEndpoint string // External-facing endpoint for public URLs
+	AccessKey      string
+	SecretKey      string
+	Bucket         string
+	Region         string
 }
 
 // DSN returns the Postgres connection string.
@@ -63,11 +64,12 @@ func Load() *Config {
 			URL: getEnv("NATS_URL", "nats://localhost:4222"),
 		},
 		S3: S3Config{
-			Endpoint:  getEnv("S3_ENDPOINT", "localhost:19000"),
-			AccessKey: getEnv("S3_ACCESS_KEY", "minioadmin"),
-			SecretKey: getEnv("S3_SECRET_KEY", "minioadmin"),
-			Bucket:    getEnv("S3_BUCKET", "ecommerce-media"),
-			Region:    getEnv("S3_REGION", "us-east-1"),
+			Endpoint:       getEnv("S3_ENDPOINT", "localhost:19000"),
+			PublicEndpoint: getEnv("S3_PUBLIC_ENDPOINT", getEnv("S3_ENDPOINT", "localhost:19000")),
+			AccessKey:      getEnv("S3_ACCESS_KEY", "minioadmin"),
+			SecretKey:      getEnv("S3_SECRET_KEY", "minioadmin"),
+			Bucket:         getEnv("S3_BUCKET", "ecommerce-media"),
+			Region:         getEnv("S3_REGION", "us-east-1"),
 		},
 	}
 }

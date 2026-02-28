@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/southern-martin/ecommerce/services/media/internal/domain"
@@ -43,4 +44,14 @@ func (c *MockStorageClient) GenerateDownloadURL(ctx context.Context, key string)
 // DeleteObject is a no-op for the mock client.
 func (c *MockStorageClient) DeleteObject(ctx context.Context, key string) error {
 	return nil
+}
+
+// UploadFile is a no-op for the mock client.
+func (c *MockStorageClient) UploadFile(ctx context.Context, key string, reader io.Reader, size int64, contentType string) error {
+	return nil
+}
+
+// GetPublicURL returns a mock public URL.
+func (c *MockStorageClient) GetPublicURL(key string) string {
+	return fmt.Sprintf("http://%s/%s/%s", c.endpoint, c.bucket, key)
 }
