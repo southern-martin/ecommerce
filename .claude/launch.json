@@ -378,6 +378,12 @@
       "runtimeArgs": ["node_modules/.bin/vite", "--host"],
       "port": 3000,
       "cwd": "apps/web"
+    },
+    {
+      "name": "web-docker",
+      "runtimeExecutable": "/bin/sleep",
+      "runtimeArgs": ["86400"],
+      "port": 28080
     }
   ]
 }
