@@ -1,6 +1,9 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"io"
+)
 
 // MediaRepository defines the interface for media persistence.
 type MediaRepository interface {
@@ -16,4 +19,6 @@ type StorageClient interface {
 	GenerateUploadURL(ctx context.Context, key, contentType string) (*PresignedURL, error)
 	GenerateDownloadURL(ctx context.Context, key string) (*PresignedURL, error)
 	DeleteObject(ctx context.Context, key string) error
+	UploadFile(ctx context.Context, key string, reader io.Reader, size int64, contentType string) error
+	GetPublicURL(key string) string
 }

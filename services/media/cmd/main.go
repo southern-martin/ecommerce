@@ -59,8 +59,19 @@ func main() {
 	}
 	defer publisher.Close()
 
-	// Initialize storage client (mock for now)
-	storageClient := storage.NewMockStorageClient(cfg.S3.Endpoint, cfg.S3.Bucket)
+	// Initialize storage client (MinIO/S3)
+	storageClient, err := storage.NewMinIOClient(
+		cfg.S3.Endpoint,
+		cfg.S3.PublicEndpoint,
+		cfg.S3.AccessKey,
+		cfg.S3.SecretKey,
+		cfg.S3.Bucket,
+		cfg.S3.Region,
+		false, // useSSL
+	)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to connect to MinIO")
+	}
 
 	// Initialize repositories
 	mediaRepo := postgres.NewMediaRepo(db)

@@ -105,6 +105,52 @@ func (h *Handler) DeleteMedia(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "media deleted"})
 }
 
+// UploadMedia handles POST /api/v1/media/upload (multipart/form-data).
+func (h *Handler) UploadMedia(c *gin.Context) {
+	ownerID := c.GetHeader("X-User-ID")
+	if ownerID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing user ID"})
+		return
+	}
+
+	file, header, err := c.Request.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
+		return
+	}
+	defer file.Close()
+
+	if header.Size > 10*1024*1024 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "file size exceeds 10MB limit"})
+		return
+	}
+
+	ownerType := c.PostForm("owner_type")
+	if ownerType == "" {
+		ownerType = "product"
+	}
+
+	contentType := header.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	media, err := h.mediaUC.UploadMedia(c.Request.Context(), usecase.UploadMediaRequest{
+		OwnerID:      ownerID,
+		OwnerType:    ownerType,
+		OriginalName: header.Filename,
+		ContentType:  contentType,
+		SizeBytes:    header.Size,
+		Reader:       file,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"media": media})
+}
+
 // --- Upload/Download URL Handlers ---
 
 type getUploadURLRequest struct {

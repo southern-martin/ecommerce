@@ -29,6 +29,7 @@ func NewRouter(handler *Handler) *gin.Engine {
 			media.GET("", handler.ListMedia)
 			media.GET("/:id", handler.GetMedia)
 			media.DELETE("/:id", handler.DeleteMedia)
+			media.POST("/upload", handler.UploadMedia)
 			media.POST("/upload-url", handler.GetUploadURL)
 			media.GET("/:id/download-url", handler.GetDownloadURL)
 		}
