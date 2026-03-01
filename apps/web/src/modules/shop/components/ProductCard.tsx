@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button';
 import { Star, ShoppingCart, Heart, Eye } from 'lucide-react';
 import { formatPrice } from '@/shared/lib/utils';
@@ -11,10 +11,14 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((s) => s.addItem);
+  const navigate = useNavigate();
   const images = product.images || [];
   const primaryImage = images.find((img) => img.is_primary) ?? images[0];
-  const discount = product.compare_at_price && product.compare_at_price > product.price
-    ? Math.round((1 - product.price / product.compare_at_price) * 100)
+  const isConfigurable = product.product_type === 'configurable';
+  const hasRange = isConfigurable && product.min_price != null && product.max_price != null && product.min_price !== product.max_price;
+  const displayPrice = hasRange ? product.min_price! : product.price;
+  const discount = product.compare_at_price && product.compare_at_price > displayPrice
+    ? Math.round((1 - displayPrice / product.compare_at_price) * 100)
     : 0;
 
   const handleAddToCart = () => {
@@ -102,8 +106,14 @@ export function ProductCard({ product }: ProductCardProps) {
 
         {/* Price */}
         <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-xl font-bold text-primary">{formatPrice(product.price)}</span>
-          {product.compare_at_price && product.compare_at_price > product.price && (
+          {hasRange ? (
+            <span className="text-xl font-bold text-primary">
+              {formatPrice(product.min_price!)} – {formatPrice(product.max_price!)}
+            </span>
+          ) : (
+            <span className="text-xl font-bold text-primary">{formatPrice(product.price)}</span>
+          )}
+          {!hasRange && product.compare_at_price && product.compare_at_price > product.price && (
             <span className="text-sm text-muted-foreground line-through">
               {formatPrice(product.compare_at_price)}
             </span>
@@ -114,11 +124,11 @@ export function ProductCard({ product }: ProductCardProps) {
         <Button
           size="sm"
           className="mt-3 w-full rounded-xl font-medium"
-          onClick={handleAddToCart}
+          onClick={isConfigurable ? () => navigate(`/products/${product.slug}`) : handleAddToCart}
           disabled={!product.in_stock}
         >
           <ShoppingCart className="mr-2 h-4 w-4" />
-          {product.in_stock ? 'Add to Cart' : 'Out of Stock'}
+          {!product.in_stock ? 'Out of Stock' : isConfigurable ? 'Select Options' : 'Add to Cart'}
         </Button>
       </div>
     </div>

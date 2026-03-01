@@ -45,6 +45,21 @@ export default function ProductDetailPage() {
     });
   }, [product, selectedOptions]);
 
+  // When variant changes, reset selected image to the first one
+  useEffect(() => {
+    setSelectedImage(0);
+  }, [activeVariant?.id]);
+
+  // Build display images: variant images first (if any), then product images
+  const displayImages = useMemo(() => {
+    if (!product) return [];
+    const variantImgs = (activeVariant?.image_urls || [])
+      .filter(Boolean)
+      .map((url, i) => ({ id: `var-${i}`, url, alt: product.name, is_primary: i === 0 }));
+    const productImgs = product.images || [];
+    return variantImgs.length > 0 ? [...variantImgs, ...productImgs] : productImgs;
+  }, [activeVariant, product]);
+
   // Effective price/stock: for configurable products use the active variant; for simple use the product directly
   const isSimple = !product?.product_type || product.product_type === 'simple';
   const effectivePrice = activeVariant ? activeVariant.price_cents : product?.price ?? 0;
@@ -98,10 +113,10 @@ export default function ProductDetailPage() {
           {/* Image Gallery */}
           <div className="space-y-4">
             <div className="aspect-square overflow-hidden rounded-2xl bg-muted">
-              {(product.images || [])[selectedImage]?.url ? (
+              {displayImages[selectedImage]?.url ? (
                 <img
-                  src={product.images[selectedImage].url}
-                  alt={product.images[selectedImage]?.alt ?? product.name}
+                  src={displayImages[selectedImage].url}
+                  alt={displayImages[selectedImage]?.alt ?? product.name}
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -110,9 +125,9 @@ export default function ProductDetailPage() {
                 </div>
               )}
             </div>
-            {(product.images || []).length > 1 && (
+            {displayImages.length > 1 && (
               <div className="flex gap-2 overflow-x-auto">
-                {product.images.map((image, index) => (
+                {displayImages.map((image, index) => (
                   <button
                     key={image.id}
                     onClick={() => setSelectedImage(index)}
@@ -298,8 +313,11 @@ export default function ProductDetailPage() {
                     product_slug: product.slug,
                     price_cents: effectivePrice,
                     quantity,
-                    image_url: (product.images || [])[0]?.url,
+                    image_url: activeVariant?.image_urls?.[0] || (product.images || [])[0]?.url,
                     variant_id: activeVariant?.id || undefined,
+                    variant_options: activeVariant?.option_values
+                      ? Object.fromEntries(activeVariant.option_values.map((ov) => [ov.option_name, ov.value]))
+                      : undefined,
                     seller_id: product.seller?.id,
                   });
                 }}

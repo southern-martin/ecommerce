@@ -15,6 +15,8 @@ export interface Product {
   variants?: ProductVariant[];
   options?: ProductOption[];
   attributes?: ProductAttribute[];
+  min_price?: number;
+  max_price?: number;
   seller: { id: string; name: string };
   created_at: string;
 }

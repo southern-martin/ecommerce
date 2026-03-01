@@ -107,6 +107,40 @@ func (r *ProductRepo) List(ctx context.Context, filter domain.ProductFilter) ([]
 		products[i] = m.ToDomain()
 	}
 
+	// Compute min/max price for configurable products from their active variants
+	var configurableIDs []string
+	idxMap := map[string]int{}
+	for i, p := range products {
+		if p.ProductType == domain.ProductTypeConfigurable {
+			configurableIDs = append(configurableIDs, p.ID)
+			idxMap[p.ID] = i
+		}
+	}
+	if len(configurableIDs) > 0 {
+		type priceRange struct {
+			ProductID string `gorm:"column:product_id"`
+			MinPrice  int64  `gorm:"column:min_price"`
+			MaxPrice  int64  `gorm:"column:max_price"`
+			TotalStock int   `gorm:"column:total_stock"`
+		}
+		var ranges []priceRange
+		r.db.WithContext(ctx).
+			Model(&VariantModel{}).
+			Select("product_id, MIN(price_cents) as min_price, MAX(price_cents) as max_price, SUM(stock) as total_stock").
+			Where("product_id IN ? AND is_active = true", configurableIDs).
+			Group("product_id").
+			Scan(&ranges)
+		for _, pr := range ranges {
+			if idx, ok := idxMap[pr.ProductID]; ok {
+				minP := pr.MinPrice
+				maxP := pr.MaxPrice
+				products[idx].MinPriceCents = &minP
+				products[idx].MaxPriceCents = &maxP
+				products[idx].StockQuantity = int(pr.TotalStock)
+			}
+		}
+	}
+
 	return products, total, nil
 }
 
