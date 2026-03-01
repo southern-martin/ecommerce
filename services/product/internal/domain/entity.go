@@ -54,6 +54,10 @@ type Product struct {
 	CreatedAt      time.Time     `json:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at"`
 
+	// Computed price range for configurable products (derived from active variants)
+	MinPriceCents *int64 `json:"min_price_cents,omitempty" gorm:"-"`
+	MaxPriceCents *int64 `json:"max_price_cents,omitempty" gorm:"-"`
+
 	// Loaded via Preload / usecase enrichment
 	Options    []ProductOption         `json:"options,omitempty"`
 	Variants   []Variant               `json:"variants,omitempty"`

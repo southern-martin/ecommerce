@@ -54,9 +54,20 @@ function mapBackendProduct(raw: any): Product {
 
   // Compute stock based on product type
   const isSimple = !raw.product_type || raw.product_type === 'simple';
+  const activeVariants = variants.filter(v => v.is_active);
   const totalStock = isSimple
     ? (raw.stock_quantity ?? 0)
-    : variants.filter(v => v.is_active).reduce((sum, v) => sum + v.stock, 0);
+    : activeVariants.length > 0
+      ? activeVariants.reduce((sum, v) => sum + v.stock, 0)
+      : (raw.stock_quantity ?? 0); // Listing API computes total stock server-side
+
+  // Compute price range for configurable products (from variants if available, else from API fields)
+  const min_price = activeVariants.length > 0
+    ? Math.min(...activeVariants.map(v => v.price_cents))
+    : (raw.min_price_cents ?? undefined);
+  const max_price = activeVariants.length > 0
+    ? Math.max(...activeVariants.map(v => v.price_cents))
+    : (raw.max_price_cents ?? undefined);
 
   return {
     id: raw.id,
@@ -80,6 +91,8 @@ function mapBackendProduct(raw: any): Product {
     variants: variants.length > 0 ? variants : undefined,
     options: options.length > 0 ? options : undefined,
     attributes: attributes.length > 0 ? attributes : undefined,
+    min_price,
+    max_price,
     seller: { id: raw.seller_id || '', name: '' },
     created_at: raw.created_at || '',
   };
