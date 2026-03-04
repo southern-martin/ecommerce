@@ -1,6 +1,7 @@
 import { Button } from '@/shared/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { CheckoutStepper } from '../components/CheckoutStepper';
+import { CheckoutSummary } from '../components/CheckoutSummary';
 import { ShippingForm } from '../components/ShippingForm';
 import { PaymentForm } from '../components/PaymentForm';
 import { useCheckout } from '../hooks/useCheckout';
@@ -82,21 +83,14 @@ export default function CheckoutPage() {
             )}
 
             {cart && (
-              <div className="rounded-2xl border bg-card p-5">
-                <h3 className="text-sm font-medium">Items ({cart.item_count})</h3>
-                <div className="mt-2 space-y-2">
-                  {cart.items.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3 text-sm">
-                      <img
-                        src={item.image_url}
-                        alt={item.name}
-                        className="h-10 w-10 rounded-xl object-cover"
-                      />
-                      <span className="flex-1">{item.name} x{item.quantity}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <CheckoutSummary
+                items={cart.items}
+                subtotal={cart.subtotal}
+                shipping={0}
+                tax={0}
+                discount={0}
+                total={cart.subtotal}
+              />
             )}
 
             <div className="flex gap-4">

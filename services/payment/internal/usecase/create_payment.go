@@ -24,9 +24,10 @@ type CreatePaymentInput struct {
 
 // CreatePaymentOutput holds the output of creating a payment intent.
 type CreatePaymentOutput struct {
-	PaymentID    string `json:"payment_id"`
-	ClientSecret string `json:"client_secret"`
-	Status       string `json:"status"`
+	PaymentID       string `json:"payment_id"`
+	StripePaymentID string `json:"stripe_payment_id"`
+	ClientSecret    string `json:"client_secret"`
+	Status          string `json:"status"`
 }
 
 // CreatePaymentUseCase handles creating payment intents.
@@ -92,10 +93,10 @@ func (uc *CreatePaymentUseCase) Execute(ctx context.Context, input CreatePayment
 		return nil, fmt.Errorf("failed to create stripe payment intent: %w", err)
 	}
 
-	// Update payment with Stripe ID.
+	// Persist stripe payment ID so webhook lookup works.
 	payment.StripePaymentID = stripeID
-	if err := uc.paymentRepo.UpdateStatus(ctx, payment.ID, domain.PaymentStatusPending, ""); err != nil {
-		log.Error().Err(err).Str("payment_id", payment.ID).Msg("Failed to update payment with stripe ID")
+	if err := uc.paymentRepo.UpdateStripeID(ctx, payment.ID, stripeID); err != nil {
+		log.Error().Err(err).Str("payment_id", payment.ID).Msg("Failed to save stripe payment ID")
 	}
 
 	// Publish payment.initiated event.
@@ -112,8 +113,9 @@ func (uc *CreatePaymentUseCase) Execute(ctx context.Context, input CreatePayment
 	}
 
 	return &CreatePaymentOutput{
-		PaymentID:    payment.ID,
-		ClientSecret: clientSecret,
-		Status:       string(payment.Status),
+		PaymentID:       payment.ID,
+		StripePaymentID: stripeID,
+		ClientSecret:    clientSecret,
+		Status:          string(payment.Status),
 	}, nil
 }

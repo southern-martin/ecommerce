@@ -22,6 +22,7 @@ type OrderCreatedEvent struct {
 	OrderID     string      `json:"order_id"`
 	OrderNumber string      `json:"order_number"`
 	BuyerID     string      `json:"buyer_id"`
+	BuyerEmail  string      `json:"buyer_email,omitempty"`
 	TotalCents  int64       `json:"total_cents"`
 	Currency    string      `json:"currency"`
 	Items       []ItemEvent `json:"items"`

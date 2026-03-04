@@ -10,6 +10,7 @@ import (
 // CreateOrderInput represents the input for creating a new order.
 type CreateOrderInput struct {
 	BuyerID         string
+	BuyerEmail      string
 	Currency        string
 	ShippingAddress domain.Address
 	Items           []CreateOrderItemInput
@@ -115,6 +116,7 @@ func (uc *CreateOrderUseCase) Execute(ctx context.Context, input CreateOrderInpu
 		OrderID:     order.ID,
 		OrderNumber: order.OrderNumber,
 		BuyerID:     order.BuyerID,
+		BuyerEmail:  input.BuyerEmail,
 		TotalCents:  order.TotalCents,
 		Currency:    order.Currency,
 		Items:       eventItems,

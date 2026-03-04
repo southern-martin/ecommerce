@@ -498,8 +498,11 @@ export default function AdminProductsPage() {
                     type: editingAttribute.type,
                     required: editingAttribute.required,
                     filterable: editingAttribute.filterable,
-                    options: editingAttribute.options?.join(', ') || '',
                   }}
+                  defaultOptionValues={editingAttribute.option_values?.map((ov: { value: string; color_hex?: string }) => ({
+                    value: ov.value,
+                    color_hex: ov.color_hex,
+                  }))}
                   onSubmit={handleUpdateAttribute}
                   isPending={updateAttribute.isPending}
                   submitLabel="Update Attribute"

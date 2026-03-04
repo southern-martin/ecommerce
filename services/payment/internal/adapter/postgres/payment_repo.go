@@ -76,6 +76,18 @@ func (r *PaymentRepo) UpdateStatus(ctx context.Context, id string, status domain
 	return nil
 }
 
+// UpdateStripeID saves the Stripe PaymentIntent ID on a payment record.
+func (r *PaymentRepo) UpdateStripeID(ctx context.Context, id string, stripePaymentID string) error {
+	result := r.db.WithContext(ctx).Model(&PaymentModel{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"stripe_payment_id": stripePaymentID,
+		"updated_at":        time.Now(),
+	})
+	if result.Error != nil {
+		return fmt.Errorf("failed to update stripe payment ID: %w", result.Error)
+	}
+	return nil
+}
+
 // List retrieves a paginated list of payments for a buyer.
 func (r *PaymentRepo) List(ctx context.Context, buyerID string, page, pageSize int) ([]*domain.Payment, int64, error) {
 	var total int64

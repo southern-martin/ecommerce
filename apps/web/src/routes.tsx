@@ -32,6 +32,7 @@ const OrderConfirmationPage = lazy(() => import('@/modules/checkout/pages/OrderC
 // ── Account pages ──
 const ProfilePage = lazy(() => import('@/modules/account/pages/ProfilePage'));
 const OrdersPage = lazy(() => import('@/modules/account/pages/OrdersPage'));
+const OrderDetailPage = lazy(() => import('@/modules/account/pages/OrderDetailPage'));
 const AddressesPage = lazy(() => import('@/modules/account/pages/AddressesPage'));
 const ReturnListPage = lazy(() => import('@/modules/returns/pages/ReturnListPage'));
 const ReturnRequestPage = lazy(() => import('@/modules/returns/pages/ReturnRequestPage'));
@@ -201,6 +202,14 @@ export const router = createBrowserRouter([
             element: (
               <SuspenseWrapper>
                 <OrdersPage />
+              </SuspenseWrapper>
+            ),
+          },
+          {
+            path: 'orders/:id',
+            element: (
+              <SuspenseWrapper>
+                <OrderDetailPage />
               </SuspenseWrapper>
             ),
           },
