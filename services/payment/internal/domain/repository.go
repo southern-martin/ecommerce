@@ -9,6 +9,7 @@ type PaymentRepository interface {
 	GetByOrderID(ctx context.Context, orderID string) (*Payment, error)
 	GetByStripeID(ctx context.Context, stripePaymentID string) (*Payment, error)
 	UpdateStatus(ctx context.Context, id string, status PaymentStatus, failureReason string) error
+	UpdateStripeID(ctx context.Context, id string, stripePaymentID string) error
 	List(ctx context.Context, buyerID string, page, pageSize int) ([]*Payment, int64, error)
 }
 

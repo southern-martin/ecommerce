@@ -1,20 +1,40 @@
 import apiClient from '@/shared/lib/api-client';
-import type { ApiResponse } from '@/shared/types/api.types';
 
 export interface PaymentIntent {
-  id: string;
+  payment_id: string;
+  stripe_payment_id: string;
   client_secret: string;
-  amount: number;
-  currency: string;
   status: string;
 }
 
 export const paymentApi = {
-  createPaymentIntent: async (orderId: string): Promise<PaymentIntent> => {
-    const response = await apiClient.post<ApiResponse<PaymentIntent>>(
-      `/payments/intent`,
-      { order_id: orderId }
-    );
-    return response.data.data;
+  /**
+   * Create a payment intent for an order.
+   * Backend route: POST /api/v1/payments/create-intent
+   */
+  createPaymentIntent: async (input: {
+    order_id: string;
+    buyer_id: string;
+    amount_cents: number;
+    currency: string;
+    seller_items: Array<{ seller_id: string; amount_cents: number }>;
+  }): Promise<PaymentIntent> => {
+    const response = await apiClient.post('/payments/create-intent', input);
+    return response.data;
+  },
+
+  /**
+   * Simulate a Stripe webhook to confirm payment (demo mode).
+   * Backend route: POST /api/v1/payments/webhooks/stripe
+   */
+  simulatePaymentSuccess: async (
+    stripePaymentId: string,
+    sellerItems: Array<{ seller_id: string; amount_cents: number }>
+  ): Promise<void> => {
+    await apiClient.post('/payments/webhooks/stripe', {
+      type: 'payment_intent.succeeded',
+      stripe_payment_id: stripePaymentId,
+      seller_items: sellerItems,
+    });
   },
 };

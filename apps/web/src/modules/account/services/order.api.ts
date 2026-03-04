@@ -22,7 +22,17 @@ function mapOrder(raw: any): Order {
     tax: raw.tax_cents ?? raw.tax ?? 0,
     discount: raw.discount_cents ?? raw.discount ?? 0,
     total: raw.total_cents ?? raw.total ?? 0,
-    shipping_address: raw.shipping_address || {},
+    shipping_address: {
+      first_name: raw.shipping_address?.full_name?.split(' ')[0] || raw.shipping_address?.first_name || '',
+      last_name: raw.shipping_address?.full_name?.split(' ').slice(1).join(' ') || raw.shipping_address?.last_name || '',
+      address_line1: raw.shipping_address?.line1 || raw.shipping_address?.address_line1 || '',
+      address_line2: raw.shipping_address?.line2 || raw.shipping_address?.address_line2 || '',
+      city: raw.shipping_address?.city || '',
+      state: raw.shipping_address?.state || '',
+      postal_code: raw.shipping_address?.postal_code || '',
+      country: raw.shipping_address?.country_code || raw.shipping_address?.country || '',
+      phone: raw.shipping_address?.phone || '',
+    },
     created_at: raw.created_at || '',
   };
 }

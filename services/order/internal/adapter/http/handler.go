@@ -36,6 +36,7 @@ func NewHandler(
 
 type createOrderRequest struct {
 	BuyerID         string             `json:"buyer_id" binding:"required"`
+	BuyerEmail      string             `json:"buyer_email"`
 	Currency        string             `json:"currency"`
 	ShippingAddress addressDTO         `json:"shipping_address" binding:"required"`
 	Items           []orderItemRequest `json:"items" binding:"required,min=1"`
@@ -145,8 +146,9 @@ func (h *Handler) CreateOrder(c *gin.Context) {
 	}
 
 	input := usecase.CreateOrderInput{
-		BuyerID:  req.BuyerID,
-		Currency: req.Currency,
+		BuyerID:    req.BuyerID,
+		BuyerEmail: req.BuyerEmail,
+		Currency:   req.Currency,
 		ShippingAddress: domain.Address{
 			FullName:    req.ShippingAddress.FullName,
 			Line1:       req.ShippingAddress.Line1,
@@ -185,6 +187,9 @@ func (h *Handler) ListOrders(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
 	buyerID := c.Query("buyer_id")
+	if buyerID == "" {
+		buyerID = c.GetHeader("X-User-ID")
+	}
 	status := c.Query("status")
 
 	filter := domain.OrderFilter{

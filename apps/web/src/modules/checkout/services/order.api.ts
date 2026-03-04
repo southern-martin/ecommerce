@@ -59,10 +59,12 @@ export const orderApi = {
       variant_id?: string;
       seller_id?: string;
     }>,
-    userId: string
+    userId: string,
+    userEmail?: string
   ): Promise<Order> => {
     const payload = {
       buyer_id: userId,
+      buyer_email: userEmail || '',
       currency: 'USD',
       shipping_address: {
         full_name: `${data.shipping_address.first_name} ${data.shipping_address.last_name}`,
@@ -98,7 +100,15 @@ export const orderApi = {
       id: raw.id,
       order_number: raw.order_number || raw.id,
       status: raw.status,
-      items: raw.items || [],
+      items: (raw.items || []).map((item: Record<string, unknown>) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+        id: item.id as string,
+        product_id: item.product_id as string,
+        name: (item.product_name || item.name || '') as string,
+        image_url: (item.image_url || '') as string,
+        price: (item.unit_price_cents || item.price || 0) as number,
+        quantity: (item.quantity || 1) as number,
+        variant_name: item.variant_name as string | undefined,
+      })),
       subtotal: raw.subtotal_cents || 0,
       shipping_cost: raw.shipping_cents || 0,
       tax: raw.tax_cents || 0,
