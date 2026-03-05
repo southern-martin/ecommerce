@@ -3,26 +3,34 @@ import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Send } from 'lucide-react';
 import { formatDateTime } from '@/shared/lib/utils';
-import { useMessages, useSendMessage } from '../hooks/useMessages';
+import { useMessages, useSendMessage, useMarkAsRead } from '../hooks/useMessages';
 import { useAuthStore } from '@/shared/stores/auth.store';
 
 interface ChatWindowProps {
   conversationId: string;
-  participantName: string;
+  title: string;
 }
 
-export function ChatWindow({ conversationId, participantName }: ChatWindowProps) {
+export function ChatWindow({ conversationId, title }: ChatWindowProps) {
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const user = useAuthStore((s) => s.user);
   const { data } = useMessages(conversationId);
   const sendMessage = useSendMessage();
+  const markAsRead = useMarkAsRead();
 
-  const messages = data?.data ?? [];
+  const messages = data?.messages ?? [];
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
+
+  // Mark messages as read when conversation is opened
+  useEffect(() => {
+    if (conversationId) {
+      markAsRead.mutate(conversationId);
+    }
+  }, [conversationId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSend = () => {
     if (!newMessage.trim()) return;
@@ -40,10 +48,15 @@ export function ChatWindow({ conversationId, participantName }: ChatWindowProps)
   return (
     <div className="flex h-full flex-col">
       <div className="border-b px-4 py-3">
-        <h3 className="font-semibold">{participantName}</h3>
+        <h3 className="font-semibold">{title}</h3>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.length === 0 && (
+          <p className="text-center text-sm text-muted-foreground py-8">
+            No messages yet. Start the conversation!
+          </p>
+        )}
         {messages.map((msg) => {
           const isOwn = msg.sender_id === user?.id;
           return (
@@ -82,7 +95,7 @@ export function ChatWindow({ conversationId, participantName }: ChatWindowProps)
             placeholder="Type a message..."
             className="flex-1"
           />
-          <Button onClick={handleSend} disabled={!newMessage.trim()}>
+          <Button onClick={handleSend} disabled={!newMessage.trim() || sendMessage.isPending}>
             <Send className="h-4 w-4" />
           </Button>
         </div>

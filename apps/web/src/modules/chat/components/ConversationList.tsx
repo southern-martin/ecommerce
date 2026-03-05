@@ -1,13 +1,20 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
-import { Badge } from '@/shared/components/ui/badge';
-import { cn } from '@/shared/lib/utils';
-import { formatDateTime } from '@/shared/lib/utils';
+import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar';
+import { cn, formatDateTime } from '@/shared/lib/utils';
 import type { Conversation } from '../services/chat.api';
 
 interface ConversationListProps {
   conversations: Conversation[];
   selectedId?: string;
   onSelect: (id: string) => void;
+}
+
+function getDisplayName(conv: Conversation): string {
+  return conv.subject || `Conversation #${conv.id.slice(0, 8)}`;
+}
+
+function getInitial(conv: Conversation): string {
+  if (conv.subject) return conv.subject[0].toUpperCase();
+  return conv.type === 'support' ? 'S' : 'C';
 }
 
 export function ConversationList({
@@ -27,29 +34,23 @@ export function ConversationList({
           )}
         >
           <Avatar className="h-10 w-10">
-            <AvatarImage src={conv.participant.avatar_url} />
-            <AvatarFallback>{conv.participant.name[0]}</AvatarFallback>
+            <AvatarFallback>{getInitial(conv)}</AvatarFallback>
           </Avatar>
           <div className="flex-1 overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">{conv.participant.name}</span>
-              {conv.last_message && (
-                <span className="text-xs text-muted-foreground">
-                  {formatDateTime(conv.last_message.created_at)}
-                </span>
-              )}
+              <span className="text-sm font-medium truncate">
+                {getDisplayName(conv)}
+              </span>
+              <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                {conv.last_message_at
+                  ? formatDateTime(conv.last_message_at)
+                  : formatDateTime(conv.updated_at)}
+              </span>
             </div>
-            {conv.last_message && (
-              <p className="truncate text-xs text-muted-foreground">
-                {conv.last_message.content}
-              </p>
-            )}
+            <p className="truncate text-xs text-muted-foreground">
+              {conv.status === 'active' ? 'Active' : conv.status}
+            </p>
           </div>
-          {conv.unread_count > 0 && (
-            <Badge className="h-5 min-w-[20px] justify-center rounded-full px-1.5 text-xs">
-              {conv.unread_count}
-            </Badge>
-          )}
         </button>
       ))}
     </div>
