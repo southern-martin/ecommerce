@@ -16,6 +16,10 @@ const statusColorMap: Record<string, string> = {
   rejected: 'bg-red-100 text-red-800 border-red-200',
   shipped_back: 'bg-purple-100 text-purple-800 border-purple-200',
   received: 'bg-blue-100 text-blue-800 border-blue-200',
+  // Wallet / Payout statuses
+  completed: 'bg-green-100 text-green-800 border-green-200',
+  failed: 'bg-red-100 text-red-800 border-red-200',
+  succeeded: 'bg-green-100 text-green-800 border-green-200',
   // Generic
   active: 'bg-green-100 text-green-800 border-green-200',
   inactive: 'bg-gray-100 text-gray-800 border-gray-200',

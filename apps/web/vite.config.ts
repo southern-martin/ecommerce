@@ -37,6 +37,7 @@ export default defineConfig({
       '/api/v1/media': { target: 'http://localhost:28089', changeOrigin: true },
       '/api/v1/promotions': { target: 'http://localhost:28093', changeOrigin: true },
       '/api/v1/returns': { target: 'http://localhost:28094', changeOrigin: true },
+      '/api/v1/shipments': { target: 'http://localhost:28095', changeOrigin: true },
       '/api/v1/shipping': { target: 'http://localhost:28095', changeOrigin: true },
       '/api/v1/loyalty': { target: 'http://localhost:28096', changeOrigin: true },
       '/api/v1/affiliate': { target: 'http://localhost:28097', changeOrigin: true },

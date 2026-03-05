@@ -7,26 +7,29 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts';
+import { formatPrice } from '@/shared/lib/utils';
 
-const revenueData = [
-  { date: 'Mon', revenue: 1200 },
-  { date: 'Tue', revenue: 1800 },
-  { date: 'Wed', revenue: 1400 },
-  { date: 'Thu', revenue: 2200 },
-  { date: 'Fri', revenue: 2800 },
-  { date: 'Sat', revenue: 3200 },
-  { date: 'Sun', revenue: 2600 },
-];
+interface RevenueChartProps {
+  data: Array<{ date: string; revenue: number }>;
+}
 
-export function RevenueChart() {
+export function RevenueChart({ data }: RevenueChartProps) {
+  if (data.length === 0) {
+    return (
+      <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+        No data available
+      </div>
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={revenueData}>
+      <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="date" />
         <YAxis />
         <Tooltip
-          formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
+          formatter={(value: number) => [formatPrice(value), 'Revenue']}
         />
         <Line
           type="monotone"

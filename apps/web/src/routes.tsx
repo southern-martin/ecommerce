@@ -3,7 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, Ticket,
   Truck, RotateCcw, BarChart3, Tag, FileText, Star,
-  AlertTriangle, Link, Calculator, Settings,
+  AlertTriangle, Link, Calculator, Settings, Wallet,
 } from 'lucide-react';
 import { RootLayout } from '@/shared/components/layout/RootLayout';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
@@ -53,6 +53,7 @@ const SellerCouponsPage = lazy(() => import('@/modules/seller/pages/SellerCoupon
 const SellerShipmentsPage = lazy(() => import('@/modules/seller/pages/SellerShipmentsPage'));
 const SellerReturnsPage = lazy(() => import('@/modules/seller/pages/SellerReturnsPage'));
 const SellerAnalyticsPage = lazy(() => import('@/modules/seller/pages/SellerAnalyticsPage'));
+const SellerWalletPage = lazy(() => import('@/modules/seller/pages/SellerWalletPage'));
 
 // ── Admin pages ──
 const AdminDashboardPage = lazy(() => import('@/modules/admin/pages/AdminDashboardPage'));
@@ -291,6 +292,7 @@ export const router = createBrowserRouter([
           { title: 'Dashboard', href: '/seller', icon: LayoutDashboard },
           { title: 'Products', href: '/seller/products', icon: Package },
           { title: 'Orders', href: '/seller/orders', icon: ShoppingCart },
+          { title: 'Wallet', href: '/seller/wallet', icon: Wallet },
           { title: 'Coupons', href: '/seller/coupons', icon: Ticket },
           { title: 'Shipments', href: '/seller/shipments', icon: Truck },
           { title: 'Returns', href: '/seller/returns', icon: RotateCcw },
@@ -345,6 +347,14 @@ export const router = createBrowserRouter([
         element: (
           <SuspenseWrapper>
             <SellerOrderDetailPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'wallet',
+        element: (
+          <SuspenseWrapper>
+            <SellerWalletPage />
           </SuspenseWrapper>
         ),
       },
