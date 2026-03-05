@@ -7,22 +7,26 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const orderStatusData = [
-  { name: 'Pending', value: 12 },
-  { name: 'Processing', value: 25 },
-  { name: 'Shipped', value: 18 },
-  { name: 'Delivered', value: 42 },
-  { name: 'Cancelled', value: 3 },
-];
+const COLORS = ['#f59e0b', '#6366f1', '#8b5cf6', '#22c55e', '#ef4444', '#3b82f6', '#64748b'];
 
-const COLORS = ['#f59e0b', '#6366f1', '#8b5cf6', '#22c55e', '#ef4444'];
+interface OrderStatusChartProps {
+  data: Array<{ name: string; value: number }>;
+}
 
-export function OrderStatusChart() {
+export function OrderStatusChart({ data }: OrderStatusChartProps) {
+  if (data.length === 0) {
+    return (
+      <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+        No data available
+      </div>
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={300}>
       <PieChart>
         <Pie
-          data={orderStatusData}
+          data={data}
           cx="50%"
           cy="50%"
           outerRadius={100}
@@ -31,7 +35,7 @@ export function OrderStatusChart() {
             `${name} ${(percent * 100).toFixed(0)}%`
           }
         >
-          {orderStatusData.map((_, index) => (
+          {data.map((_, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>

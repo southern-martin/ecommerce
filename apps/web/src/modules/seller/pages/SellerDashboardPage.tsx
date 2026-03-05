@@ -1,14 +1,16 @@
 import { DollarSign, Package, ShoppingCart, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { StatsCard } from '../components/StatsCard';
+import { WalletBalanceCard } from '../components/WalletBalanceCard';
 import { SellerOrderTable } from '../components/SellerOrderTable';
-import { useSellerDashboard } from '../hooks/useSellerOrders';
-import { useSellerOrders } from '../hooks/useSellerOrders';
+import { useSellerDashboardStats, useSellerOrders } from '../hooks/useSellerOrders';
+import { useSellerWalletBalance } from '../hooks/useSellerWallet';
 import { formatPrice } from '@/shared/lib/utils';
 
 export default function SellerDashboardPage() {
-  const { data: stats, isLoading: statsLoading } = useSellerDashboard();
+  const { data: stats, isLoading: statsLoading } = useSellerDashboardStats();
   const { data: recentOrders, isLoading: ordersLoading } = useSellerOrders(1, 5);
+  const { data: wallet, isLoading: walletLoading } = useSellerWalletBalance();
 
   if (statsLoading) {
     return (
@@ -18,6 +20,7 @@ export default function SellerDashboardPage() {
             <Skeleton key={i} className="h-28" />
           ))}
         </div>
+        <Skeleton className="h-24" />
         <Skeleton className="h-64" />
       </div>
     );
@@ -33,13 +36,11 @@ export default function SellerDashboardPage() {
             icon={DollarSign}
             label="Total Revenue"
             value={formatPrice(stats.total_revenue)}
-            trend={stats.revenue_trend}
           />
           <StatsCard
             icon={ShoppingCart}
             label="Total Orders"
             value={stats.total_orders.toLocaleString()}
-            trend={stats.orders_trend}
           />
           <StatsCard
             icon={Package}
@@ -53,6 +54,17 @@ export default function SellerDashboardPage() {
           />
         </div>
       )}
+
+      {walletLoading ? (
+        <Skeleton className="h-24" />
+      ) : wallet ? (
+        <WalletBalanceCard
+          availableBalance={wallet.available_balance}
+          pendingBalance={wallet.pending_balance}
+          currency={wallet.currency}
+          showLink
+        />
+      ) : null}
 
       <div>
         <h2 className="mb-4 text-lg font-semibold">Recent Orders</h2>

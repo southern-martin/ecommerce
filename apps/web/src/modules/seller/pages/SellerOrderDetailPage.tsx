@@ -10,6 +10,9 @@ import { formatPrice, formatDateTime } from '@/shared/lib/utils';
 import { ArrowLeft } from 'lucide-react';
 import { OrderItemsTable } from '../components/OrderItemsTable';
 import { OrderStatusUpdater } from '../components/OrderStatusUpdater';
+import { CreateShipmentForm } from '../components/CreateShipmentForm';
+import { ShipmentInfoCard } from '../components/ShipmentInfoCard';
+import { useCreateShipment, useShipmentByOrderId, useSellerCarriers } from '../hooks/useSellerShipping';
 
 async function getSellerOrder(id: string): Promise<Order> {
   const response = await apiClient.get(`/seller/orders/${id}`);
@@ -39,6 +42,10 @@ export default function SellerOrderDetailPage() {
     },
   });
 
+  const { data: existingShipment, isLoading: shipmentLoading } = useShipmentByOrderId(id);
+  const { data: carriers } = useSellerCarriers();
+  const createShipment = useCreateShipment();
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -53,6 +60,14 @@ export default function SellerOrderDetailPage() {
       <div className="py-8 text-center text-muted-foreground">Order not found.</div>
     );
   }
+
+  const canCreateShipment =
+    !existingShipment &&
+    (order.status === 'confirmed' || order.status === 'processing');
+
+  // The backend may return shipping_address in a different shape than the frontend type
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const addr = order.shipping_address as any;
 
   return (
     <div className="space-y-6">
@@ -83,6 +98,51 @@ export default function SellerOrderDetailPage() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Shipment</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {shipmentLoading ? (
+            <Skeleton className="h-24" />
+          ) : existingShipment ? (
+            <ShipmentInfoCard shipment={existingShipment} />
+          ) : canCreateShipment ? (
+            <CreateShipmentForm
+              orderId={order.id}
+              destinationAddress={{
+                street: addr.address_line1 || addr.line1 || '',
+                city: addr.city || '',
+                state: addr.state || '',
+                postal_code: addr.postal_code || '',
+                country: addr.country || addr.country_code || '',
+              }}
+              items={(order.items || []).map((item) => ({
+                product_id: item.product_id,
+                product_name: item.name,
+                quantity: item.quantity,
+              }))}
+              carriers={carriers ?? []}
+              onSubmit={(data) => {
+                createShipment.mutate(data, {
+                  onSuccess: () => {
+                    updateStatus.mutate('shipped');
+                    queryClient.invalidateQueries({ queryKey: ['seller-shipment-by-order', id] });
+                  },
+                });
+              }}
+              isPending={createShipment.isPending}
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {order.status === 'pending'
+                ? 'Confirm the order before creating a shipment.'
+                : 'Shipment has already been created or the order is not eligible.'}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -90,10 +150,11 @@ export default function SellerOrderDetailPage() {
           </CardHeader>
           <CardContent>
             <p className="font-medium">
-              {order.shipping_address.first_name} {order.shipping_address.last_name}
+              {addr.first_name || addr.full_name}{' '}
+              {addr.last_name || ''}
             </p>
-            {order.shipping_address.phone && (
-              <p className="text-sm text-muted-foreground">{order.shipping_address.phone}</p>
+            {addr.phone && (
+              <p className="text-sm text-muted-foreground">{addr.phone}</p>
             )}
           </CardContent>
         </Card>
@@ -103,15 +164,15 @@ export default function SellerOrderDetailPage() {
             <CardTitle>Shipping Address</CardTitle>
           </CardHeader>
           <CardContent className="text-sm">
-            <p>{order.shipping_address.address_line1}</p>
-            {order.shipping_address.address_line2 && (
-              <p>{order.shipping_address.address_line2}</p>
+            <p>{addr.address_line1 || addr.line1}</p>
+            {(addr.address_line2 || addr.line2) && (
+              <p>{addr.address_line2 || addr.line2}</p>
             )}
             <p>
-              {order.shipping_address.city}, {order.shipping_address.state}{' '}
-              {order.shipping_address.postal_code}
+              {addr.city}, {addr.state}{' '}
+              {addr.postal_code}
             </p>
-            <p>{order.shipping_address.country}</p>
+            <p>{addr.country || addr.country_code}</p>
           </CardContent>
         </Card>
       </div>

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { sellerShippingApi } from '../services/seller-shipping.api';
+import { sellerShippingApi, type CreateShipmentInput } from '../services/seller-shipping.api';
 
 export function useSellerShipments(page = 1, pageSize = 10) {
   return useQuery({
@@ -24,5 +24,24 @@ export function useSetupCarrier() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['seller-carriers'] });
     },
+  });
+}
+
+export function useCreateShipment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateShipmentInput) => sellerShippingApi.createShipment(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seller-shipments'] });
+      queryClient.invalidateQueries({ queryKey: ['seller-orders'] });
+    },
+  });
+}
+
+export function useShipmentByOrderId(orderId: string | undefined) {
+  return useQuery({
+    queryKey: ['seller-shipment-by-order', orderId],
+    queryFn: () => sellerShippingApi.getShipmentsByOrderId(orderId!),
+    enabled: !!orderId,
   });
 }
