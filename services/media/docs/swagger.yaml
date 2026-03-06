@@ -1,0 +1,433 @@
+basePath: /api/v1
+definitions:
+  internal_adapter_http.createMediaRequest:
+    properties:
+      content_type:
+        type: string
+      original_name:
+        type: string
+      owner_type:
+        type: string
+      size_bytes:
+        type: integer
+    required:
+    - content_type
+    - original_name
+    type: object
+  internal_adapter_http.getUploadURLRequest:
+    properties:
+      content_type:
+        type: string
+      key:
+        type: string
+    required:
+    - content_type
+    - key
+    type: object
+host: localhost:28089
+info:
+  contact: {}
+  description: File upload, image management, and media asset storage.
+  title: Media Service API
+  version: "1.0"
+paths:
+  /media:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Owner ID
+        in: query
+        name: owner_id
+        type: string
+      - description: Owner type
+        in: query
+        name: owner_type
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              media:
+                items:
+                  properties:
+                    content_type:
+                      type: string
+                    created_at:
+                      type: string
+                    file_name:
+                      type: string
+                    id:
+                      type: string
+                    original_name:
+                      type: string
+                    owner_id:
+                      type: string
+                    size_bytes:
+                      type: integer
+                    status:
+                      type: string
+                    url:
+                      type: string
+                  type: object
+                type: array
+              page:
+                type: integer
+              page_size:
+                type: integer
+              total:
+                type: integer
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List media with optional filters and pagination
+      tags:
+      - Media
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Media metadata
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.createMediaRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              media:
+                properties:
+                  content_type:
+                    type: string
+                  created_at:
+                    type: string
+                  file_name:
+                    type: string
+                  id:
+                    type: string
+                  original_name:
+                    type: string
+                  owner_id:
+                    type: string
+                  size_bytes:
+                    type: integer
+                  status:
+                    type: string
+                  url:
+                    type: string
+                type: object
+              upload_url:
+                properties:
+                  expires_at:
+                    type: string
+                  method:
+                    type: string
+                  url:
+                    type: string
+                type: object
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create media metadata and generate upload URL
+      tags:
+      - Media
+  /media/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Media ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete media by ID
+      tags:
+      - Media
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Media ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              media:
+                properties:
+                  content_type:
+                    type: string
+                  created_at:
+                    type: string
+                  file_name:
+                    type: string
+                  id:
+                    type: string
+                  original_name:
+                    type: string
+                  owner_id:
+                    type: string
+                  size_bytes:
+                    type: integer
+                  status:
+                    type: string
+                  url:
+                    type: string
+                type: object
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get media by ID
+      tags:
+      - Media
+  /media/{id}/download-url:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Media ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              download_url:
+                properties:
+                  expires_at:
+                    type: string
+                  method:
+                    type: string
+                  url:
+                    type: string
+                type: object
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Generate a presigned download URL for a media file
+      tags:
+      - Media
+  /media/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: 'Owner type (default: product)'
+        in: formData
+        name: owner_type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              media:
+                properties:
+                  content_type:
+                    type: string
+                  created_at:
+                    type: string
+                  file_name:
+                    type: string
+                  id:
+                    type: string
+                  original_name:
+                    type: string
+                  owner_id:
+                    type: string
+                  size_bytes:
+                    type: integer
+                  status:
+                    type: string
+                  url:
+                    type: string
+                type: object
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload a file directly
+      tags:
+      - Media
+  /media/upload-url:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Upload URL parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.getUploadURLRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              upload_url:
+                properties:
+                  expires_at:
+                    type: string
+                  method:
+                    type: string
+                  url:
+                    type: string
+                type: object
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Generate a presigned upload URL
+      tags:
+      - Media
+securityDefinitions:
+  BearerAuth:
+    description: JWT Bearer token (via Kong gateway)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

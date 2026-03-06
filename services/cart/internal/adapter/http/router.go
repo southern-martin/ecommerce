@@ -2,9 +2,13 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
+
+	_ "github.com/southern-martin/ecommerce/services/cart/docs"
 )
 
 // NewRouter creates a new Gin router with all cart routes registered.
@@ -20,6 +24,9 @@ func NewRouter(handler *CartHandler) *gin.Engine {
 	// Health check
 	router.GET("/health", handler.Health)
 	router.GET("/ready", handler.Ready)
+
+	// Swagger
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Cart API v1 routes
 	v1 := router.Group("/api/v1")

@@ -1,3 +1,14 @@
+// @title          Loyalty Service API
+// @version        1.0
+// @description    Loyalty points and membership tier management.
+//
+// @host           localhost:28096
+// @BasePath       /api/v1
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT Bearer token (via Kong gateway)
 package main
 
 import (

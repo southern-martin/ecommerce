@@ -1,3 +1,14 @@
+// @title          CMS Service API
+// @version        1.0
+// @description    Content management for pages, banners, and scheduled content.
+//
+// @host           localhost:28099
+// @BasePath       /api/v1
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT Bearer token (via Kong gateway)
 package main
 
 import (

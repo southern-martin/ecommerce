@@ -1,3 +1,15 @@
+// @title          Search Service API
+// @version        1.0
+// @description    Full-text product search and autocomplete suggestions.
+//
+// @host           localhost:28085
+// @BasePath       /api/v1
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT Bearer token (via Kong gateway)
+
 package main
 
 import (

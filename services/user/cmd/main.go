@@ -1,3 +1,15 @@
+// @title          User Service API
+// @version        1.0
+// @description    User profiles, addresses, wishlists, seller management, and social features.
+//
+// @host           localhost:28091
+// @BasePath       /api/v1
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT Bearer token (via Kong gateway)
+
 package main
 
 import (

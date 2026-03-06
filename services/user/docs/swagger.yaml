@@ -1,0 +1,949 @@
+basePath: /api/v1
+definitions:
+  github_com_southern-martin_ecommerce_services_user_internal_usecase.CreateAddressInput:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      full_name:
+        type: string
+      label:
+        type: string
+      phone:
+        type: string
+      postal_code:
+        type: string
+      state:
+        type: string
+      street:
+        type: string
+    required:
+    - city
+    - country
+    - full_name
+    - phone
+    - postal_code
+    - street
+    type: object
+  github_com_southern-martin_ecommerce_services_user_internal_usecase.CreateSellerInput:
+    properties:
+      description:
+        type: string
+      logo_url:
+        type: string
+      store_name:
+        type: string
+    required:
+    - store_name
+    type: object
+  github_com_southern-martin_ecommerce_services_user_internal_usecase.UpdateAddressInput:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      full_name:
+        type: string
+      label:
+        type: string
+      phone:
+        type: string
+      postal_code:
+        type: string
+      state:
+        type: string
+      street:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_user_internal_usecase.UpdateProfileInput:
+    properties:
+      avatar_url:
+        type: string
+      bio:
+        type: string
+      display_name:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_user_internal_usecase.UpdateSellerInput:
+    properties:
+      description:
+        type: string
+      logo_url:
+        type: string
+      store_name:
+        type: string
+    type: object
+host: localhost:28091
+info:
+  contact: {}
+  description: User profiles, addresses, wishlists, seller management, and social
+    features.
+  title: User Service API
+  version: "1.0"
+paths:
+  /admin/sellers/{id}/approve:
+    post:
+      parameters:
+      - description: Seller ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              created_at:
+                type: string
+              description:
+                type: string
+              id:
+                type: string
+              logo_url:
+                type: string
+              rating:
+                type: number
+              status:
+                type: string
+              store_name:
+                type: string
+              total_sales:
+                type: integer
+              user_id:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Approve a seller profile (admin only)
+      tags:
+      - Admin Users
+  /sellers:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Seller profile details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_user_internal_usecase.CreateSellerInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              created_at:
+                type: string
+              description:
+                type: string
+              id:
+                type: string
+              logo_url:
+                type: string
+              rating:
+                type: number
+              status:
+                type: string
+              store_name:
+                type: string
+              total_sales:
+                type: integer
+              user_id:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a seller profile
+      tags:
+      - Sellers
+  /sellers/{id}:
+    get:
+      parameters:
+      - description: Seller ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              created_at:
+                type: string
+              description:
+                type: string
+              id:
+                type: string
+              logo_url:
+                type: string
+              rating:
+                type: number
+              status:
+                type: string
+              store_name:
+                type: string
+              total_sales:
+                type: integer
+              user_id:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a seller profile by ID
+      tags:
+      - Sellers
+  /sellers/{id}/followers/count:
+    get:
+      parameters:
+      - description: Seller ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              follower_count:
+                type: integer
+              seller_id:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get follower count for a seller
+      tags:
+      - Sellers
+  /sellers/me:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Seller fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_user_internal_usecase.UpdateSellerInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              created_at:
+                type: string
+              description:
+                type: string
+              id:
+                type: string
+              logo_url:
+                type: string
+              rating:
+                type: number
+              status:
+                type: string
+              store_name:
+                type: string
+              total_sales:
+                type: integer
+              user_id:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update current user's seller profile
+      tags:
+      - Sellers
+  /users/{id}/follow:
+    delete:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Seller ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Unfollow a seller
+      tags:
+      - Following
+    post:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Seller ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Follow a seller
+      tags:
+      - Following
+  /users/me:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              avatar_url:
+                type: string
+              created_at:
+                type: string
+              display_name:
+                type: string
+              email:
+                type: string
+              first_name:
+                type: string
+              id:
+                type: string
+              last_name:
+                type: string
+              phone:
+                type: string
+              role:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - User Profile
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Profile fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_user_internal_usecase.UpdateProfileInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              avatar_url:
+                type: string
+              created_at:
+                type: string
+              display_name:
+                type: string
+              email:
+                type: string
+              first_name:
+                type: string
+              id:
+                type: string
+              last_name:
+                type: string
+              phone:
+                type: string
+              role:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update current user profile
+      tags:
+      - User Profile
+  /users/me/addresses:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              addresses:
+                items:
+                  properties:
+                    city:
+                      type: string
+                    country:
+                      type: string
+                    full_name:
+                      type: string
+                    id:
+                      type: string
+                    is_default:
+                      type: boolean
+                    label:
+                      type: string
+                    phone:
+                      type: string
+                    street:
+                      type: string
+                    user_id:
+                      type: string
+                  type: object
+                type: array
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List all addresses for current user
+      tags:
+      - Addresses
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Address details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_user_internal_usecase.CreateAddressInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              city:
+                type: string
+              country:
+                type: string
+              full_name:
+                type: string
+              id:
+                type: string
+              is_default:
+                type: boolean
+              label:
+                type: string
+              phone:
+                type: string
+              postal_code:
+                type: string
+              state:
+                type: string
+              street:
+                type: string
+              user_id:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new address
+      tags:
+      - Addresses
+  /users/me/addresses/{id}:
+    delete:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete an address
+      tags:
+      - Addresses
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Address fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_user_internal_usecase.UpdateAddressInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              city:
+                type: string
+              country:
+                type: string
+              full_name:
+                type: string
+              id:
+                type: string
+              is_default:
+                type: boolean
+              label:
+                type: string
+              phone:
+                type: string
+              postal_code:
+                type: string
+              state:
+                type: string
+              street:
+                type: string
+              user_id:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update an address
+      tags:
+      - Addresses
+  /users/me/addresses/{id}/default:
+    patch:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Set an address as default
+      tags:
+      - Addresses
+  /users/me/following:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                items:
+                  properties:
+                    created_at:
+                      type: string
+                    description:
+                      type: string
+                    id:
+                      type: string
+                    rating:
+                      type: number
+                    status:
+                      type: string
+                    store_name:
+                      type: string
+                    user_id:
+                      type: string
+                  type: object
+                type: array
+              page:
+                type: integer
+              page_size:
+                type: integer
+              total:
+                type: integer
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List sellers the current user follows
+      tags:
+      - Following
+  /wishlist:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                items:
+                  properties:
+                    created_at:
+                      type: string
+                    id:
+                      type: string
+                    product_id:
+                      type: string
+                    user_id:
+                      type: string
+                  type: object
+                type: array
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get current user's wishlist
+      tags:
+      - Wishlist
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Product to add
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            product_id:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add a product to wishlist
+      tags:
+      - Wishlist
+  /wishlist/{productId}:
+    delete:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Product ID
+        in: path
+        name: productId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Remove a product from wishlist
+      tags:
+      - Wishlist
+securityDefinitions:
+  BearerAuth:
+    description: JWT Bearer token (via Kong gateway)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

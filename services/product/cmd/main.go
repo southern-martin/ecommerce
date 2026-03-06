@@ -1,3 +1,14 @@
+// @title          Product Service API
+// @version        1.0
+// @description    Product catalog, categories, variants, options, and attribute management.
+//
+// @host           localhost:28081
+// @BasePath       /api/v1
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT Bearer token (via Kong gateway)
 package main
 
 import (

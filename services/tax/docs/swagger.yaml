@@ -1,0 +1,350 @@
+basePath: /api/v1
+definitions:
+  internal_adapter_http.calculateTaxRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/internal_adapter_http.taxItemRequest'
+        type: array
+      shipping_address:
+        $ref: '#/definitions/internal_adapter_http.taxAddressRequest'
+    required:
+    - items
+    - shipping_address
+    type: object
+  internal_adapter_http.createRuleRequest:
+    properties:
+      category:
+        type: string
+      expires_at:
+        type: string
+      inclusive:
+        type: boolean
+      rate:
+        type: number
+      starts_at:
+        type: string
+      tax_name:
+        type: string
+      zone_id:
+        type: string
+    required:
+    - rate
+    - tax_name
+    - zone_id
+    type: object
+  internal_adapter_http.ruleResponse:
+    properties:
+      category:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      inclusive:
+        type: boolean
+      is_active:
+        type: boolean
+      rate:
+        type: number
+      starts_at:
+        type: string
+      tax_name:
+        type: string
+      zone_id:
+        type: string
+    type: object
+  internal_adapter_http.taxAddressRequest:
+    properties:
+      city:
+        type: string
+      country_code:
+        type: string
+      postal_code:
+        type: string
+      state_code:
+        type: string
+    required:
+    - country_code
+    type: object
+  internal_adapter_http.taxBreakdownResponse:
+    properties:
+      amount_cents:
+        type: integer
+      jurisdiction:
+        type: string
+      rate:
+        type: number
+      tax_name:
+        type: string
+    type: object
+  internal_adapter_http.taxItemRequest:
+    properties:
+      category:
+        type: string
+      price_cents:
+        type: integer
+      product_id:
+        type: string
+      quantity:
+        type: integer
+      variant_id:
+        type: string
+    required:
+    - price_cents
+    - quantity
+    type: object
+  internal_adapter_http.updateRuleRequest:
+    properties:
+      category:
+        type: string
+      expires_at:
+        type: string
+      inclusive:
+        type: boolean
+      is_active:
+        type: boolean
+      rate:
+        type: number
+      tax_name:
+        type: string
+    type: object
+  internal_adapter_http.zoneResponse:
+    properties:
+      country_code:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      state_code:
+        type: string
+    type: object
+host: localhost:28098
+info:
+  contact: {}
+  description: Tax calculation, zone management, and tax rule configuration.
+  title: Tax Service API
+  version: "1.0"
+paths:
+  /admin/tax/rules:
+    get:
+      parameters:
+      - description: Filter by zone ID
+        in: query
+        name: zone_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              rules:
+                items:
+                  $ref: '#/definitions/internal_adapter_http.ruleResponse'
+                type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List tax rules
+      tags:
+      - Tax
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tax rule to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.createRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              rule:
+                $ref: '#/definitions/internal_adapter_http.ruleResponse'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a tax rule
+      tags:
+      - Tax
+  /admin/tax/rules/{id}:
+    delete:
+      parameters:
+      - description: Rule ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a tax rule
+      tags:
+      - Tax
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Rule ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updateRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              rule:
+                $ref: '#/definitions/internal_adapter_http.ruleResponse'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a tax rule
+      tags:
+      - Tax
+  /tax/calculate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Items and shipping address
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.calculateTaxRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              breakdown:
+                items:
+                  $ref: '#/definitions/internal_adapter_http.taxBreakdownResponse'
+                type: array
+              subtotal_cents:
+                format: int64
+                type: integer
+              tax_amount_cents:
+                format: int64
+                type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Calculate tax for items
+      tags:
+      - Tax
+  /tax/zones:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              zones:
+                items:
+                  $ref: '#/definitions/internal_adapter_http.zoneResponse'
+                type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List all tax zones
+      tags:
+      - Tax
+securityDefinitions:
+  BearerAuth:
+    description: JWT Bearer token (via Kong gateway)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

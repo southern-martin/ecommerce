@@ -46,7 +46,16 @@ func (h *Handler) Ready(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
-// SendNotification handles POST /api/v1/notifications.
+// SendNotification godoc
+// @Summary      Send a notification
+// @Tags         Notifications
+// @Accept       json
+// @Produce      json
+// @Param        body  body  usecase.SendNotificationRequest  true  "Notification payload"
+// @Success      201  {object}  domain.Notification
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /notifications [post]
 func (h *Handler) SendNotification(c *gin.Context) {
 	var req usecase.SendNotificationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -63,7 +72,21 @@ func (h *Handler) SendNotification(c *gin.Context) {
 	c.JSON(http.StatusCreated, notification)
 }
 
-// ListNotifications handles GET /api/v1/notifications.
+// ListNotifications godoc
+// @Summary      List notifications for the authenticated user
+// @Tags         Notifications
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "User ID"
+// @Param        type       query   string  false  "Filter by notification type"
+// @Param        channel    query   string  false  "Filter by channel"
+// @Param        status     query   string  false  "Filter by status"
+// @Param        page       query   int     false  "Page number"   default(1)
+// @Param        page_size  query   int     false  "Page size"     default(20)
+// @Success      200  {object}  object{notifications=[]domain.Notification,total=int64,page=int,page_size=int}
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /notifications [get]
+// @Security     BearerAuth
 func (h *Handler) ListNotifications(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -97,7 +120,14 @@ func (h *Handler) ListNotifications(c *gin.Context) {
 	})
 }
 
-// GetNotification handles GET /api/v1/notifications/:id.
+// GetNotification godoc
+// @Summary      Get a notification by ID
+// @Tags         Notifications
+// @Produce      json
+// @Param        id  path  string  true  "Notification ID"
+// @Success      200  {object}  domain.Notification
+// @Failure      404  {object}  object{error=string}
+// @Router       /notifications/{id} [get]
 func (h *Handler) GetNotification(c *gin.Context) {
 	id := c.Param("id")
 
@@ -110,7 +140,14 @@ func (h *Handler) GetNotification(c *gin.Context) {
 	c.JSON(http.StatusOK, notification)
 }
 
-// MarkAsRead handles PATCH /api/v1/notifications/:id/read.
+// MarkAsRead godoc
+// @Summary      Mark a notification as read
+// @Tags         Notifications
+// @Produce      json
+// @Param        id  path  string  true  "Notification ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /notifications/{id}/read [patch]
 func (h *Handler) MarkAsRead(c *gin.Context) {
 	id := c.Param("id")
 
@@ -122,7 +159,16 @@ func (h *Handler) MarkAsRead(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "notification marked as read"})
 }
 
-// MarkAllAsRead handles PATCH /api/v1/notifications/read-all.
+// MarkAllAsRead godoc
+// @Summary      Mark all notifications as read for the authenticated user
+// @Tags         Notifications
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "User ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /notifications/read-all [patch]
+// @Security     BearerAuth
 func (h *Handler) MarkAllAsRead(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -138,7 +184,16 @@ func (h *Handler) MarkAllAsRead(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "all notifications marked as read"})
 }
 
-// GetUnreadCount handles GET /api/v1/notifications/unread-count.
+// GetUnreadCount godoc
+// @Summary      Get unread notification count for the authenticated user
+// @Tags         Notifications
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "User ID"
+// @Success      200  {object}  object{unread_count=int64}
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /notifications/unread-count [get]
+// @Security     BearerAuth
 func (h *Handler) GetUnreadCount(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -155,7 +210,16 @@ func (h *Handler) GetUnreadCount(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"unread_count": count})
 }
 
-// GetPreferences handles GET /api/v1/notifications/preferences.
+// GetPreferences godoc
+// @Summary      Get notification preferences for the authenticated user
+// @Tags         Notifications
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "User ID"
+// @Success      200  {object}  object{preferences=[]domain.NotificationPreference}
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /notifications/preferences [get]
+// @Security     BearerAuth
 func (h *Handler) GetPreferences(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -172,7 +236,18 @@ func (h *Handler) GetPreferences(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"preferences": preferences})
 }
 
-// UpdatePreference handles PATCH /api/v1/notifications/preferences.
+// UpdatePreference godoc
+// @Summary      Update a notification preference
+// @Tags         Notifications
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string                          true  "User ID"
+// @Param        body       body    usecase.UpdatePreferenceRequest  true  "Preference update payload"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /notifications/preferences [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdatePreference(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {

@@ -1,0 +1,394 @@
+basePath: /api/v1
+definitions:
+  github_com_southern-martin_ecommerce_services_review_internal_domain.Review:
+    properties:
+      cons:
+        items:
+          type: string
+        type: array
+      content:
+        type: string
+      createdAt:
+        type: string
+      helpfulCount:
+        type: integer
+      id:
+        type: string
+      images:
+        items:
+          type: string
+        type: array
+      isVerifiedPurchase:
+        type: boolean
+      productID:
+        type: string
+      pros:
+        items:
+          type: string
+        type: array
+      rating:
+        type: integer
+      status:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_review_internal_domain.ReviewStatus'
+      title:
+        type: string
+      unhelpfulCount:
+        type: integer
+      updatedAt:
+        type: string
+      userID:
+        type: string
+      userName:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_review_internal_domain.ReviewStatus:
+    enum:
+    - pending
+    - approved
+    - rejected
+    type: string
+    x-enum-varnames:
+    - ReviewStatusPending
+    - ReviewStatusApproved
+    - ReviewStatusRejected
+  github_com_southern-martin_ecommerce_services_review_internal_domain.ReviewSummary:
+    properties:
+      averageRating:
+        format: float64
+        type: number
+      productID:
+        type: string
+      ratingDistribution:
+        additionalProperties:
+          type: integer
+        type: object
+      totalReviews:
+        type: integer
+    type: object
+  internal_adapter_http.createReviewRequest:
+    properties:
+      cons:
+        items:
+          type: string
+        type: array
+      content:
+        type: string
+      images:
+        items:
+          type: string
+        type: array
+      is_verified_purchase:
+        type: boolean
+      product_id:
+        type: string
+      pros:
+        items:
+          type: string
+        type: array
+      rating:
+        type: integer
+      title:
+        type: string
+      user_name:
+        type: string
+    required:
+    - product_id
+    - rating
+    type: object
+  internal_adapter_http.updateReviewRequest:
+    properties:
+      cons:
+        items:
+          type: string
+        type: array
+      content:
+        type: string
+      images:
+        items:
+          type: string
+        type: array
+      pros:
+        items:
+          type: string
+        type: array
+      rating:
+        type: integer
+      title:
+        type: string
+    type: object
+host: localhost:28086
+info:
+  contact: {}
+  description: Product reviews and ratings management.
+  title: Review Service API
+  version: "1.0"
+paths:
+  /admin/reviews/{id}/approve:
+    patch:
+      parameters:
+      - description: Review ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              review:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_review_internal_domain.Review'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Approve a review (admin)
+      tags:
+      - Reviews
+  /products/{product_id}/reviews/summary:
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              summary:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_review_internal_domain.ReviewSummary'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get review summary for a product
+      tags:
+      - Reviews
+  /reviews:
+    get:
+      parameters:
+      - description: Product ID
+        in: query
+        name: product_id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - default: 0
+        description: Minimum rating filter
+        in: query
+        name: min_rating
+        type: integer
+      - description: Review status filter
+        in: query
+        name: status
+        type: string
+      - default: created_at
+        description: Sort field
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: Sort order
+        in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              page:
+                type: integer
+              page_size:
+                type: integer
+              reviews:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_review_internal_domain.Review'
+                type: array
+              total:
+                type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List reviews for a product
+      tags:
+      - Reviews
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Review creation payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.createReviewRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              review:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_review_internal_domain.Review'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new review
+      tags:
+      - Reviews
+  /reviews/{id}:
+    delete:
+      parameters:
+      - description: Review ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Delete a review
+      tags:
+      - Reviews
+    get:
+      parameters:
+      - description: Review ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              review:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_review_internal_domain.Review'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get a review by ID
+      tags:
+      - Reviews
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Review ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Review update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updateReviewRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              review:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_review_internal_domain.Review'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Update an existing review
+      tags:
+      - Reviews
+securityDefinitions:
+  BearerAuth:
+    description: JWT Bearer token (via Kong gateway)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

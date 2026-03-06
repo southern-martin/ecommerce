@@ -1,0 +1,2304 @@
+basePath: /api/v1
+definitions:
+  github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeDefinition:
+    properties:
+      created_at:
+        type: string
+      filterable:
+        type: boolean
+      id:
+        type: string
+      name:
+        type: string
+      option_values:
+        items:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeOptionValue'
+        type: array
+      required:
+        type: boolean
+      slug:
+        type: string
+      sort_order:
+        type: integer
+      type:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeType'
+      unit:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeGroup:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeDefinition'
+        type: array
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+      sort_order:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeOptionValue:
+    properties:
+      attribute_id:
+        type: string
+      color_hex:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      sort_order:
+        type: integer
+      value:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeType:
+    enum:
+    - text
+    - number
+    - select
+    - multi_select
+    - color
+    - bool
+    type: string
+    x-enum-varnames:
+    - AttributeTypeText
+    - AttributeTypeNumber
+    - AttributeTypeSelect
+    - AttributeTypeMultiSelect
+    - AttributeTypeColor
+    - AttributeTypeBool
+  github_com_southern-martin_ecommerce_services_product_internal_domain.Category:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      parent_id:
+        type: string
+      slug:
+        type: string
+      sort_order:
+        type: integer
+    type: object
+  github_com_southern-martin_ecommerce_services_product_internal_domain.Product:
+    properties:
+      attribute_group_id:
+        type: string
+      attributes:
+        items:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.ProductAttributeValue'
+        type: array
+      base_price_cents:
+        type: integer
+      category_id:
+        type: string
+      created_at:
+        type: string
+      currency:
+        type: string
+      description:
+        type: string
+      has_variants:
+        type: boolean
+      id:
+        type: string
+      image_urls:
+        items:
+          type: string
+        type: array
+      max_price_cents:
+        type: integer
+      min_price_cents:
+        description: Computed price range for configurable products (derived from
+          active variants)
+        type: integer
+      name:
+        type: string
+      options:
+        description: Loaded via Preload / usecase enrichment
+        items:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.ProductOption'
+        type: array
+      product_type:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.ProductType'
+      rating_avg:
+        type: number
+      rating_count:
+        type: integer
+      seller_id:
+        type: string
+      slug:
+        type: string
+      status:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.ProductStatus'
+      stock_quantity:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+      updated_at:
+        type: string
+      variants:
+        items:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Variant'
+        type: array
+    type: object
+  github_com_southern-martin_ecommerce_services_product_internal_domain.ProductAttributeValue:
+    properties:
+      attribute_id:
+        type: string
+      attribute_name:
+        type: string
+      id:
+        type: string
+      option_value_id:
+        type: string
+      option_value_ids:
+        items:
+          type: string
+        type: array
+      product_id:
+        type: string
+      value:
+        type: string
+      values:
+        items:
+          type: string
+        type: array
+    type: object
+  github_com_southern-martin_ecommerce_services_product_internal_domain.ProductOption:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      product_id:
+        type: string
+      sort_order:
+        type: integer
+      values:
+        items:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.ProductOptionValue'
+        type: array
+    type: object
+  github_com_southern-martin_ecommerce_services_product_internal_domain.ProductOptionValue:
+    properties:
+      color_hex:
+        type: string
+      id:
+        type: string
+      option_id:
+        type: string
+      sort_order:
+        type: integer
+      value:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_product_internal_domain.ProductStatus:
+    enum:
+    - draft
+    - active
+    - inactive
+    - archived
+    type: string
+    x-enum-varnames:
+    - ProductStatusDraft
+    - ProductStatusActive
+    - ProductStatusInactive
+    - ProductStatusArchived
+  github_com_southern-martin_ecommerce_services_product_internal_domain.ProductType:
+    enum:
+    - simple
+    - configurable
+    type: string
+    x-enum-varnames:
+    - ProductTypeSimple
+    - ProductTypeConfigurable
+  github_com_southern-martin_ecommerce_services_product_internal_domain.Variant:
+    properties:
+      barcode:
+        type: string
+      compare_at_cents:
+        type: integer
+      cost_cents:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: string
+      image_urls:
+        items:
+          type: string
+        type: array
+      is_active:
+        type: boolean
+      is_default:
+        type: boolean
+      low_stock_alert:
+        type: integer
+      name:
+        type: string
+      option_values:
+        items:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.VariantOptionValue'
+        type: array
+      price_cents:
+        type: integer
+      product_id:
+        type: string
+      sku:
+        type: string
+      stock:
+        type: integer
+      updated_at:
+        type: string
+      weight_grams:
+        type: integer
+    type: object
+  github_com_southern-martin_ecommerce_services_product_internal_domain.VariantOptionValue:
+    properties:
+      option_id:
+        type: string
+      option_name:
+        type: string
+      option_value_id:
+        type: string
+      value:
+        type: string
+      variant_id:
+        type: string
+    type: object
+  internal_adapter_http.addAttributeToGroupRequest:
+    properties:
+      attribute_id:
+        type: string
+      sort_order:
+        type: integer
+    required:
+    - attribute_id
+    type: object
+  internal_adapter_http.addOptionRequest:
+    properties:
+      name:
+        type: string
+      sort_order:
+        type: integer
+      values:
+        items:
+          $ref: '#/definitions/internal_adapter_http.optionValueInputRequest'
+        type: array
+    required:
+    - name
+    - values
+    type: object
+  internal_adapter_http.assignAttributeRequest:
+    properties:
+      attribute_id:
+        type: string
+      sort_order:
+        type: integer
+    required:
+    - attribute_id
+    type: object
+  internal_adapter_http.attributeValueInputRequest:
+    properties:
+      attribute_id:
+        type: string
+      option_value_id:
+        type: string
+      option_value_ids:
+        items:
+          type: string
+        type: array
+      value:
+        type: string
+      values:
+        items:
+          type: string
+        type: array
+    type: object
+  internal_adapter_http.createAttributeGroupRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      sort_order:
+        type: integer
+    required:
+    - name
+    type: object
+  internal_adapter_http.createAttributeRequest:
+    properties:
+      filterable:
+        type: boolean
+      name:
+        type: string
+      option_values:
+        items:
+          $ref: '#/definitions/internal_adapter_http.optionValueInput'
+        type: array
+      required:
+        type: boolean
+      sort_order:
+        type: integer
+      type:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeType'
+      unit:
+        type: string
+    required:
+    - name
+    - type
+    type: object
+  internal_adapter_http.createCategoryRequest:
+    properties:
+      image_url:
+        type: string
+      name:
+        type: string
+      parent_id:
+        type: string
+      sort_order:
+        type: integer
+    required:
+    - name
+    type: object
+  internal_adapter_http.createProductRequest:
+    properties:
+      attribute_group_id:
+        type: string
+      attributes:
+        items:
+          $ref: '#/definitions/internal_adapter_http.attributeValueInputRequest'
+        type: array
+      base_price_cents:
+        type: integer
+      category_id:
+        type: string
+      currency:
+        type: string
+      description:
+        type: string
+      image_urls:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      product_type:
+        type: string
+      stock_quantity:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+    required:
+    - base_price_cents
+    - name
+    type: object
+  internal_adapter_http.optionValueInput:
+    properties:
+      color_hex:
+        type: string
+      sort_order:
+        type: integer
+      value:
+        type: string
+    required:
+    - value
+    type: object
+  internal_adapter_http.optionValueInputRequest:
+    properties:
+      color_hex:
+        type: string
+      sort_order:
+        type: integer
+      value:
+        type: string
+    required:
+    - value
+    type: object
+  internal_adapter_http.setProductAttributesRequest:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/internal_adapter_http.attributeValueInputRequest'
+        type: array
+    required:
+    - attributes
+    type: object
+  internal_adapter_http.updateAttributeGroupRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      sort_order:
+        type: integer
+    type: object
+  internal_adapter_http.updateAttributeRequest:
+    properties:
+      filterable:
+        type: boolean
+      name:
+        type: string
+      option_values:
+        items:
+          $ref: '#/definitions/internal_adapter_http.optionValueInput'
+        type: array
+      required:
+        type: boolean
+      sort_order:
+        type: integer
+      type:
+        type: string
+      unit:
+        type: string
+    type: object
+  internal_adapter_http.updateCategoryRequest:
+    properties:
+      image_url:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      parent_id:
+        type: string
+      sort_order:
+        type: integer
+    type: object
+  internal_adapter_http.updateProductRequest:
+    properties:
+      attribute_group_id:
+        type: string
+      base_price_cents:
+        type: integer
+      category_id:
+        type: string
+      currency:
+        type: string
+      description:
+        type: string
+      image_urls:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      status:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.ProductStatus'
+      stock_quantity:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  internal_adapter_http.updateStockRequest:
+    properties:
+      delta:
+        type: integer
+    required:
+    - delta
+    type: object
+  internal_adapter_http.updateVariantRequest:
+    properties:
+      barcode:
+        type: string
+      compare_at_cents:
+        type: integer
+      cost_cents:
+        type: integer
+      image_urls:
+        items:
+          type: string
+        type: array
+      is_active:
+        type: boolean
+      low_stock_alert:
+        type: integer
+      name:
+        type: string
+      price_cents:
+        type: integer
+      stock:
+        type: integer
+      weight_grams:
+        type: integer
+    type: object
+host: localhost:28081
+info:
+  contact: {}
+  description: Product catalog, categories, variants, options, and attribute management.
+  title: Product Service API
+  version: "1.0"
+paths:
+  /admin/attribute-groups:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Attribute group data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.createAttributeGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeGroup'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create an attribute group
+      tags:
+      - Admin Attribute Groups
+  /admin/attribute-groups/{id}:
+    delete:
+      parameters:
+      - description: Attribute group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete an attribute group
+      tags:
+      - Admin Attribute Groups
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Attribute group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updateAttributeGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeGroup'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update an attribute group
+      tags:
+      - Admin Attribute Groups
+  /admin/attribute-groups/{id}/attributes:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Attribute group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Attribute to add
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.addAttributeToGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add an attribute to a group
+      tags:
+      - Admin Attribute Groups
+  /admin/attribute-groups/{id}/attributes/{attrId}:
+    delete:
+      parameters:
+      - description: Attribute group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Attribute definition ID
+        in: path
+        name: attrId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Remove an attribute from a group
+      tags:
+      - Admin Attribute Groups
+  /admin/attributes:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              attributes:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeDefinition'
+                type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List all attribute definitions
+      tags:
+      - Admin Attributes
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Attribute definition data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.createAttributeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeDefinition'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create an attribute definition
+      tags:
+      - Admin Attributes
+  /admin/attributes/{id}:
+    delete:
+      parameters:
+      - description: Attribute definition ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete an attribute definition
+      tags:
+      - Admin Attributes
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Attribute definition ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updateAttributeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeDefinition'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update an attribute definition
+      tags:
+      - Admin Attributes
+  /admin/categories:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Category data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.createCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Category'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a category
+      tags:
+      - Admin Categories
+  /admin/categories/{id}:
+    delete:
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a category
+      tags:
+      - Admin Categories
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Category'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a category
+      tags:
+      - Admin Categories
+  /admin/products:
+    get:
+      description: Lists ALL products across all statuses and sellers
+      parameters:
+      - description: Filter by seller ID
+        in: query
+        name: seller_id
+        type: string
+      - description: Filter by category ID
+        in: query
+        name: category_id
+        type: string
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - description: Search query
+        in: query
+        name: q
+        type: string
+      - description: Sort field
+        in: query
+        name: sort_by
+        type: string
+      - description: Minimum price in cents
+        in: query
+        name: min_price
+        type: integer
+      - description: Maximum price in cents
+        in: query
+        name: max_price
+        type: integer
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              page:
+                type: integer
+              pageSize:
+                type: integer
+              products:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Product'
+                type: array
+              total:
+                type: integer
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List all products (admin)
+      tags:
+      - Admin Products
+  /admin/products/{id}:
+    delete:
+      description: Deletes a product regardless of seller ownership
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete any product (admin)
+      tags:
+      - Admin Products
+    get:
+      description: Returns full product with preloaded relations
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Product'
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get any product by ID (admin)
+      tags:
+      - Admin Products
+    patch:
+      consumes:
+      - application/json
+      description: Updates a product regardless of seller ownership
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Product'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update any product (admin)
+      tags:
+      - Admin Products
+  /admin/products/{id}/attributes:
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              attributes:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.ProductAttributeValue'
+                type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get product attribute values (admin)
+      tags:
+      - Admin Products
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Attribute values
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.setProductAttributesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Set product attribute values (admin)
+      tags:
+      - Admin Products
+  /admin/products/{id}/options:
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              options:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.ProductOption'
+                type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List product options (admin)
+      tags:
+      - Admin Products
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Option data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.addOptionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.ProductOption'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add an option to a product (admin)
+      tags:
+      - Admin Products
+  /admin/products/{id}/options/{optionId}:
+    delete:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Option ID
+        in: path
+        name: optionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Remove an option from a product (admin)
+      tags:
+      - Admin Products
+  /admin/products/{id}/variants:
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              variants:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Variant'
+                type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List product variants (admin)
+      tags:
+      - Admin Products
+  /admin/products/{id}/variants/{variantId}:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Variant ID
+        in: path
+        name: variantId
+        required: true
+        type: string
+      - description: Variant fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updateVariantRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Variant'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a variant (admin)
+      tags:
+      - Admin Products
+  /admin/products/{id}/variants/{variantId}/stock:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Variant ID
+        in: path
+        name: variantId
+        required: true
+        type: string
+      - description: Stock delta
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updateStockRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update variant stock (admin)
+      tags:
+      - Admin Products
+  /admin/products/{id}/variants/generate:
+    post:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              variants:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Variant'
+                type: array
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Generate variants from options (admin)
+      tags:
+      - Admin Products
+  /attribute-groups:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              attribute_groups:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeGroup'
+                type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List all attribute groups
+      tags:
+      - Attribute Groups
+  /attribute-groups/{id}:
+    get:
+      parameters:
+      - description: Attribute group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeGroup'
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get an attribute group by ID
+      tags:
+      - Attribute Groups
+  /attribute-groups/{id}/attributes:
+    get:
+      parameters:
+      - description: Attribute group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              attributes:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeDefinition'
+                type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List attributes in a group
+      tags:
+      - Attribute Groups
+  /categories:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              categories:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Category'
+                type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List all categories
+      tags:
+      - Categories
+  /categories/{id}/attributes:
+    get:
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              attributes:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.AttributeDefinition'
+                type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List attributes assigned to a category
+      tags:
+      - Categories
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Attribute assignment
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.assignAttributeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Assign an attribute to a category
+      tags:
+      - Categories
+  /categories/{id}/attributes/{attrId}:
+    delete:
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Attribute definition ID
+        in: path
+        name: attrId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Remove an attribute from a category
+      tags:
+      - Categories
+  /products:
+    get:
+      parameters:
+      - description: Filter by seller ID
+        in: query
+        name: seller_id
+        type: string
+      - description: Filter by category ID
+        in: query
+        name: category_id
+        type: string
+      - description: 'Filter by status (default: active)'
+        in: query
+        name: status
+        type: string
+      - description: Search query
+        in: query
+        name: q
+        type: string
+      - description: Sort field
+        in: query
+        name: sort_by
+        type: string
+      - description: Minimum price in cents
+        in: query
+        name: min_price
+        type: integer
+      - description: Maximum price in cents
+        in: query
+        name: max_price
+        type: integer
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              page:
+                type: integer
+              pageSize:
+                type: integer
+              products:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Product'
+                type: array
+              total:
+                type: integer
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List products
+      tags:
+      - Public Products
+  /products/{id}:
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Product'
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get product by ID
+      tags:
+      - Public Products
+  /products/{id}/attributes:
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              attributes:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.ProductAttributeValue'
+                type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get product attribute values
+      tags:
+      - Public Products
+  /products/{id}/options:
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              options:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.ProductOption'
+                type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List product options
+      tags:
+      - Public Products
+  /products/{id}/variants:
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              variants:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Variant'
+                type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List product variants
+      tags:
+      - Public Products
+  /products/{id}/variants/{variantId}:
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Variant ID
+        in: path
+        name: variantId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Variant'
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get a variant by ID
+      tags:
+      - Public Products
+  /products/slug/{slug}:
+    get:
+      parameters:
+      - description: Product slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Product'
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get product by slug
+      tags:
+      - Public Products
+  /seller/products:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Seller ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Product data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.createProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Product'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new product
+      tags:
+      - Seller Products
+  /seller/products/{id}:
+    delete:
+      parameters:
+      - description: Seller ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a product (seller)
+      tags:
+      - Seller Products
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Seller ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Product'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a product (seller)
+      tags:
+      - Seller Products
+  /seller/products/{id}/attributes:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Seller ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Attribute values
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.setProductAttributesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Set product attribute values (seller)
+      tags:
+      - Seller Products
+  /seller/products/{id}/options:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Seller ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Option data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.addOptionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.ProductOption'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add an option to a product (seller)
+      tags:
+      - Seller Products
+  /seller/products/{id}/options/{optionId}:
+    delete:
+      parameters:
+      - description: Seller ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Option ID
+        in: path
+        name: optionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Remove an option from a product (seller)
+      tags:
+      - Seller Products
+  /seller/products/{id}/variants/{variantId}:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Seller ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Variant ID
+        in: path
+        name: variantId
+        required: true
+        type: string
+      - description: Variant fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updateVariantRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Variant'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a variant (seller)
+      tags:
+      - Seller Products
+  /seller/products/{id}/variants/{variantId}/stock:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Seller ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Variant ID
+        in: path
+        name: variantId
+        required: true
+        type: string
+      - description: Stock delta
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updateStockRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update variant stock (seller)
+      tags:
+      - Seller Products
+  /seller/products/{id}/variants/generate:
+    post:
+      parameters:
+      - description: Seller ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              variants:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_product_internal_domain.Variant'
+                type: array
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Generate variants from options (seller)
+      tags:
+      - Seller Products
+securityDefinitions:
+  BearerAuth:
+    description: JWT Bearer token (via Kong gateway)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

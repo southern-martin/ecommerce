@@ -76,7 +76,15 @@ func (h *Handler) Ready(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
-// GetProfile handles GET /api/v1/users/me
+// GetProfile godoc
+// @Summary      Get current user profile
+// @Tags         User Profile
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "User ID"
+// @Success      200  {object}  object{id=string,email=string,first_name=string,last_name=string,display_name=string,phone=string,avatar_url=string,role=string,created_at=string}
+// @Failure      404  {object}  object{error=string}
+// @Router       /users/me [get]
+// @Security     BearerAuth
 func (h *Handler) GetProfile(c *gin.Context) {
 	userID := getUserID(c)
 	profile, err := h.profile.GetProfile(c.Request.Context(), userID)
@@ -87,7 +95,18 @@ func (h *Handler) GetProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, profile)
 }
 
-// UpdateProfile handles PATCH /api/v1/users/me
+// UpdateProfile godoc
+// @Summary      Update current user profile
+// @Tags         User Profile
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string                    true  "User ID"
+// @Param        body       body    usecase.UpdateProfileInput true  "Profile fields to update"
+// @Success      200  {object}  object{id=string,email=string,first_name=string,last_name=string,display_name=string,phone=string,avatar_url=string,role=string,created_at=string}
+// @Failure      400  {object}  object{error=string}
+// @Failure      404  {object}  object{error=string}
+// @Router       /users/me [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdateProfile(c *gin.Context) {
 	userID := getUserID(c)
 
@@ -105,7 +124,17 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, profile)
 }
 
-// CreateAddress handles POST /api/v1/users/me/addresses
+// CreateAddress godoc
+// @Summary      Create a new address
+// @Tags         Addresses
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string                     true  "User ID"
+// @Param        body       body    usecase.CreateAddressInput  true  "Address details"
+// @Success      201  {object}  object{id=string,user_id=string,label=string,full_name=string,phone=string,street=string,city=string,state=string,postal_code=string,country=string,is_default=bool}
+// @Failure      400  {object}  object{error=string}
+// @Router       /users/me/addresses [post]
+// @Security     BearerAuth
 func (h *Handler) CreateAddress(c *gin.Context) {
 	userID := getUserID(c)
 
@@ -123,7 +152,14 @@ func (h *Handler) CreateAddress(c *gin.Context) {
 	c.JSON(http.StatusCreated, addr)
 }
 
-// ListAddresses handles GET /api/v1/users/me/addresses
+// ListAddresses godoc
+// @Summary      List all addresses for current user
+// @Tags         Addresses
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "User ID"
+// @Success      200  {object}  object{addresses=[]object{id=string,user_id=string,label=string,full_name=string,phone=string,street=string,city=string,country=string,is_default=bool}}
+// @Router       /users/me/addresses [get]
+// @Security     BearerAuth
 func (h *Handler) ListAddresses(c *gin.Context) {
 	userID := getUserID(c)
 
@@ -135,7 +171,20 @@ func (h *Handler) ListAddresses(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"addresses": addresses})
 }
 
-// UpdateAddress handles PATCH /api/v1/users/me/addresses/:id
+// UpdateAddress godoc
+// @Summary      Update an address
+// @Tags         Addresses
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string                     true  "User ID"
+// @Param        id         path    string                     true  "Address ID"
+// @Param        body       body    usecase.UpdateAddressInput  true  "Address fields to update"
+// @Success      200  {object}  object{id=string,user_id=string,label=string,full_name=string,phone=string,street=string,city=string,state=string,postal_code=string,country=string,is_default=bool}
+// @Failure      400  {object}  object{error=string}
+// @Failure      403  {object}  object{error=string}
+// @Failure      404  {object}  object{error=string}
+// @Router       /users/me/addresses/{id} [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdateAddress(c *gin.Context) {
 	userID := getUserID(c)
 	addrID := c.Param("id")
@@ -154,7 +203,17 @@ func (h *Handler) UpdateAddress(c *gin.Context) {
 	c.JSON(http.StatusOK, addr)
 }
 
-// DeleteAddress handles DELETE /api/v1/users/me/addresses/:id
+// DeleteAddress godoc
+// @Summary      Delete an address
+// @Tags         Addresses
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "User ID"
+// @Param        id         path    string  true  "Address ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      403  {object}  object{error=string}
+// @Failure      404  {object}  object{error=string}
+// @Router       /users/me/addresses/{id} [delete]
+// @Security     BearerAuth
 func (h *Handler) DeleteAddress(c *gin.Context) {
 	userID := getUserID(c)
 	addrID := c.Param("id")
@@ -166,7 +225,17 @@ func (h *Handler) DeleteAddress(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "address deleted"})
 }
 
-// SetDefaultAddress handles PATCH /api/v1/users/me/addresses/:id/default
+// SetDefaultAddress godoc
+// @Summary      Set an address as default
+// @Tags         Addresses
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "User ID"
+// @Param        id         path    string  true  "Address ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      403  {object}  object{error=string}
+// @Failure      404  {object}  object{error=string}
+// @Router       /users/me/addresses/{id}/default [patch]
+// @Security     BearerAuth
 func (h *Handler) SetDefaultAddress(c *gin.Context) {
 	userID := getUserID(c)
 	addrID := c.Param("id")
@@ -178,7 +247,18 @@ func (h *Handler) SetDefaultAddress(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "default address updated"})
 }
 
-// CreateSeller handles POST /api/v1/sellers
+// CreateSeller godoc
+// @Summary      Create a seller profile
+// @Tags         Sellers
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string                     true  "User ID"
+// @Param        body       body    usecase.CreateSellerInput   true  "Seller profile details"
+// @Success      201  {object}  object{id=string,user_id=string,store_name=string,description=string,logo_url=string,rating=number,total_sales=int,status=string,created_at=string}
+// @Failure      400  {object}  object{error=string}
+// @Failure      409  {object}  object{error=string}
+// @Router       /sellers [post]
+// @Security     BearerAuth
 func (h *Handler) CreateSeller(c *gin.Context) {
 	userID := getUserID(c)
 
@@ -196,7 +276,15 @@ func (h *Handler) CreateSeller(c *gin.Context) {
 	c.JSON(http.StatusCreated, seller)
 }
 
-// GetSeller handles GET /api/v1/sellers/:id
+// GetSeller godoc
+// @Summary      Get a seller profile by ID
+// @Tags         Sellers
+// @Produce      json
+// @Param        id  path  string  true  "Seller ID"
+// @Success      200  {object}  object{id=string,user_id=string,store_name=string,description=string,logo_url=string,rating=number,total_sales=int,status=string,created_at=string}
+// @Failure      404  {object}  object{error=string}
+// @Router       /sellers/{id} [get]
+// @Security     BearerAuth
 func (h *Handler) GetSeller(c *gin.Context) {
 	sellerID := c.Param("id")
 
@@ -208,7 +296,18 @@ func (h *Handler) GetSeller(c *gin.Context) {
 	c.JSON(http.StatusOK, seller)
 }
 
-// UpdateSeller handles PATCH /api/v1/sellers/me
+// UpdateSeller godoc
+// @Summary      Update current user's seller profile
+// @Tags         Sellers
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string                     true  "User ID"
+// @Param        body       body    usecase.UpdateSellerInput   true  "Seller fields to update"
+// @Success      200  {object}  object{id=string,user_id=string,store_name=string,description=string,logo_url=string,rating=number,total_sales=int,status=string,created_at=string}
+// @Failure      400  {object}  object{error=string}
+// @Failure      404  {object}  object{error=string}
+// @Router       /sellers/me [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdateSeller(c *gin.Context) {
 	userID := getUserID(c)
 
@@ -226,7 +325,15 @@ func (h *Handler) UpdateSeller(c *gin.Context) {
 	c.JSON(http.StatusOK, seller)
 }
 
-// ApproveSeller handles POST /api/v1/admin/sellers/:id/approve
+// ApproveSeller godoc
+// @Summary      Approve a seller profile (admin only)
+// @Tags         Admin Users
+// @Produce      json
+// @Param        id  path  string  true  "Seller ID"
+// @Success      200  {object}  object{id=string,user_id=string,store_name=string,description=string,logo_url=string,rating=number,total_sales=int,status=string,created_at=string}
+// @Failure      404  {object}  object{error=string}
+// @Router       /admin/sellers/{id}/approve [post]
+// @Security     BearerAuth
 func (h *Handler) ApproveSeller(c *gin.Context) {
 	sellerID := c.Param("id")
 
@@ -238,7 +345,16 @@ func (h *Handler) ApproveSeller(c *gin.Context) {
 	c.JSON(http.StatusOK, seller)
 }
 
-// FollowSeller handles POST /api/v1/users/:id/follow
+// FollowSeller godoc
+// @Summary      Follow a seller
+// @Tags         Following
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "User ID"
+// @Param        id         path    string  true  "Seller ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      409  {object}  object{error=string}
+// @Router       /users/{id}/follow [post]
+// @Security     BearerAuth
 func (h *Handler) FollowSeller(c *gin.Context) {
 	userID := getUserID(c)
 	sellerID := c.Param("id")
@@ -250,7 +366,16 @@ func (h *Handler) FollowSeller(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "followed"})
 }
 
-// UnfollowSeller handles DELETE /api/v1/users/:id/follow
+// UnfollowSeller godoc
+// @Summary      Unfollow a seller
+// @Tags         Following
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "User ID"
+// @Param        id         path    string  true  "Seller ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      404  {object}  object{error=string}
+// @Router       /users/{id}/follow [delete]
+// @Security     BearerAuth
 func (h *Handler) UnfollowSeller(c *gin.Context) {
 	userID := getUserID(c)
 	sellerID := c.Param("id")
@@ -262,7 +387,16 @@ func (h *Handler) UnfollowSeller(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "unfollowed"})
 }
 
-// ListFollowed handles GET /api/v1/users/me/following
+// ListFollowed godoc
+// @Summary      List sellers the current user follows
+// @Tags         Following
+// @Produce      json
+// @Param        X-User-ID  header  string  true   "User ID"
+// @Param        page       query   int     false  "Page number"
+// @Param        page_size  query   int     false  "Page size"
+// @Success      200  {object}  object{data=[]object{id=string,user_id=string,store_name=string,description=string,rating=number,status=string,created_at=string},total=int,page=int,page_size=int}
+// @Router       /users/me/following [get]
+// @Security     BearerAuth
 func (h *Handler) ListFollowed(c *gin.Context) {
 	userID := getUserID(c)
 	params := pagination.ParseFromGin(c)
@@ -277,7 +411,15 @@ func (h *Handler) ListFollowed(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// GetFollowerCount handles GET /api/v1/sellers/:id/followers/count
+// GetFollowerCount godoc
+// @Summary      Get follower count for a seller
+// @Tags         Sellers
+// @Produce      json
+// @Param        id  path  string  true  "Seller ID"
+// @Success      200  {object}  object{seller_id=string,follower_count=int}
+// @Failure      404  {object}  object{error=string}
+// @Router       /sellers/{id}/followers/count [get]
+// @Security     BearerAuth
 func (h *Handler) GetFollowerCount(c *gin.Context) {
 	sellerID := c.Param("id")
 
@@ -289,7 +431,14 @@ func (h *Handler) GetFollowerCount(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"seller_id": sellerID, "follower_count": count})
 }
 
-// GetWishlist handles GET /api/v1/wishlist
+// GetWishlist godoc
+// @Summary      Get current user's wishlist
+// @Tags         Wishlist
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "User ID"
+// @Success      200  {object}  object{data=[]object{id=string,user_id=string,product_id=string,created_at=string}}
+// @Router       /wishlist [get]
+// @Security     BearerAuth
 func (h *Handler) GetWishlist(c *gin.Context) {
 	userID := getUserID(c)
 	items, err := h.wishlist.ListItems(c.Request.Context(), userID)
@@ -300,7 +449,18 @@ func (h *Handler) GetWishlist(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": items})
 }
 
-// AddToWishlist handles POST /api/v1/wishlist
+// AddToWishlist godoc
+// @Summary      Add a product to wishlist
+// @Tags         Wishlist
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string                           true  "User ID"
+// @Param        body       body    object{product_id=string}        true  "Product to add"
+// @Success      201  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Failure      409  {object}  object{error=string}
+// @Router       /wishlist [post]
+// @Security     BearerAuth
 func (h *Handler) AddToWishlist(c *gin.Context) {
 	userID := getUserID(c)
 
@@ -319,7 +479,16 @@ func (h *Handler) AddToWishlist(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "added to wishlist"})
 }
 
-// RemoveFromWishlist handles DELETE /api/v1/wishlist/:productId
+// RemoveFromWishlist godoc
+// @Summary      Remove a product from wishlist
+// @Tags         Wishlist
+// @Produce      json
+// @Param        X-User-ID   header  string  true  "User ID"
+// @Param        productId   path    string  true  "Product ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      404  {object}  object{error=string}
+// @Router       /wishlist/{productId} [delete]
+// @Security     BearerAuth
 func (h *Handler) RemoveFromWishlist(c *gin.Context) {
 	userID := getUserID(c)
 	productID := c.Param("productId")

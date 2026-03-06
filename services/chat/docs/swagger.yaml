@@ -1,0 +1,515 @@
+basePath: /api/v1
+definitions:
+  internal_adapter_http.createConversationRequest:
+    properties:
+      buyer_id:
+        type: string
+      order_id:
+        type: string
+      seller_id:
+        type: string
+      subject:
+        type: string
+      type:
+        type: string
+    required:
+    - buyer_id
+    - seller_id
+    type: object
+  internal_adapter_http.sendMessageRequest:
+    properties:
+      attachments:
+        items:
+          type: string
+        type: array
+      content:
+        type: string
+      message_type:
+        type: string
+      sender_role:
+        type: string
+    required:
+    - content
+    type: object
+host: localhost:28088
+info:
+  contact: {}
+  description: Real-time messaging between buyers and sellers.
+  title: Chat Service API
+  version: "1.0"
+paths:
+  /conversations:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              conversations:
+                items:
+                  properties:
+                    buyer_id:
+                      type: string
+                    created_at:
+                      type: string
+                    id:
+                      type: string
+                    last_message_at:
+                      type: string
+                    seller_id:
+                      type: string
+                    status:
+                      type: string
+                    subject:
+                      type: string
+                    type:
+                      type: string
+                  type: object
+                type: array
+              page:
+                type: integer
+              page_size:
+                type: integer
+              total:
+                type: integer
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List conversations for a user
+      tags:
+      - Chat
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Conversation creation payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.createConversationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              conversation:
+                properties:
+                  buyer_id:
+                    type: string
+                  created_at:
+                    type: string
+                  id:
+                    type: string
+                  order_id:
+                    type: string
+                  seller_id:
+                    type: string
+                  status:
+                    type: string
+                  subject:
+                    type: string
+                  type:
+                    type: string
+                type: object
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new conversation
+      tags:
+      - Chat
+  /conversations/{id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Conversation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              conversation:
+                properties:
+                  buyer_id:
+                    type: string
+                  created_at:
+                    type: string
+                  id:
+                    type: string
+                  seller_id:
+                    type: string
+                  status:
+                    type: string
+                  subject:
+                    type: string
+                  type:
+                    type: string
+                type: object
+              messages:
+                items:
+                  properties:
+                    content:
+                      type: string
+                    conversation_id:
+                      type: string
+                    created_at:
+                      type: string
+                    id:
+                      type: string
+                    is_read:
+                      type: boolean
+                    message_type:
+                      type: string
+                    sender_id:
+                      type: string
+                    sender_role:
+                      type: string
+                  type: object
+                type: array
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get a conversation with recent messages
+      tags:
+      - Chat
+  /conversations/{id}/archive:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Conversation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              status:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Archive a conversation
+      tags:
+      - Chat
+  /conversations/{id}/messages:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Conversation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Items per page
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              messages:
+                items:
+                  properties:
+                    content:
+                      type: string
+                    conversation_id:
+                      type: string
+                    created_at:
+                      type: string
+                    id:
+                      type: string
+                    is_read:
+                      type: boolean
+                    message_type:
+                      type: string
+                    sender_id:
+                      type: string
+                    sender_role:
+                      type: string
+                  type: object
+                type: array
+              page:
+                type: integer
+              page_size:
+                type: integer
+              total:
+                type: integer
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List messages in a conversation
+      tags:
+      - Chat
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Conversation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Message payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.sendMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              message:
+                properties:
+                  content:
+                    type: string
+                  conversation_id:
+                    type: string
+                  created_at:
+                    type: string
+                  id:
+                    type: string
+                  is_read:
+                    type: boolean
+                  message_type:
+                    type: string
+                  sender_id:
+                    type: string
+                  sender_role:
+                    type: string
+                type: object
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Send a message in a conversation
+      tags:
+      - Chat
+  /conversations/{id}/messages/read:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Conversation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mark messages as read
+      tags:
+      - Chat
+  /conversations/{id}/unread:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Conversation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              unread_count:
+                type: integer
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get unread message count
+      tags:
+      - Chat
+securityDefinitions:
+  BearerAuth:
+    description: JWT Bearer token (via Kong gateway)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

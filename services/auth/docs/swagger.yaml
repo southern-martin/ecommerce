@@ -1,0 +1,381 @@
+basePath: /api/v1
+definitions:
+  github_com_southern-martin_ecommerce_services_auth_internal_usecase.ForgotPasswordInput:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  github_com_southern-martin_ecommerce_services_auth_internal_usecase.LoginInput:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  github_com_southern-martin_ecommerce_services_auth_internal_usecase.LoginOutput:
+    properties:
+      access_token:
+        type: string
+      email:
+        type: string
+      refresh_token:
+        type: string
+      role:
+        type: string
+      user_id:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_auth_internal_usecase.LogoutInput:
+    properties:
+      access_token:
+        type: string
+      user_id:
+        type: string
+    required:
+    - access_token
+    type: object
+  github_com_southern-martin_ecommerce_services_auth_internal_usecase.OAuthLoginInput:
+    properties:
+      email:
+        type: string
+      provider:
+        type: string
+      provider_id:
+        type: string
+    required:
+    - email
+    - provider
+    - provider_id
+    type: object
+  github_com_southern-martin_ecommerce_services_auth_internal_usecase.OAuthLoginOutput:
+    properties:
+      access_token:
+        type: string
+      email:
+        type: string
+      is_new:
+        type: boolean
+      refresh_token:
+        type: string
+      role:
+        type: string
+      user_id:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_auth_internal_usecase.RefreshTokenInput:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  github_com_southern-martin_ecommerce_services_auth_internal_usecase.RefreshTokenOutput:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_auth_internal_usecase.RegisterInput:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  github_com_southern-martin_ecommerce_services_auth_internal_usecase.RegisterOutput:
+    properties:
+      access_token:
+        type: string
+      email:
+        type: string
+      refresh_token:
+        type: string
+      role:
+        type: string
+      user_id:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_auth_internal_usecase.ResetPasswordInput:
+    properties:
+      email:
+        type: string
+      new_password:
+        minLength: 8
+        type: string
+      reset_token:
+        type: string
+    required:
+    - email
+    - new_password
+    - reset_token
+    type: object
+host: localhost:28090
+info:
+  contact: {}
+  description: 'Authentication service: registration, login, token refresh, password
+    reset, and OAuth.'
+  title: Auth Service API
+  version: "1.0"
+paths:
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email address
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_auth_internal_usecase.ForgotPasswordInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Request a password reset email
+      tags:
+      - Authentication
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_auth_internal_usecase.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_auth_internal_usecase.LoginOutput'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Log in with email and password
+      tags:
+      - Authentication
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Authenticated user ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Access token to blacklist
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_auth_internal_usecase.LogoutInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Log out the current user
+      tags:
+      - Authentication
+  /auth/oauth/{provider}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: OAuth provider (e.g. google, github)
+        in: path
+        name: provider
+        required: true
+        type: string
+      - description: OAuth token payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_auth_internal_usecase.OAuthLoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_auth_internal_usecase.OAuthLoginOutput'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Authenticate via OAuth provider
+      tags:
+      - Authentication
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_auth_internal_usecase.RefreshTokenInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_auth_internal_usecase.RefreshTokenOutput'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Refresh an access token
+      tags:
+      - Authentication
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Registration details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_auth_internal_usecase.RegisterInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_auth_internal_usecase.RegisterOutput'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - Authentication
+  /auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Reset token and new password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_auth_internal_usecase.ResetPasswordInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Reset password with a reset token
+      tags:
+      - Authentication
+securityDefinitions:
+  BearerAuth:
+    description: JWT Bearer token (via Kong gateway)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -1,3 +1,15 @@
+// @title          Auth Service API
+// @version        1.0
+// @description    Authentication service: registration, login, token refresh, password reset, and OAuth.
+//
+// @host           localhost:28090
+// @BasePath       /api/v1
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT Bearer token (via Kong gateway)
+
 package main
 
 import (

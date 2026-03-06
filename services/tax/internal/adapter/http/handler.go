@@ -53,7 +53,13 @@ func (h *Handler) Ready(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
-// ListZones returns all tax zones.
+// ListZones godoc
+// @Summary      List all tax zones
+// @Tags         Tax
+// @Produce      json
+// @Success      200  {object}  object{zones=[]zoneResponse}
+// @Failure      500  {object}  object{error=string}
+// @Router       /tax/zones [get]
 func (h *Handler) ListZones(c *gin.Context) {
 	zones, err := h.manageZones.ListZones(c.Request.Context())
 	if err != nil {
@@ -69,7 +75,15 @@ func (h *Handler) ListZones(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"zones": response})
 }
 
-// ListRules returns all active tax rules.
+// ListRules godoc
+// @Summary      List tax rules
+// @Tags         Tax
+// @Produce      json
+// @Param        zone_id  query  string  false  "Filter by zone ID"
+// @Success      200  {object}  object{rules=[]ruleResponse}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/tax/rules [get]
+// @Security     BearerAuth
 func (h *Handler) ListRules(c *gin.Context) {
 	zoneID := c.Query("zone_id")
 
@@ -95,7 +109,17 @@ func (h *Handler) ListRules(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"rules": response})
 }
 
-// CreateRule creates a new tax rule.
+// CreateRule godoc
+// @Summary      Create a tax rule
+// @Tags         Tax
+// @Accept       json
+// @Produce      json
+// @Param        body  body  createRuleRequest  true  "Tax rule to create"
+// @Success      201  {object}  object{rule=ruleResponse}
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/tax/rules [post]
+// @Security     BearerAuth
 func (h *Handler) CreateRule(c *gin.Context) {
 	var req createRuleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -122,7 +146,18 @@ func (h *Handler) CreateRule(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"rule": toRuleResponse(rule)})
 }
 
-// UpdateRule updates an existing tax rule.
+// UpdateRule godoc
+// @Summary      Update a tax rule
+// @Tags         Tax
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string             true  "Rule ID"
+// @Param        body  body  updateRuleRequest  true  "Fields to update"
+// @Success      200  {object}  object{rule=ruleResponse}
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/tax/rules/{id} [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdateRule(c *gin.Context) {
 	id := c.Param("id")
 
@@ -150,7 +185,15 @@ func (h *Handler) UpdateRule(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"rule": toRuleResponse(rule)})
 }
 
-// DeleteRule deletes a tax rule.
+// DeleteRule godoc
+// @Summary      Delete a tax rule
+// @Tags         Tax
+// @Produce      json
+// @Param        id  path  string  true  "Rule ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/tax/rules/{id} [delete]
+// @Security     BearerAuth
 func (h *Handler) DeleteRule(c *gin.Context) {
 	id := c.Param("id")
 
@@ -162,7 +205,16 @@ func (h *Handler) DeleteRule(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "rule deleted"})
 }
 
-// CalculateTax calculates tax for the given items and address.
+// CalculateTax godoc
+// @Summary      Calculate tax for items
+// @Tags         Tax
+// @Accept       json
+// @Produce      json
+// @Param        body  body  calculateTaxRequest  true  "Items and shipping address"
+// @Success      200  {object}  object{subtotal_cents=int64,tax_amount_cents=int64,breakdown=[]taxBreakdownResponse}
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /tax/calculate [post]
 func (h *Handler) CalculateTax(c *gin.Context) {
 	var req calculateTaxRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

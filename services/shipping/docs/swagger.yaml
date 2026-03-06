@@ -1,0 +1,610 @@
+basePath: /api/v1
+definitions:
+  github_com_southern-martin_ecommerce_services_shipping_internal_domain.Address:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      postal_code:
+        type: string
+      state:
+        type: string
+      street:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_shipping_internal_domain.ShipmentItem:
+    properties:
+      id:
+        type: string
+      productID:
+        type: string
+      productName:
+        type: string
+      quantity:
+        type: integer
+      shipmentID:
+        type: string
+      variantID:
+        type: string
+    type: object
+  internal_adapter_http.addTrackingEventRequest:
+    properties:
+      description:
+        type: string
+      event_at:
+        type: string
+      location:
+        type: string
+      status:
+        type: string
+    required:
+    - status
+    type: object
+  internal_adapter_http.createCarrierRequest:
+    properties:
+      api_base_url:
+        type: string
+      code:
+        type: string
+      name:
+        type: string
+      supported_countries:
+        items:
+          type: string
+        type: array
+    required:
+    - code
+    - name
+    type: object
+  internal_adapter_http.createShipmentRequest:
+    properties:
+      carrier_code:
+        type: string
+      currency:
+        type: string
+      destination:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_shipping_internal_domain.Address'
+      items:
+        items:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_shipping_internal_domain.ShipmentItem'
+        type: array
+      order_id:
+        type: string
+      origin:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_shipping_internal_domain.Address'
+      rate_cents:
+        type: integer
+      service_code:
+        type: string
+      weight_grams:
+        type: integer
+    required:
+    - carrier_code
+    - destination
+    - order_id
+    - origin
+    type: object
+  internal_adapter_http.getRatesRequest:
+    properties:
+      currency:
+        type: string
+      destination:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_shipping_internal_domain.Address'
+      origin:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_shipping_internal_domain.Address'
+      weight_grams:
+        type: integer
+    required:
+    - destination
+    - origin
+    - weight_grams
+    type: object
+  internal_adapter_http.setupSellerCarrierRequest:
+    properties:
+      carrier_code:
+        type: string
+      credentials:
+        type: string
+    required:
+    - carrier_code
+    - credentials
+    type: object
+  internal_adapter_http.updateCarrierRequest:
+    properties:
+      api_base_url:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      supported_countries:
+        items:
+          type: string
+        type: array
+    type: object
+host: localhost:28095
+info:
+  contact: {}
+  description: Shipping rate calculation, label generation, carrier management, and
+    shipment tracking.
+  title: Shipping Service API
+  version: "1.0"
+paths:
+  /admin/carriers:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              carriers:
+                items:
+                  type: object
+                type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List all carriers (admin)
+      tags:
+      - Shipping
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Carrier details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.createCarrierRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              carrier:
+                type: object
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new carrier (admin)
+      tags:
+      - Shipping
+  /admin/carriers/{code}:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Carrier code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Carrier update details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updateCarrierRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              carrier:
+                type: object
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a carrier (admin)
+      tags:
+      - Shipping
+  /seller/carriers:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              carriers:
+                items:
+                  type: object
+                type: array
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List carriers configured for the authenticated seller
+      tags:
+      - Shipping
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Carrier setup details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.setupSellerCarrierRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              credential:
+                type: object
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Set up a carrier for the authenticated seller
+      tags:
+      - Shipping
+  /seller/shipments:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              page:
+                type: integer
+              page_size:
+                type: integer
+              shipments:
+                items:
+                  type: object
+                type: array
+              total:
+                type: integer
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List shipments for the authenticated seller
+      tags:
+      - Shipping
+  /shipments:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Shipment details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.createShipmentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              shipment:
+                type: object
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a shipment
+      tags:
+      - Shipping
+  /shipments/{id}:
+    get:
+      parameters:
+      - description: Shipment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              shipment:
+                type: object
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get a shipment by ID
+      tags:
+      - Shipping
+  /shipments/{id}/label:
+    post:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Shipment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              label_url:
+                type: string
+              shipment:
+                type: object
+              tracking_number:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Generate a shipping label
+      tags:
+      - Shipping
+  /shipments/{id}/tracking:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Shipment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Tracking event details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.addTrackingEventRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              event:
+                type: object
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Add a tracking event to a shipment
+      tags:
+      - Shipping
+  /shipping/rates:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Rate calculation request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.getRatesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              rates:
+                items:
+                  type: object
+                type: array
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get shipping rates
+      tags:
+      - Shipping
+  /tracking/{tracking_number}:
+    get:
+      parameters:
+      - description: Tracking number
+        in: path
+        name: tracking_number
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              carrier_code:
+                type: string
+              events:
+                items:
+                  type: object
+                type: array
+              status:
+                type: string
+              tracking_number:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get tracking info by tracking number
+      tags:
+      - Shipping
+securityDefinitions:
+  BearerAuth:
+    description: JWT Bearer token (via Kong gateway)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

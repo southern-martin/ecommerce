@@ -157,7 +157,18 @@ type listResponse struct {
 
 // --- Coupon Handlers ---
 
-// ValidateCoupon handles POST /api/v1/coupons/validate
+// ValidateCoupon godoc
+// @Summary      Validate a coupon code
+// @Tags         Coupons
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string               true  "User ID"
+// @Param        body       body    validateCouponRequest true  "Coupon code and order total"
+// @Success      200  {object}  object{data=object{coupon=couponResponse,discount_cents=int64}}
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Router       /coupons/validate [post]
+// @Security     BearerAuth
 func (h *Handler) ValidateCoupon(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -189,7 +200,15 @@ func (h *Handler) ValidateCoupon(c *gin.Context) {
 	})
 }
 
-// ListActiveCoupons handles GET /api/v1/coupons
+// ListActiveCoupons godoc
+// @Summary      List active coupons
+// @Tags         Coupons
+// @Produce      json
+// @Param        page       query  int  false  "Page number"   default(1)
+// @Param        page_size  query  int  false  "Page size"     default(20)
+// @Success      200  {object}  listResponse{data=[]couponResponse}
+// @Failure      500  {object}  object{error=string}
+// @Router       /coupons [get]
 func (h *Handler) ListActiveCoupons(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
@@ -219,7 +238,18 @@ func (h *Handler) ListActiveCoupons(c *gin.Context) {
 	})
 }
 
-// CreateSellerCoupon handles POST /api/v1/seller/coupons
+// CreateSellerCoupon godoc
+// @Summary      Create a seller coupon
+// @Tags         Coupons
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string              true  "Seller ID"
+// @Param        body       body    createCouponRequest  true  "Coupon details"
+// @Success      201  {object}  object{data=couponResponse}
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Router       /seller/coupons [post]
+// @Security     BearerAuth
 func (h *Handler) CreateSellerCoupon(c *gin.Context) {
 	sellerID := c.GetHeader("X-User-ID")
 	if sellerID == "" {
@@ -271,7 +301,18 @@ func (h *Handler) CreateSellerCoupon(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"data": toCouponResponse(coupon)})
 }
 
-// ListSellerCoupons handles GET /api/v1/seller/coupons
+// ListSellerCoupons godoc
+// @Summary      List coupons for the authenticated seller
+// @Tags         Coupons
+// @Produce      json
+// @Param        X-User-ID  header  string  true   "Seller ID"
+// @Param        page       query   int     false  "Page number"  default(1)
+// @Param        page_size  query   int     false  "Page size"    default(20)
+// @Success      200  {object}  listResponse{data=[]couponResponse}
+// @Failure      401  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /seller/coupons [get]
+// @Security     BearerAuth
 func (h *Handler) ListSellerCoupons(c *gin.Context) {
 	sellerID := c.GetHeader("X-User-ID")
 	if sellerID == "" {
@@ -307,7 +348,14 @@ func (h *Handler) ListSellerCoupons(c *gin.Context) {
 	})
 }
 
-// GetSellerCoupon handles GET /api/v1/seller/coupons/:id
+// GetSellerCoupon godoc
+// @Summary      Get a seller coupon by ID
+// @Tags         Coupons
+// @Produce      json
+// @Param        id  path  string  true  "Coupon ID"
+// @Success      200  {object}  object{data=couponResponse}
+// @Failure      404  {object}  object{error=string}
+// @Router       /seller/coupons/{id} [get]
 func (h *Handler) GetSellerCoupon(c *gin.Context) {
 	id := c.Param("id")
 	coupon, err := h.couponUC.GetCoupon(c.Request.Context(), id)
@@ -318,7 +366,17 @@ func (h *Handler) GetSellerCoupon(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": toCouponResponse(coupon)})
 }
 
-// UpdateSellerCoupon handles PATCH /api/v1/seller/coupons/:id
+// UpdateSellerCoupon godoc
+// @Summary      Update a seller coupon
+// @Tags         Coupons
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string              true  "Coupon ID"
+// @Param        body  body  updateCouponRequest  true  "Fields to update"
+// @Success      200  {object}  object{data=couponResponse}
+// @Failure      400  {object}  object{error=string}
+// @Failure      404  {object}  object{error=string}
+// @Router       /seller/coupons/{id} [patch]
 func (h *Handler) UpdateSellerCoupon(c *gin.Context) {
 	id := c.Param("id")
 
@@ -363,7 +421,15 @@ func (h *Handler) UpdateSellerCoupon(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": toCouponResponse(coupon)})
 }
 
-// DeleteSellerCoupon handles DELETE /api/v1/seller/coupons/:id (soft delete via deactivation)
+// DeleteSellerCoupon godoc
+// @Summary      Deactivate a seller coupon
+// @Tags         Coupons
+// @Produce      json
+// @Param        id  path  string  true  "Coupon ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      404  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /seller/coupons/{id} [delete]
 func (h *Handler) DeleteSellerCoupon(c *gin.Context) {
 	id := c.Param("id")
 
@@ -384,7 +450,15 @@ func (h *Handler) DeleteSellerCoupon(c *gin.Context) {
 
 // --- Admin Coupon Handlers ---
 
-// AdminCreateCoupon handles POST /api/v1/admin/promotions/coupons
+// AdminCreateCoupon godoc
+// @Summary      Create a platform coupon (admin)
+// @Tags         Coupons
+// @Accept       json
+// @Produce      json
+// @Param        body  body  createCouponRequest  true  "Coupon details"
+// @Success      201  {object}  object{data=couponResponse}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/promotions/coupons [post]
 func (h *Handler) AdminCreateCoupon(c *gin.Context) {
 	var req createCouponRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -430,7 +504,15 @@ func (h *Handler) AdminCreateCoupon(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"data": toCouponResponse(coupon)})
 }
 
-// AdminListCoupons handles GET /api/v1/admin/promotions/coupons
+// AdminListCoupons godoc
+// @Summary      List all coupons (admin)
+// @Tags         Coupons
+// @Produce      json
+// @Param        page       query  int  false  "Page number"  default(1)
+// @Param        page_size  query  int  false  "Page size"    default(20)
+// @Success      200  {object}  listResponse{data=[]couponResponse}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/promotions/coupons [get]
 func (h *Handler) AdminListCoupons(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
@@ -460,7 +542,14 @@ func (h *Handler) AdminListCoupons(c *gin.Context) {
 	})
 }
 
-// AdminGetCoupon handles GET /api/v1/admin/promotions/coupons/:id
+// AdminGetCoupon godoc
+// @Summary      Get a coupon by ID (admin)
+// @Tags         Coupons
+// @Produce      json
+// @Param        id  path  string  true  "Coupon ID"
+// @Success      200  {object}  object{data=couponResponse}
+// @Failure      404  {object}  object{error=string}
+// @Router       /admin/promotions/coupons/{id} [get]
 func (h *Handler) AdminGetCoupon(c *gin.Context) {
 	id := c.Param("id")
 	coupon, err := h.couponUC.GetCoupon(c.Request.Context(), id)
@@ -471,7 +560,17 @@ func (h *Handler) AdminGetCoupon(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": toCouponResponse(coupon)})
 }
 
-// AdminUpdateCoupon handles PATCH /api/v1/admin/promotions/coupons/:id
+// AdminUpdateCoupon godoc
+// @Summary      Update a coupon (admin)
+// @Tags         Coupons
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string              true  "Coupon ID"
+// @Param        body  body  updateCouponRequest  true  "Fields to update"
+// @Success      200  {object}  object{data=couponResponse}
+// @Failure      400  {object}  object{error=string}
+// @Failure      404  {object}  object{error=string}
+// @Router       /admin/promotions/coupons/{id} [patch]
 func (h *Handler) AdminUpdateCoupon(c *gin.Context) {
 	id := c.Param("id")
 
@@ -516,7 +615,15 @@ func (h *Handler) AdminUpdateCoupon(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": toCouponResponse(coupon)})
 }
 
-// AdminDeleteCoupon handles DELETE /api/v1/admin/promotions/coupons/:id
+// AdminDeleteCoupon godoc
+// @Summary      Deactivate a coupon (admin)
+// @Tags         Coupons
+// @Produce      json
+// @Param        id  path  string  true  "Coupon ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      404  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/promotions/coupons/{id} [delete]
 func (h *Handler) AdminDeleteCoupon(c *gin.Context) {
 	id := c.Param("id")
 
@@ -537,7 +644,13 @@ func (h *Handler) AdminDeleteCoupon(c *gin.Context) {
 
 // --- Flash Sale Handlers ---
 
-// ListActiveFlashSales handles GET /api/v1/flash-sales
+// ListActiveFlashSales godoc
+// @Summary      List active flash sales
+// @Tags         Flash Sales
+// @Produce      json
+// @Success      200  {object}  object{data=[]flashSaleResponse}
+// @Failure      500  {object}  object{error=string}
+// @Router       /flash-sales [get]
 func (h *Handler) ListActiveFlashSales(c *gin.Context) {
 	flashSales, err := h.flashSaleUC.ListActiveFlashSales(c.Request.Context())
 	if err != nil {
@@ -553,7 +666,15 @@ func (h *Handler) ListActiveFlashSales(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": resp})
 }
 
-// AdminCreateFlashSale handles POST /api/v1/admin/promotions/flash-sales
+// AdminCreateFlashSale godoc
+// @Summary      Create a flash sale (admin)
+// @Tags         Flash Sales
+// @Accept       json
+// @Produce      json
+// @Param        body  body  createFlashSaleRequest  true  "Flash sale details"
+// @Success      201  {object}  object{data=flashSaleResponse}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/promotions/flash-sales [post]
 func (h *Handler) AdminCreateFlashSale(c *gin.Context) {
 	var req createFlashSaleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -597,7 +718,15 @@ func (h *Handler) AdminCreateFlashSale(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"data": toFlashSaleResponse(flashSale)})
 }
 
-// AdminListFlashSales handles GET /api/v1/admin/promotions/flash-sales
+// AdminListFlashSales godoc
+// @Summary      List all flash sales (admin)
+// @Tags         Flash Sales
+// @Produce      json
+// @Param        page       query  int  false  "Page number"  default(1)
+// @Param        page_size  query  int  false  "Page size"    default(20)
+// @Success      200  {object}  listResponse{data=[]flashSaleResponse}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/promotions/flash-sales [get]
 func (h *Handler) AdminListFlashSales(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
@@ -627,7 +756,14 @@ func (h *Handler) AdminListFlashSales(c *gin.Context) {
 	})
 }
 
-// AdminGetFlashSale handles GET /api/v1/admin/promotions/flash-sales/:id
+// AdminGetFlashSale godoc
+// @Summary      Get a flash sale by ID (admin)
+// @Tags         Flash Sales
+// @Produce      json
+// @Param        id  path  string  true  "Flash Sale ID"
+// @Success      200  {object}  object{data=flashSaleResponse}
+// @Failure      404  {object}  object{error=string}
+// @Router       /admin/promotions/flash-sales/{id} [get]
 func (h *Handler) AdminGetFlashSale(c *gin.Context) {
 	id := c.Param("id")
 	flashSale, err := h.flashSaleUC.GetFlashSale(c.Request.Context(), id)
@@ -638,7 +774,17 @@ func (h *Handler) AdminGetFlashSale(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": toFlashSaleResponse(flashSale)})
 }
 
-// AdminUpdateFlashSale handles PATCH /api/v1/admin/promotions/flash-sales/:id
+// AdminUpdateFlashSale godoc
+// @Summary      Update a flash sale (admin)
+// @Tags         Flash Sales
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string                  true  "Flash Sale ID"
+// @Param        body  body  updateFlashSaleRequest   true  "Fields to update"
+// @Success      200  {object}  object{data=flashSaleResponse}
+// @Failure      400  {object}  object{error=string}
+// @Failure      404  {object}  object{error=string}
+// @Router       /admin/promotions/flash-sales/{id} [patch]
 func (h *Handler) AdminUpdateFlashSale(c *gin.Context) {
 	id := c.Param("id")
 
@@ -671,7 +817,15 @@ func (h *Handler) AdminUpdateFlashSale(c *gin.Context) {
 
 // --- Bundle Handlers ---
 
-// ListActiveBundles handles GET /api/v1/bundles
+// ListActiveBundles godoc
+// @Summary      List active bundles
+// @Tags         Bundles
+// @Produce      json
+// @Param        page       query  int  false  "Page number"  default(1)
+// @Param        page_size  query  int  false  "Page size"    default(20)
+// @Success      200  {object}  listResponse{data=[]bundleResponse}
+// @Failure      500  {object}  object{error=string}
+// @Router       /bundles [get]
 func (h *Handler) ListActiveBundles(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
@@ -701,7 +855,17 @@ func (h *Handler) ListActiveBundles(c *gin.Context) {
 	})
 }
 
-// AdminCreateBundle handles POST /api/v1/admin/promotions/bundles
+// AdminCreateBundle godoc
+// @Summary      Create a bundle (admin)
+// @Tags         Bundles
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string              false  "Seller ID (defaults to platform)"
+// @Param        body       body    createBundleRequest  true   "Bundle details"
+// @Success      201  {object}  object{data=bundleResponse}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/promotions/bundles [post]
+// @Security     BearerAuth
 func (h *Handler) AdminCreateBundle(c *gin.Context) {
 	var req createBundleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -729,7 +893,15 @@ func (h *Handler) AdminCreateBundle(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"data": toBundleResponse(bundle)})
 }
 
-// AdminListBundles handles GET /api/v1/admin/promotions/bundles
+// AdminListBundles godoc
+// @Summary      List all bundles (admin)
+// @Tags         Bundles
+// @Produce      json
+// @Param        page       query  int  false  "Page number"  default(1)
+// @Param        page_size  query  int  false  "Page size"    default(20)
+// @Success      200  {object}  listResponse{data=[]bundleResponse}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/promotions/bundles [get]
 func (h *Handler) AdminListBundles(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
@@ -759,7 +931,14 @@ func (h *Handler) AdminListBundles(c *gin.Context) {
 	})
 }
 
-// AdminGetBundle handles GET /api/v1/admin/promotions/bundles/:id
+// AdminGetBundle godoc
+// @Summary      Get a bundle by ID (admin)
+// @Tags         Bundles
+// @Produce      json
+// @Param        id  path  string  true  "Bundle ID"
+// @Success      200  {object}  object{data=bundleResponse}
+// @Failure      404  {object}  object{error=string}
+// @Router       /admin/promotions/bundles/{id} [get]
 func (h *Handler) AdminGetBundle(c *gin.Context) {
 	id := c.Param("id")
 	bundle, err := h.bundleUC.GetBundle(c.Request.Context(), id)
@@ -770,7 +949,17 @@ func (h *Handler) AdminGetBundle(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": toBundleResponse(bundle)})
 }
 
-// AdminUpdateBundle handles PATCH /api/v1/admin/promotions/bundles/:id
+// AdminUpdateBundle godoc
+// @Summary      Update a bundle (admin)
+// @Tags         Bundles
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string              true  "Bundle ID"
+// @Param        body  body  updateBundleRequest  true  "Fields to update"
+// @Success      200  {object}  object{data=bundleResponse}
+// @Failure      400  {object}  object{error=string}
+// @Failure      404  {object}  object{error=string}
+// @Router       /admin/promotions/bundles/{id} [patch]
 func (h *Handler) AdminUpdateBundle(c *gin.Context) {
 	id := c.Param("id")
 
@@ -807,7 +996,15 @@ func (h *Handler) AdminUpdateBundle(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": toBundleResponse(bundle)})
 }
 
-// AdminDeleteBundle handles DELETE /api/v1/admin/promotions/bundles/:id
+// AdminDeleteBundle godoc
+// @Summary      Deactivate a bundle (admin)
+// @Tags         Bundles
+// @Produce      json
+// @Param        id  path  string  true  "Bundle ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      404  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/promotions/bundles/{id} [delete]
 func (h *Handler) AdminDeleteBundle(c *gin.Context) {
 	id := c.Param("id")
 

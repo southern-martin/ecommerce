@@ -1,3 +1,14 @@
+// @title          Affiliate Service API
+// @version        1.0
+// @description    Affiliate link tracking, referral management, and payout processing.
+//
+// @host           localhost:28097
+// @BasePath       /api/v1
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT Bearer token (via Kong gateway)
 package main
 
 import (

@@ -55,6 +55,18 @@ type createReviewRequest struct {
 	IsVerifiedPurchase bool     `json:"is_verified_purchase"`
 }
 
+// CreateReview godoc
+// @Summary      Create a new review
+// @Tags         Reviews
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string              true  "User ID"
+// @Param        body       body    createReviewRequest  true  "Review creation payload"
+// @Success      201  {object}  object{review=domain.Review}
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Router       /reviews [post]
+// @Security     BearerAuth
 func (h *Handler) CreateReview(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -88,6 +100,21 @@ func (h *Handler) CreateReview(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"review": review})
 }
 
+// ListProductReviews godoc
+// @Summary      List reviews for a product
+// @Tags         Reviews
+// @Produce      json
+// @Param        product_id  query  string  true   "Product ID"
+// @Param        page        query  int     false  "Page number"   default(1)
+// @Param        page_size   query  int     false  "Page size"     default(20)
+// @Param        min_rating  query  int     false  "Minimum rating filter"  default(0)
+// @Param        status      query  string  false  "Review status filter"
+// @Param        sort_by     query  string  false  "Sort field"    default(created_at)
+// @Param        sort_order  query  string  false  "Sort order"    default(desc)
+// @Success      200  {object}  object{reviews=[]domain.Review,total=int,page=int,page_size=int}
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /reviews [get]
 func (h *Handler) ListProductReviews(c *gin.Context) {
 	productID := c.Query("product_id")
 	if productID == "" {
@@ -123,6 +150,14 @@ func (h *Handler) ListProductReviews(c *gin.Context) {
 	})
 }
 
+// GetReview godoc
+// @Summary      Get a review by ID
+// @Tags         Reviews
+// @Produce      json
+// @Param        id   path      string  true  "Review ID"
+// @Success      200  {object}  object{review=domain.Review}
+// @Failure      404  {object}  object{error=string}
+// @Router       /reviews/{id} [get]
 func (h *Handler) GetReview(c *gin.Context) {
 	id := c.Param("id")
 	review, err := h.reviewUC.GetReview(c.Request.Context(), id)
@@ -142,6 +177,16 @@ type updateReviewRequest struct {
 	Images  []string `json:"images"`
 }
 
+// UpdateReview godoc
+// @Summary      Update an existing review
+// @Tags         Reviews
+// @Accept       json
+// @Produce      json
+// @Param        id    path      string               true  "Review ID"
+// @Param        body  body      updateReviewRequest   true  "Review update payload"
+// @Success      200   {object}  object{review=domain.Review}
+// @Failure      400   {object}  object{error=string}
+// @Router       /reviews/{id} [patch]
 func (h *Handler) UpdateReview(c *gin.Context) {
 	id := c.Param("id")
 
@@ -167,6 +212,14 @@ func (h *Handler) UpdateReview(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"review": review})
 }
 
+// DeleteReview godoc
+// @Summary      Delete a review
+// @Tags         Reviews
+// @Produce      json
+// @Param        id   path      string  true  "Review ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /reviews/{id} [delete]
 func (h *Handler) DeleteReview(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.reviewUC.DeleteReview(c.Request.Context(), id); err != nil {
@@ -176,6 +229,14 @@ func (h *Handler) DeleteReview(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "review deleted"})
 }
 
+// GetProductSummary godoc
+// @Summary      Get review summary for a product
+// @Tags         Reviews
+// @Produce      json
+// @Param        product_id  path      string  true  "Product ID"
+// @Success      200  {object}  object{summary=domain.ReviewSummary}
+// @Failure      500  {object}  object{error=string}
+// @Router       /products/{product_id}/reviews/summary [get]
 func (h *Handler) GetProductSummary(c *gin.Context) {
 	productID := c.Param("product_id")
 	summary, err := h.reviewUC.GetProductSummary(c.Request.Context(), productID)
@@ -186,6 +247,14 @@ func (h *Handler) GetProductSummary(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"summary": summary})
 }
 
+// ApproveReview godoc
+// @Summary      Approve a review (admin)
+// @Tags         Reviews
+// @Produce      json
+// @Param        id   path      string  true  "Review ID"
+// @Success      200  {object}  object{review=domain.Review}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/reviews/{id}/approve [patch]
 func (h *Handler) ApproveReview(c *gin.Context) {
 	id := c.Param("id")
 	review, err := h.reviewUC.ApproveReview(c.Request.Context(), id)

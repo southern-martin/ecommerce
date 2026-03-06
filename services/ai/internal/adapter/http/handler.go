@@ -62,7 +62,19 @@ type chatRequest struct {
 	Message        string `json:"message" binding:"required"`
 }
 
-// Chat sends a message to the AI assistant.
+// Chat godoc
+// @Summary      Send a message to the AI assistant
+// @Tags         AI
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string       true  "User ID"
+// @Param        body       body    chatRequest  true  "Chat message"
+// @Success      200  {object}  usecase.ChatResponse
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /ai/chat [post]
+// @Security     BearerAuth
 func (h *Handler) Chat(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -89,7 +101,18 @@ func (h *Handler) Chat(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// ListConversations lists AI conversations for a user.
+// ListConversations godoc
+// @Summary      List AI conversations for the current user
+// @Tags         AI
+// @Produce      json
+// @Param        X-User-ID  header  string  true   "User ID"
+// @Param        page       query   int     false  "Page number"
+// @Param        page_size  query   int     false  "Page size"
+// @Success      200  {object}  object{conversations=[]domain.AIConversation,total=int,page=int,page_size=int}
+// @Failure      401  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /ai/chat [get]
+// @Security     BearerAuth
 func (h *Handler) ListConversations(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -109,7 +132,14 @@ func (h *Handler) ListConversations(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"conversations": conversations, "total": total, "page": page, "page_size": pageSize})
 }
 
-// GetConversation retrieves an AI conversation by ID.
+// GetConversation godoc
+// @Summary      Retrieve an AI conversation by ID
+// @Tags         AI
+// @Produce      json
+// @Param        id  path  string  true  "Conversation ID"
+// @Success      200  {object}  object{conversation=domain.AIConversation}
+// @Failure      404  {object}  object{error=string}
+// @Router       /ai/chat/{id} [get]
 func (h *Handler) GetConversation(c *gin.Context) {
 	id := c.Param("id")
 	conversation, err := h.chatbotUC.GetConversation(c.Request.Context(), id)
@@ -122,7 +152,18 @@ func (h *Handler) GetConversation(c *gin.Context) {
 
 // --- Recommendation Handlers ---
 
-// GetRecommendations returns product recommendations for a user.
+// GetRecommendations godoc
+// @Summary      Get product recommendations for the current user
+// @Tags         AI
+// @Produce      json
+// @Param        X-User-ID  header  string  true   "User ID"
+// @Param        page       query   int     false  "Page number"
+// @Param        page_size  query   int     false  "Page size"
+// @Success      200  {object}  object{recommendations=[]domain.Recommendation,total=int,page=int,page_size=int}
+// @Failure      401  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /ai/recommendations [get]
+// @Security     BearerAuth
 func (h *Handler) GetRecommendations(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -150,7 +191,19 @@ type generateDescriptionRequest struct {
 	Category    string `json:"category" binding:"required"`
 }
 
-// GenerateDescription generates a product description using AI.
+// GenerateDescription godoc
+// @Summary      Generate a product description using AI
+// @Tags         AI
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string                      true  "User ID"
+// @Param        body       body    generateDescriptionRequest  true  "Product details"
+// @Success      200  {object}  object{generated_content=domain.GeneratedContent}
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /ai/generate-description [post]
+// @Security     BearerAuth
 func (h *Handler) GenerateDescription(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -179,7 +232,12 @@ func (h *Handler) GenerateDescription(c *gin.Context) {
 
 // --- Image Search Handler ---
 
-// ImageSearch handles image-based search (mock).
+// ImageSearch godoc
+// @Summary      Search products by image
+// @Tags         AI
+// @Produce      json
+// @Success      200  {object}  object{results=[]interface{},message=string}
+// @Router       /search/image [post]
 func (h *Handler) ImageSearch(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"results": []interface{}{},
@@ -195,7 +253,16 @@ type generateEmbeddingRequest struct {
 	Text       string `json:"text" binding:"required"`
 }
 
-// GenerateEmbedding triggers embedding generation.
+// GenerateEmbedding godoc
+// @Summary      Generate an embedding for an entity
+// @Tags         AI
+// @Accept       json
+// @Produce      json
+// @Param        body  body  generateEmbeddingRequest  true  "Embedding request"
+// @Success      201  {object}  object{embedding=object{id=string,entity_type=string,entity_id=string,model_version=string,dimensions=int}}
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /ai/embeddings [post]
 func (h *Handler) GenerateEmbedding(c *gin.Context) {
 	var req generateEmbeddingRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
