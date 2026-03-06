@@ -1,0 +1,437 @@
+basePath: /api/v1
+definitions:
+  github_com_southern-martin_ecommerce_services_notification_internal_domain.Notification:
+    properties:
+      body:
+        type: string
+      channel:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_notification_internal_domain.NotificationChannel'
+      createdAt:
+        type: string
+      data:
+        type: string
+      id:
+        type: string
+      readAt:
+        type: string
+      sentAt:
+        type: string
+      status:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_notification_internal_domain.NotificationStatus'
+      subject:
+        type: string
+      type:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_notification_internal_domain.NotificationType'
+      userID:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_notification_internal_domain.NotificationChannel:
+    enum:
+    - email
+    - push
+    - in_app
+    type: string
+    x-enum-varnames:
+    - ChannelEmail
+    - ChannelPush
+    - ChannelInApp
+  github_com_southern-martin_ecommerce_services_notification_internal_domain.NotificationPreference:
+    properties:
+      channel:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_notification_internal_domain.NotificationChannel'
+      createdAt:
+        type: string
+      enabled:
+        type: boolean
+      id:
+        type: string
+      userID:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_notification_internal_domain.NotificationStatus:
+    enum:
+    - queued
+    - sent
+    - failed
+    - read
+    type: string
+    x-enum-varnames:
+    - StatusQueued
+    - StatusSent
+    - StatusFailed
+    - StatusRead
+  github_com_southern-martin_ecommerce_services_notification_internal_domain.NotificationType:
+    enum:
+    - order_update
+    - payment_update
+    - shipment_update
+    - return_update
+    - promotion
+    - system
+    type: string
+    x-enum-varnames:
+    - TypeOrderUpdate
+    - TypePaymentUpdate
+    - TypeShipmentUpdate
+    - TypeReturnUpdate
+    - TypePromotion
+    - TypeSystem
+  github_com_southern-martin_ecommerce_services_notification_internal_usecase.SendNotificationRequest:
+    properties:
+      body:
+        type: string
+      channel:
+        type: string
+      data:
+        type: string
+      subject:
+        type: string
+      type:
+        type: string
+      user_id:
+        type: string
+    required:
+    - body
+    - channel
+    - subject
+    - type
+    - user_id
+    type: object
+  github_com_southern-martin_ecommerce_services_notification_internal_usecase.UpdatePreferenceRequest:
+    properties:
+      channel:
+        type: string
+      enabled:
+        type: boolean
+      user_id:
+        type: string
+    required:
+    - channel
+    type: object
+host: localhost:28087
+info:
+  contact: {}
+  description: User notifications management and delivery.
+  title: Notification Service API
+  version: "1.0"
+paths:
+  /notifications:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Filter by notification type
+        in: query
+        name: type
+        type: string
+      - description: Filter by channel
+        in: query
+        name: channel
+        type: string
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              notifications:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_notification_internal_domain.Notification'
+                type: array
+              page:
+                type: integer
+              page_size:
+                type: integer
+              total:
+                format: int64
+                type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List notifications for the authenticated user
+      tags:
+      - Notifications
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Notification payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_notification_internal_usecase.SendNotificationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_notification_internal_domain.Notification'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Send a notification
+      tags:
+      - Notifications
+  /notifications/{id}:
+    get:
+      parameters:
+      - description: Notification ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_notification_internal_domain.Notification'
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get a notification by ID
+      tags:
+      - Notifications
+  /notifications/{id}/read:
+    patch:
+      parameters:
+      - description: Notification ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Mark a notification as read
+      tags:
+      - Notifications
+  /notifications/preferences:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              preferences:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_notification_internal_domain.NotificationPreference'
+                type: array
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get notification preferences for the authenticated user
+      tags:
+      - Notifications
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Preference update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_notification_internal_usecase.UpdatePreferenceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a notification preference
+      tags:
+      - Notifications
+  /notifications/read-all:
+    patch:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mark all notifications as read for the authenticated user
+      tags:
+      - Notifications
+  /notifications/unread-count:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              unread_count:
+                format: int64
+                type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get unread notification count for the authenticated user
+      tags:
+      - Notifications
+securityDefinitions:
+  BearerAuth:
+    description: JWT Bearer token (via Kong gateway)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

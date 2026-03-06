@@ -2,9 +2,12 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
+	_ "github.com/southern-martin/ecommerce/services/payment/docs"
 )
 
 // NewRouter creates and configures a new Gin router with all payment routes.
@@ -19,6 +22,7 @@ func NewRouter(handler *Handler) *gin.Engine {
 	// Health check.
 	router.GET("/health", handler.Health)
 	router.GET("/ready", handler.Ready)
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	v1 := router.Group("/api/v1/payments")
 	{

@@ -45,7 +45,16 @@ func NewHandler(
 	}
 }
 
-// Register handles POST /api/v1/auth/register
+// Register godoc
+// @Summary      Register a new user
+// @Tags         Authentication
+// @Accept       json
+// @Produce      json
+// @Param        body  body      usecase.RegisterInput   true  "Registration details"
+// @Success      201   {object}  usecase.RegisterOutput
+// @Failure      400   {object}  object{error=string}
+// @Failure      409   {object}  object{error=string}
+// @Router       /auth/register [post]
 func (h *Handler) Register(c *gin.Context) {
 	var input usecase.RegisterInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -63,7 +72,16 @@ func (h *Handler) Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, output)
 }
 
-// Login handles POST /api/v1/auth/login
+// Login godoc
+// @Summary      Log in with email and password
+// @Tags         Authentication
+// @Accept       json
+// @Produce      json
+// @Param        body  body      usecase.LoginInput   true  "Login credentials"
+// @Success      200   {object}  usecase.LoginOutput
+// @Failure      400   {object}  object{error=string}
+// @Failure      401   {object}  object{error=string}
+// @Router       /auth/login [post]
 func (h *Handler) Login(c *gin.Context) {
 	var input usecase.LoginInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -81,7 +99,16 @@ func (h *Handler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, output)
 }
 
-// RefreshToken handles POST /api/v1/auth/refresh
+// RefreshToken godoc
+// @Summary      Refresh an access token
+// @Tags         Authentication
+// @Accept       json
+// @Produce      json
+// @Param        body  body      usecase.RefreshTokenInput   true  "Refresh token"
+// @Success      200   {object}  usecase.RefreshTokenOutput
+// @Failure      400   {object}  object{error=string}
+// @Failure      401   {object}  object{error=string}
+// @Router       /auth/refresh [post]
 func (h *Handler) RefreshToken(c *gin.Context) {
 	var input usecase.RefreshTokenInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -99,7 +126,17 @@ func (h *Handler) RefreshToken(c *gin.Context) {
 	c.JSON(http.StatusOK, output)
 }
 
-// Logout handles POST /api/v1/auth/logout
+// Logout godoc
+// @Summary      Log out the current user
+// @Tags         Authentication
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        X-User-ID  header    string              true  "Authenticated user ID"
+// @Param        body       body      usecase.LogoutInput  true  "Access token to blacklist"
+// @Success      200        {object}  object{message=string}
+// @Failure      400        {object}  object{error=string}
+// @Router       /auth/logout [post]
 func (h *Handler) Logout(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -123,7 +160,15 @@ func (h *Handler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 }
 
-// ForgotPassword handles POST /api/v1/auth/forgot-password
+// ForgotPassword godoc
+// @Summary      Request a password reset email
+// @Tags         Authentication
+// @Accept       json
+// @Produce      json
+// @Param        body  body      usecase.ForgotPasswordInput  true  "Email address"
+// @Success      200   {object}  object{message=string}
+// @Failure      400   {object}  object{error=string}
+// @Router       /auth/forgot-password [post]
 func (h *Handler) ForgotPassword(c *gin.Context) {
 	var input usecase.ForgotPasswordInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -141,7 +186,15 @@ func (h *Handler) ForgotPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "if that email exists, a reset link has been sent"})
 }
 
-// ResetPassword handles POST /api/v1/auth/reset-password
+// ResetPassword godoc
+// @Summary      Reset password with a reset token
+// @Tags         Authentication
+// @Accept       json
+// @Produce      json
+// @Param        body  body      usecase.ResetPasswordInput  true  "Reset token and new password"
+// @Success      200   {object}  object{message=string}
+// @Failure      400   {object}  object{error=string}
+// @Router       /auth/reset-password [post]
 func (h *Handler) ResetPassword(c *gin.Context) {
 	var input usecase.ResetPasswordInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -158,7 +211,17 @@ func (h *Handler) ResetPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "password reset successfully"})
 }
 
-// OAuthLogin handles POST /api/v1/auth/oauth/:provider
+// OAuthLogin godoc
+// @Summary      Authenticate via OAuth provider
+// @Tags         Authentication
+// @Accept       json
+// @Produce      json
+// @Param        provider  path      string                  true  "OAuth provider (e.g. google, github)"
+// @Param        body      body      usecase.OAuthLoginInput  true  "OAuth token payload"
+// @Success      200       {object}  usecase.OAuthLoginOutput
+// @Failure      400       {object}  object{error=string}
+// @Failure      401       {object}  object{error=string}
+// @Router       /auth/oauth/{provider} [post]
 func (h *Handler) OAuthLogin(c *gin.Context) {
 	provider := c.Param("provider")
 

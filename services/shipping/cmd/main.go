@@ -1,3 +1,15 @@
+// @title          Shipping Service API
+// @version        1.0
+// @description    Shipping rate calculation, label generation, carrier management, and shipment tracking.
+//
+// @host           localhost:28095
+// @BasePath       /api/v1
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT Bearer token (via Kong gateway)
+
 package main
 
 import (

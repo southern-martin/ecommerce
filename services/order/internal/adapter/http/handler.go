@@ -127,7 +127,15 @@ type listResponse struct {
 
 // --- Handlers ---
 
-// CreateOrder handles POST /api/v1/orders
+// CreateOrder godoc
+// @Summary      Create a new order
+// @Tags         Buyer Orders
+// @Accept       json
+// @Produce      json
+// @Param        body  body      createOrderRequest  true  "Order creation payload"
+// @Success      201   {object}  object{data=orderResponse}
+// @Failure      400   {object}  object{error=string}
+// @Router       /orders [post]
 func (h *Handler) CreateOrder(c *gin.Context) {
 	var req createOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -176,7 +184,14 @@ func (h *Handler) CreateOrder(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"data": toOrderResponse(order)})
 }
 
-// GetOrder handles GET /api/v1/orders/:id
+// GetOrder godoc
+// @Summary      Get an order by ID
+// @Tags         Buyer Orders
+// @Produce      json
+// @Param        id   path      string  true  "Order ID"
+// @Success      200  {object}  object{data=orderResponse}
+// @Failure      404  {object}  object{error=string}
+// @Router       /orders/{id} [get]
 func (h *Handler) GetOrder(c *gin.Context) {
 	id := c.Param("id")
 	order, err := h.getOrder.GetOrder(c.Request.Context(), id)
@@ -187,7 +202,19 @@ func (h *Handler) GetOrder(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": toOrderResponse(order)})
 }
 
-// ListOrders handles GET /api/v1/orders
+// ListOrders godoc
+// @Summary      List orders for a buyer
+// @Tags         Buyer Orders
+// @Produce      json
+// @Param        X-User-ID  header  string  false  "User ID"
+// @Param        buyer_id   query   string  false  "Buyer ID"
+// @Param        status     query   string  false  "Order status filter"
+// @Param        page       query   int     false  "Page number"  default(1)
+// @Param        page_size  query   int     false  "Page size"    default(20)
+// @Success      200  {object}  listResponse
+// @Failure      500  {object}  object{error=string}
+// @Router       /orders [get]
+// @Security     BearerAuth
 func (h *Handler) ListOrders(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
@@ -229,7 +256,15 @@ func (h *Handler) ListOrders(c *gin.Context) {
 	})
 }
 
-// CancelOrder handles POST /api/v1/orders/:id/cancel
+// CancelOrder godoc
+// @Summary      Cancel an order
+// @Tags         Buyer Orders
+// @Produce      json
+// @Param        id        path   string  true  "Order ID"
+// @Param        buyer_id  query  string  true  "Buyer ID"
+// @Success      200  {object}  object{data=orderResponse}
+// @Failure      400  {object}  object{error=string}
+// @Router       /orders/{id}/cancel [post]
 func (h *Handler) CancelOrder(c *gin.Context) {
 	id := c.Param("id")
 	buyerID := c.Query("buyer_id")
@@ -247,7 +282,17 @@ func (h *Handler) CancelOrder(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": toOrderResponse(order)})
 }
 
-// ListSellerOrders handles GET /api/v1/seller/orders
+// ListSellerOrders godoc
+// @Summary      List seller orders
+// @Tags         Seller Orders
+// @Produce      json
+// @Param        seller_id  query  string  true   "Seller ID"
+// @Param        page       query  int     false  "Page number"  default(1)
+// @Param        page_size  query  int     false  "Page size"    default(20)
+// @Success      200  {object}  listResponse
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /seller/orders [get]
 func (h *Handler) ListSellerOrders(c *gin.Context) {
 	sellerID := c.Query("seller_id")
 	if sellerID == "" {
@@ -283,7 +328,14 @@ func (h *Handler) ListSellerOrders(c *gin.Context) {
 	})
 }
 
-// GetSellerOrder handles GET /api/v1/seller/orders/:id
+// GetSellerOrder godoc
+// @Summary      Get a seller order by ID
+// @Tags         Seller Orders
+// @Produce      json
+// @Param        id   path      string  true  "Seller Order ID"
+// @Success      200  {object}  object{data=sellerOrderResponse}
+// @Failure      404  {object}  object{error=string}
+// @Router       /seller/orders/{id} [get]
 func (h *Handler) GetSellerOrder(c *gin.Context) {
 	id := c.Param("id")
 	sellerOrder, err := h.getOrder.GetSellerOrder(c.Request.Context(), id)
@@ -294,7 +346,16 @@ func (h *Handler) GetSellerOrder(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": toSellerOrderResponse(sellerOrder)})
 }
 
-// UpdateSellerOrderStatus handles PATCH /api/v1/seller/orders/:id/status
+// UpdateSellerOrderStatus godoc
+// @Summary      Update seller order status
+// @Tags         Seller Orders
+// @Accept       json
+// @Produce      json
+// @Param        id    path      string              true  "Seller Order ID"
+// @Param        body  body      updateStatusRequest  true  "New status"
+// @Success      200   {object}  object{data=sellerOrderResponse}
+// @Failure      400   {object}  object{error=string}
+// @Router       /seller/orders/{id}/status [patch]
 func (h *Handler) UpdateSellerOrderStatus(c *gin.Context) {
 	id := c.Param("id")
 

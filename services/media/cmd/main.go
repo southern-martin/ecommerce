@@ -1,3 +1,15 @@
+// @title          Media Service API
+// @version        1.0
+// @description    File upload, image management, and media asset storage.
+//
+// @host           localhost:28089
+// @BasePath       /api/v1
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT Bearer token (via Kong gateway)
+
 package main
 
 import (

@@ -1,0 +1,371 @@
+basePath: /api/v1
+definitions:
+  github_com_southern-martin_ecommerce_services_cart_internal_domain.CartItem:
+    properties:
+      image_url:
+        type: string
+      price_cents:
+        type: integer
+      product_id:
+        type: string
+      product_name:
+        type: string
+      quantity:
+        type: integer
+      seller_id:
+        type: string
+      sku:
+        type: string
+      variant_id:
+        type: string
+      variant_name:
+        type: string
+    type: object
+  internal_adapter_http.addItemRequest:
+    properties:
+      image_url:
+        type: string
+      price_cents:
+        type: integer
+      product_id:
+        type: string
+      product_name:
+        type: string
+      quantity:
+        minimum: 1
+        type: integer
+      seller_id:
+        type: string
+      sku:
+        type: string
+      variant_id:
+        type: string
+      variant_name:
+        type: string
+    required:
+    - price_cents
+    - product_id
+    - quantity
+    type: object
+  internal_adapter_http.cartResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_cart_internal_domain.CartItem'
+        type: array
+      subtotal_cents:
+        type: integer
+      total_items:
+        type: integer
+      user_id:
+        type: string
+    type: object
+  internal_adapter_http.mergeCartRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_southern-martin_ecommerce_services_cart_internal_domain.CartItem'
+        type: array
+    required:
+    - items
+    type: object
+  internal_adapter_http.removeItemRequest:
+    properties:
+      product_id:
+        type: string
+      variant_id:
+        type: string
+    required:
+    - product_id
+    type: object
+  internal_adapter_http.updateQuantityRequest:
+    properties:
+      product_id:
+        type: string
+      quantity:
+        minimum: 1
+        type: integer
+      variant_id:
+        type: string
+    required:
+    - product_id
+    - quantity
+    type: object
+host: localhost:28082
+info:
+  contact: {}
+  description: 'Shopping cart management: add, update, remove items and checkout.'
+  title: Cart Service API
+  version: "1.0"
+paths:
+  /cart:
+    delete:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Clear all items from the cart
+      tags:
+      - Cart
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_adapter_http.cartResponse'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get current user's cart
+      tags:
+      - Cart
+  /cart/items:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Item to remove
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.removeItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_adapter_http.cartResponse'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Remove an item from the cart
+      tags:
+      - Cart
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Quantity update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updateQuantityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_adapter_http.cartResponse'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update item quantity in the cart
+      tags:
+      - Cart
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Item to add
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.addItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_adapter_http.cartResponse'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add an item to the cart
+      tags:
+      - Cart
+  /cart/merge:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Guest cart items to merge
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.mergeCartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_adapter_http.cartResponse'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Merge guest cart items into authenticated user's cart
+      tags:
+      - Cart
+securityDefinitions:
+  BearerAuth:
+    description: JWT Bearer token (via Kong gateway)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

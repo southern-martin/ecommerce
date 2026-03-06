@@ -1,3 +1,15 @@
+// @title          Return Service API
+// @version        1.0
+// @description    Return request management, processing, and dispute resolution.
+//
+// @host           localhost:28094
+// @BasePath       /api/v1
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT Bearer token (via Kong gateway)
+
 package main
 
 import (

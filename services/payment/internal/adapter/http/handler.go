@@ -63,7 +63,17 @@ func (h *Handler) Ready(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
-// CreatePaymentIntent creates a new payment intent.
+// CreatePaymentIntent godoc
+// @Summary      Create a payment intent
+// @Tags         Payments
+// @Accept       json
+// @Produce      json
+// @Param        body  body  usecase.CreatePaymentInput  true  "Payment intent payload"
+// @Success      201  {object}  usecase.CreatePaymentOutput
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /payments/create-intent [post]
+// @Security     BearerAuth
 func (h *Handler) CreatePaymentIntent(c *gin.Context) {
 	var input usecase.CreatePaymentInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -86,7 +96,16 @@ func (h *Handler) CreatePaymentIntent(c *gin.Context) {
 	c.JSON(http.StatusCreated, output)
 }
 
-// ListPayments lists payments for the authenticated buyer.
+// ListPayments godoc
+// @Summary      List payments for the authenticated buyer
+// @Tags         Payments
+// @Produce      json
+// @Param        page       query  int  false  "Page number"   default(1)
+// @Param        page_size  query  int  false  "Page size"     default(20)
+// @Success      200  {object}  object{payments=[]domain.Payment,total=int64,page=int,page_size=int}
+// @Failure      500  {object}  object{error=string}
+// @Router       /payments [get]
+// @Security     BearerAuth
 func (h *Handler) ListPayments(c *gin.Context) {
 	buyerID := c.GetString("user_id")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -107,7 +126,14 @@ func (h *Handler) ListPayments(c *gin.Context) {
 	})
 }
 
-// GetPayment retrieves a single payment by ID.
+// GetPayment godoc
+// @Summary      Get a payment by ID
+// @Tags         Payments
+// @Produce      json
+// @Param        id  path  string  true  "Payment ID"
+// @Success      200  {object}  domain.Payment
+// @Failure      404  {object}  object{error=string}
+// @Router       /payments/{id} [get]
 func (h *Handler) GetPayment(c *gin.Context) {
 	paymentID := c.Param("id")
 
@@ -120,7 +146,16 @@ func (h *Handler) GetPayment(c *gin.Context) {
 	c.JSON(http.StatusOK, payment)
 }
 
-// HandleStripeWebhook handles incoming Stripe webhook events.
+// HandleStripeWebhook godoc
+// @Summary      Handle Stripe webhook event
+// @Tags         Payments
+// @Accept       json
+// @Produce      json
+// @Param        body  body  usecase.WebhookEvent  true  "Stripe webhook event"
+// @Success      200  {object}  object{received=bool}
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /payments/webhooks/stripe [post]
 func (h *Handler) HandleStripeWebhook(c *gin.Context) {
 	var event usecase.WebhookEvent
 	if err := c.ShouldBindJSON(&event); err != nil {
@@ -137,7 +172,15 @@ func (h *Handler) HandleStripeWebhook(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"received": true})
 }
 
-// GetWalletBalance returns the wallet balance for the authenticated seller.
+// GetWalletBalance godoc
+// @Summary      Get wallet balance for the authenticated seller
+// @Tags         Payments
+// @Produce      json
+// @Param        seller_id  query  string  false  "Seller ID (fallback)"
+// @Success      200  {object}  domain.SellerWallet
+// @Failure      500  {object}  object{error=string}
+// @Router       /payments/wallet [get]
+// @Security     BearerAuth
 func (h *Handler) GetWalletBalance(c *gin.Context) {
 	sellerID := c.GetString("user_id")
 	if sellerID == "" {
@@ -154,7 +197,17 @@ func (h *Handler) GetWalletBalance(c *gin.Context) {
 	c.JSON(http.StatusOK, wallet)
 }
 
-// ListWalletTransactions lists wallet transactions for the authenticated seller.
+// ListWalletTransactions godoc
+// @Summary      List wallet transactions for the authenticated seller
+// @Tags         Payments
+// @Produce      json
+// @Param        seller_id  query  string  false  "Seller ID (fallback)"
+// @Param        page       query  int     false  "Page number"   default(1)
+// @Param        page_size  query  int     false  "Page size"     default(20)
+// @Success      200  {object}  object{transactions=[]domain.WalletTransaction,total=int64,page=int,page_size=int}
+// @Failure      500  {object}  object{error=string}
+// @Router       /payments/wallet/transactions [get]
+// @Security     BearerAuth
 func (h *Handler) ListWalletTransactions(c *gin.Context) {
 	sellerID := c.GetString("user_id")
 	if sellerID == "" {
@@ -179,7 +232,16 @@ func (h *Handler) ListWalletTransactions(c *gin.Context) {
 	})
 }
 
-// RequestPayout handles a seller's payout request.
+// RequestPayout godoc
+// @Summary      Request a seller payout
+// @Tags         Payments
+// @Accept       json
+// @Produce      json
+// @Param        body  body  usecase.RequestPayoutInput  true  "Payout request payload"
+// @Success      201  {object}  domain.Payout
+// @Failure      400  {object}  object{error=string}
+// @Router       /payments/payouts [post]
+// @Security     BearerAuth
 func (h *Handler) RequestPayout(c *gin.Context) {
 	var input usecase.RequestPayoutInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -201,7 +263,17 @@ func (h *Handler) RequestPayout(c *gin.Context) {
 	c.JSON(http.StatusCreated, payout)
 }
 
-// ListPayouts lists payouts for the authenticated seller.
+// ListPayouts godoc
+// @Summary      List payouts for the authenticated seller
+// @Tags         Payments
+// @Produce      json
+// @Param        seller_id  query  string  false  "Seller ID (fallback)"
+// @Param        page       query  int     false  "Page number"   default(1)
+// @Param        page_size  query  int     false  "Page size"     default(20)
+// @Success      200  {object}  object{payouts=[]domain.Payout,total=int64,page=int,page_size=int}
+// @Failure      500  {object}  object{error=string}
+// @Router       /payments/payouts [get]
+// @Security     BearerAuth
 func (h *Handler) ListPayouts(c *gin.Context) {
 	sellerID := c.GetString("user_id")
 	if sellerID == "" {

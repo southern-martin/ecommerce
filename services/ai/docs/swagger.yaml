@@ -1,0 +1,432 @@
+basePath: /api/v1
+definitions:
+  github_com_southern-martin_ecommerce_services_ai_internal_domain.AIConversation:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: string
+      messagesJSON:
+        description: JSON array of ChatMessage
+        type: string
+      model:
+        description: e.g. "gpt-4"
+        type: string
+      title:
+        type: string
+      tokenCount:
+        type: integer
+      updatedAt:
+        type: string
+      userID:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_ai_internal_domain.ContentType:
+    enum:
+    - product_description
+    - seo_meta
+    - review_summary
+    type: string
+    x-enum-varnames:
+    - ContentTypeProductDescription
+    - ContentTypeSEOMeta
+    - ContentTypeReviewSummary
+  github_com_southern-martin_ecommerce_services_ai_internal_domain.GeneratedContent:
+    properties:
+      completionTokens:
+        type: integer
+      content:
+        type: string
+      createdAt:
+        type: string
+      entityID:
+        type: string
+      entityType:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_ai_internal_domain.ContentType'
+      id:
+        type: string
+      model:
+        type: string
+      promptTokens:
+        type: integer
+    type: object
+  github_com_southern-martin_ecommerce_services_ai_internal_domain.Recommendation:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: string
+      isViewed:
+        type: boolean
+      productID:
+        type: string
+      reason:
+        description: e.g. "similar_to_viewed", "frequently_bought_together", "trending"
+        type: string
+      score:
+        format: float64
+        type: number
+      userID:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_ai_internal_usecase.ChatResponse:
+    properties:
+      conversation_id:
+        type: string
+      model:
+        type: string
+      response:
+        type: string
+      token_count:
+        type: integer
+    type: object
+  internal_adapter_http.chatRequest:
+    properties:
+      conversation_id:
+        type: string
+      message:
+        type: string
+    required:
+    - message
+    type: object
+  internal_adapter_http.generateDescriptionRequest:
+    properties:
+      category:
+        type: string
+      product_id:
+        type: string
+      product_name:
+        type: string
+    required:
+    - category
+    - product_id
+    - product_name
+    type: object
+  internal_adapter_http.generateEmbeddingRequest:
+    properties:
+      entity_id:
+        type: string
+      entity_type:
+        type: string
+      text:
+        type: string
+    required:
+    - entity_id
+    - entity_type
+    - text
+    type: object
+host: localhost:28092
+info:
+  contact: {}
+  description: AI-powered product recommendations, content generation, and embeddings.
+  title: AI Service API
+  version: "1.0"
+paths:
+  /ai/chat:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              conversations:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_ai_internal_domain.AIConversation'
+                type: array
+              page:
+                type: integer
+              page_size:
+                type: integer
+              total:
+                type: integer
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List AI conversations for the current user
+      tags:
+      - AI
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Chat message
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.chatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_southern-martin_ecommerce_services_ai_internal_usecase.ChatResponse'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Send a message to the AI assistant
+      tags:
+      - AI
+  /ai/chat/{id}:
+    get:
+      parameters:
+      - description: Conversation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              conversation:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_ai_internal_domain.AIConversation'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Retrieve an AI conversation by ID
+      tags:
+      - AI
+  /ai/embeddings:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Embedding request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.generateEmbeddingRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              embedding:
+                properties:
+                  dimensions:
+                    type: integer
+                  entity_id:
+                    type: string
+                  entity_type:
+                    type: string
+                  id:
+                    type: string
+                  model_version:
+                    type: string
+                type: object
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Generate an embedding for an entity
+      tags:
+      - AI
+  /ai/generate-description:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Product details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.generateDescriptionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              generated_content:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_ai_internal_domain.GeneratedContent'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Generate a product description using AI
+      tags:
+      - AI
+  /ai/recommendations:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              page:
+                type: integer
+              page_size:
+                type: integer
+              recommendations:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_ai_internal_domain.Recommendation'
+                type: array
+              total:
+                type: integer
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get product recommendations for the current user
+      tags:
+      - AI
+  /search/image:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+              results:
+                items: {}
+                type: array
+            type: object
+      summary: Search products by image
+      tags:
+      - AI
+securityDefinitions:
+  BearerAuth:
+    description: JWT Bearer token (via Kong gateway)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

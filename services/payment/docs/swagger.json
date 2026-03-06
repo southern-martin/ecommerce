@@ -1,0 +1,775 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Payment processing, wallet management, refunds, and seller payouts.",
+        "title": "Payment Service API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:28084",
+    "basePath": "/api/v1",
+    "paths": {
+        "/payments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "List payments for the authenticated buyer",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "page": {
+                                    "type": "integer"
+                                },
+                                "page_size": {
+                                    "type": "integer"
+                                },
+                                "payments": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_domain.Payment"
+                                    }
+                                },
+                                "total": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/create-intent": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Create a payment intent",
+                "parameters": [
+                    {
+                        "description": "Payment intent payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_usecase.CreatePaymentInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_usecase.CreatePaymentOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/payouts": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "List payouts for the authenticated seller",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Seller ID (fallback)",
+                        "name": "seller_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "page": {
+                                    "type": "integer"
+                                },
+                                "page_size": {
+                                    "type": "integer"
+                                },
+                                "payouts": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_domain.Payout"
+                                    }
+                                },
+                                "total": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Request a seller payout",
+                "parameters": [
+                    {
+                        "description": "Payout request payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_usecase.RequestPayoutInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_domain.Payout"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/wallet": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Get wallet balance for the authenticated seller",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Seller ID (fallback)",
+                        "name": "seller_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_domain.SellerWallet"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/wallet/transactions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "List wallet transactions for the authenticated seller",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Seller ID (fallback)",
+                        "name": "seller_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "page": {
+                                    "type": "integer"
+                                },
+                                "page_size": {
+                                    "type": "integer"
+                                },
+                                "total": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                },
+                                "transactions": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_domain.WalletTransaction"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/webhooks/stripe": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Handle Stripe webhook event",
+                "parameters": [
+                    {
+                        "description": "Stripe webhook event",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_usecase.WebhookEvent"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "received": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Get a payment by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Payment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_domain.Payment"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_southern-martin_ecommerce_services_payment_internal_domain.OrderSellerItem": {
+            "type": "object",
+            "properties": {
+                "amount_cents": {
+                    "type": "integer"
+                },
+                "seller_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_southern-martin_ecommerce_services_payment_internal_domain.Payment": {
+            "type": "object",
+            "properties": {
+                "amountCents": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "buyerID": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "failureReason": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "method": {
+                    "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_domain.PaymentMethod"
+                },
+                "orderID": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_domain.PaymentStatus"
+                },
+                "stripePaymentID": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_southern-martin_ecommerce_services_payment_internal_domain.PaymentMethod": {
+            "type": "string",
+            "enum": [
+                "card",
+                "wallet"
+            ],
+            "x-enum-varnames": [
+                "PaymentMethodCard",
+                "PaymentMethodWallet"
+            ]
+        },
+        "github_com_southern-martin_ecommerce_services_payment_internal_domain.PaymentStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "completed",
+                "failed",
+                "refunded"
+            ],
+            "x-enum-varnames": [
+                "PaymentStatusPending",
+                "PaymentStatusCompleted",
+                "PaymentStatusFailed",
+                "PaymentStatusRefunded"
+            ]
+        },
+        "github_com_southern-martin_ecommerce_services_payment_internal_domain.Payout": {
+            "type": "object",
+            "properties": {
+                "amountCents": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "completedAt": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "method": {
+                    "description": "\"stripe_connect\", \"bank_transfer\"",
+                    "type": "string"
+                },
+                "requestedAt": {
+                    "type": "string"
+                },
+                "sellerID": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_domain.PayoutStatus"
+                },
+                "stripeTransferID": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_southern-martin_ecommerce_services_payment_internal_domain.PayoutStatus": {
+            "type": "string",
+            "enum": [
+                "requested",
+                "processing",
+                "completed",
+                "failed"
+            ],
+            "x-enum-varnames": [
+                "PayoutStatusRequested",
+                "PayoutStatusProcessing",
+                "PayoutStatusCompleted",
+                "PayoutStatusFailed"
+            ]
+        },
+        "github_com_southern-martin_ecommerce_services_payment_internal_domain.SellerWallet": {
+            "type": "object",
+            "properties": {
+                "availableBalance": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "pendingBalance": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "sellerID": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_southern-martin_ecommerce_services_payment_internal_domain.WalletTransaction": {
+            "type": "object",
+            "properties": {
+                "amountCents": {
+                    "description": "positive = credit, negative = debit",
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "referenceID": {
+                    "type": "string"
+                },
+                "referenceType": {
+                    "type": "string"
+                },
+                "sellerID": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_domain.WalletTransactionType"
+                }
+            }
+        },
+        "github_com_southern-martin_ecommerce_services_payment_internal_domain.WalletTransactionType": {
+            "type": "string",
+            "enum": [
+                "sale",
+                "commission_deducted",
+                "payout",
+                "refund_debit",
+                "adjustment"
+            ],
+            "x-enum-varnames": [
+                "WalletTxSale",
+                "WalletTxCommissionDeducted",
+                "WalletTxPayout",
+                "WalletTxRefundDebit",
+                "WalletTxAdjustment"
+            ]
+        },
+        "github_com_southern-martin_ecommerce_services_payment_internal_usecase.CreatePaymentInput": {
+            "type": "object",
+            "required": [
+                "amount_cents",
+                "order_id"
+            ],
+            "properties": {
+                "amount_cents": {
+                    "type": "integer"
+                },
+                "buyer_id": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "method": {
+                    "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_domain.PaymentMethod"
+                },
+                "order_id": {
+                    "type": "string"
+                },
+                "seller_items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_domain.OrderSellerItem"
+                    }
+                }
+            }
+        },
+        "github_com_southern-martin_ecommerce_services_payment_internal_usecase.CreatePaymentOutput": {
+            "type": "object",
+            "properties": {
+                "client_secret": {
+                    "type": "string"
+                },
+                "payment_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "stripe_payment_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_southern-martin_ecommerce_services_payment_internal_usecase.RequestPayoutInput": {
+            "type": "object",
+            "required": [
+                "amount_cents"
+            ],
+            "properties": {
+                "amount_cents": {
+                    "type": "integer"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "method": {
+                    "type": "string"
+                },
+                "seller_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_southern-martin_ecommerce_services_payment_internal_usecase.WebhookEvent": {
+            "type": "object",
+            "properties": {
+                "failure_reason": {
+                    "description": "FailureReason is populated when the payment fails.",
+                    "type": "string"
+                },
+                "seller_items": {
+                    "description": "SellerItems is included for crediting seller wallets on success.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_southern-martin_ecommerce_services_payment_internal_domain.OrderSellerItem"
+                    }
+                },
+                "stripe_payment_id": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "JWT Bearer token (via Kong gateway)",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

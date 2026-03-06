@@ -1,0 +1,548 @@
+basePath: /api/v1
+definitions:
+  github_com_southern-martin_ecommerce_services_affiliate_internal_domain.AffiliateLink:
+    properties:
+      clickCount:
+        format: int64
+        type: integer
+      code:
+        type: string
+      conversionCount:
+        format: int64
+        type: integer
+      createdAt:
+        type: string
+      id:
+        type: string
+      targetURL:
+        type: string
+      totalEarningsCents:
+        format: int64
+        type: integer
+      userID:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_affiliate_internal_domain.AffiliatePayout:
+    properties:
+      amountCents:
+        format: int64
+        type: integer
+      completedAt:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      payoutMethod:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_affiliate_internal_domain.PayoutMethod'
+      status:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_affiliate_internal_domain.PayoutStatus'
+      userID:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_affiliate_internal_domain.AffiliateProgram:
+    properties:
+      commissionRate:
+        format: float64
+        type: number
+      cookieDays:
+        type: integer
+      createdAt:
+        type: string
+      id:
+        type: string
+      isActive:
+        type: boolean
+      minPayoutCents:
+        format: int64
+        type: integer
+      referredBonusCents:
+        format: int64
+        type: integer
+      referrerBonusCents:
+        format: int64
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_affiliate_internal_domain.PayoutMethod:
+    enum:
+    - bank_transfer
+    - stripe
+    type: string
+    x-enum-varnames:
+    - PayoutMethodBankTransfer
+    - PayoutMethodStripe
+  github_com_southern-martin_ecommerce_services_affiliate_internal_domain.PayoutStatus:
+    enum:
+    - requested
+    - processing
+    - completed
+    - failed
+    type: string
+    x-enum-varnames:
+    - PayoutStatusRequested
+    - PayoutStatusProcessing
+    - PayoutStatusCompleted
+    - PayoutStatusFailed
+  github_com_southern-martin_ecommerce_services_affiliate_internal_domain.Referral:
+    properties:
+      commissionCents:
+        format: int64
+        type: integer
+      createdAt:
+        type: string
+      id:
+        type: string
+      orderID:
+        type: string
+      orderTotalCents:
+        format: int64
+        type: integer
+      referredID:
+        type: string
+      referrerID:
+        type: string
+      status:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_affiliate_internal_domain.ReferralStatus'
+    type: object
+  github_com_southern-martin_ecommerce_services_affiliate_internal_domain.ReferralStatus:
+    enum:
+    - pending
+    - confirmed
+    - paid
+    type: string
+    x-enum-varnames:
+    - ReferralStatusPending
+    - ReferralStatusConfirmed
+    - ReferralStatusPaid
+  internal_adapter_http.createLinkRequest:
+    properties:
+      target_url:
+        type: string
+    required:
+    - target_url
+    type: object
+  internal_adapter_http.requestPayoutRequest:
+    properties:
+      amount_cents:
+        type: integer
+      payout_method:
+        type: string
+    required:
+    - amount_cents
+    - payout_method
+    type: object
+  internal_adapter_http.updatePayoutStatusRequest:
+    properties:
+      status:
+        type: string
+    required:
+    - status
+    type: object
+  internal_adapter_http.updateProgramRequest:
+    properties:
+      commission_rate:
+        type: number
+      cookie_days:
+        type: integer
+      is_active:
+        type: boolean
+      min_payout_cents:
+        type: integer
+      referred_bonus_cents:
+        type: integer
+      referrer_bonus_cents:
+        type: integer
+    type: object
+host: localhost:28097
+info:
+  contact: {}
+  description: Affiliate link tracking, referral management, and payout processing.
+  title: Affiliate Service API
+  version: "1.0"
+paths:
+  /admin/affiliates/payouts:
+    get:
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              page:
+                type: integer
+              page_size:
+                type: integer
+              payouts:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_affiliate_internal_domain.AffiliatePayout'
+                type: array
+              total:
+                type: integer
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List all affiliate payouts (admin)
+      tags:
+      - Affiliate
+  /admin/affiliates/payouts/{id}:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Payout ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Payout status update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updatePayoutStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              payout:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_affiliate_internal_domain.AffiliatePayout'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a payout status (admin)
+      tags:
+      - Affiliate
+  /admin/affiliates/program:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              program:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_affiliate_internal_domain.AffiliateProgram'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get the affiliate program configuration
+      tags:
+      - Affiliate
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Program update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updateProgramRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              program:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_affiliate_internal_domain.AffiliateProgram'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update the affiliate program configuration
+      tags:
+      - Affiliate
+  /affiliate/links:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              links:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_affiliate_internal_domain.AffiliateLink'
+                type: array
+              page:
+                type: integer
+              page_size:
+                type: integer
+              total:
+                type: integer
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List affiliate links for the current user
+      tags:
+      - Affiliate
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Link creation payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.createLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              link:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_affiliate_internal_domain.AffiliateLink'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new affiliate link
+      tags:
+      - Affiliate
+  /affiliate/payout:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Payout request payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.requestPayoutRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              payout:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_affiliate_internal_domain.AffiliatePayout'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Request a payout for affiliate earnings
+      tags:
+      - Affiliate
+  /affiliate/referrals:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              page:
+                type: integer
+              page_size:
+                type: integer
+              referrals:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_affiliate_internal_domain.Referral'
+                type: array
+              total:
+                type: integer
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List referrals for the current user
+      tags:
+      - Affiliate
+  /affiliate/stats:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              link_count:
+                type: integer
+              total_clicks:
+                type: integer
+              total_conversions:
+                type: integer
+              total_earnings_cents:
+                type: integer
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get affiliate statistics for the current user
+      tags:
+      - Affiliate
+  /r/{code}:
+    get:
+      parameters:
+      - description: Affiliate link code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Redirect to target URL
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Track a click on an affiliate link and redirect
+      tags:
+      - Affiliate
+securityDefinitions:
+  BearerAuth:
+    description: JWT Bearer token (via Kong gateway)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

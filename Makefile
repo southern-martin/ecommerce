@@ -15,7 +15,8 @@ POSTGRES_PASSWORD ?= ecommerce_secret
 .PHONY: help build test lint vet fmt run-infra stop-infra clean \
         docker-build docker-push deploy-dev deploy-staging deploy-prod \
         proto run-all stop migrate-up test-coverage integration-test \
-        e2e-test load-test-smoke load-test verify-all
+        e2e-test load-test-smoke load-test verify-all \
+        swagger swagger-one swagger-fmt
 
 # ─── Help ───────────────────────────────────────────────────────
 help: ## Show this help
@@ -179,6 +180,27 @@ verify-all: ## Build + vet + lint + test all services
 	@echo "=== Running linter ===" && $(MAKE) lint
 	@echo "=== Running tests ===" && $(MAKE) test
 	@echo "=== All checks passed ==="
+
+# ─── Swagger ────────────────────────────────────────────────────
+swagger: ## Generate Swagger docs for all services
+	@for svc in $(SERVICES); do \
+		echo "Generating swagger docs for $$svc..."; \
+		(cd services/$$svc && GOWORK=off swag init \
+			--generalInfo cmd/main.go \
+			--parseDependency --parseInternal \
+			--output ./docs --quiet) || echo "  WARNING: $$svc swagger generation had errors"; \
+	done
+	@echo "All Swagger docs generated."
+
+swagger-one: ## Generate Swagger for one service (usage: make swagger-one SVC=product)
+	cd services/$(SVC) && GOWORK=off swag init \
+		--generalInfo cmd/main.go \
+		--parseDependency --parseInternal --output ./docs
+
+swagger-fmt: ## Format swagger annotations
+	@for svc in $(SERVICES); do \
+		(cd services/$$svc && swag fmt ./internal/adapter/http/) || true; \
+	done
 
 # ─── Clean ──────────────────────────────────────────────────────
 clean: ## Clean build artifacts

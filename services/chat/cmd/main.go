@@ -1,3 +1,15 @@
+// @title          Chat Service API
+// @version        1.0
+// @description    Real-time messaging between buyers and sellers.
+//
+// @host           localhost:28088
+// @BasePath       /api/v1
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT Bearer token (via Kong gateway)
+
 package main
 
 import (

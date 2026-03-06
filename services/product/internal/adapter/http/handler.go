@@ -63,7 +63,22 @@ func (h *Handler) Ready(c *gin.Context) {
 
 // --- Public Product Endpoints ---
 
-// ListProducts handles GET /api/v1/products
+// ListProducts godoc
+// @Summary      List products
+// @Tags         Public Products
+// @Produce      json
+// @Param        seller_id   query  string  false  "Filter by seller ID"
+// @Param        category_id query  string  false  "Filter by category ID"
+// @Param        status      query  string  false  "Filter by status (default: active)"
+// @Param        q           query  string  false  "Search query"
+// @Param        sort_by     query  string  false  "Sort field"
+// @Param        min_price   query  int     false  "Minimum price in cents"
+// @Param        max_price   query  int     false  "Maximum price in cents"
+// @Param        page        query  int     false  "Page number"
+// @Param        page_size   query  int     false  "Page size"
+// @Success      200  {object}  object{products=[]domain.Product,total=int,page=int,pageSize=int}
+// @Failure      500  {object}  object{error=string}
+// @Router       /products [get]
 func (h *Handler) ListProducts(c *gin.Context) {
 	filter := domain.ProductFilter{
 		SellerID:   c.Query("seller_id"),
@@ -113,7 +128,14 @@ func (h *Handler) ListProducts(c *gin.Context) {
 	})
 }
 
-// GetProduct handles GET /api/v1/products/:id
+// GetProduct godoc
+// @Summary      Get product by ID
+// @Tags         Public Products
+// @Produce      json
+// @Param        id  path  string  true  "Product ID"
+// @Success      200  {object}  domain.Product
+// @Failure      404  {object}  object{error=string}
+// @Router       /products/{id} [get]
 func (h *Handler) GetProduct(c *gin.Context) {
 	id := c.Param("id")
 	product, err := h.productUC.GetProduct(c.Request.Context(), id)
@@ -124,7 +146,14 @@ func (h *Handler) GetProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, product)
 }
 
-// GetProductBySlug handles GET /api/v1/products/slug/:slug
+// GetProductBySlug godoc
+// @Summary      Get product by slug
+// @Tags         Public Products
+// @Produce      json
+// @Param        slug  path  string  true  "Product slug"
+// @Success      200  {object}  domain.Product
+// @Failure      404  {object}  object{error=string}
+// @Router       /products/slug/{slug} [get]
 func (h *Handler) GetProductBySlug(c *gin.Context) {
 	slug := c.Param("slug")
 	product, err := h.productUC.GetProductBySlug(c.Request.Context(), slug)
@@ -137,7 +166,13 @@ func (h *Handler) GetProductBySlug(c *gin.Context) {
 
 // --- Public Category Endpoints ---
 
-// ListCategories handles GET /api/v1/categories
+// ListCategories godoc
+// @Summary      List all categories
+// @Tags         Categories
+// @Produce      json
+// @Success      200  {object}  object{categories=[]domain.Category}
+// @Failure      500  {object}  object{error=string}
+// @Router       /categories [get]
 func (h *Handler) ListCategories(c *gin.Context) {
 	categories, err := h.categoryUC.GetCategories(c.Request.Context())
 	if err != nil {
@@ -171,7 +206,18 @@ type attributeValueInputRequest struct {
 	OptionValueIDs []string `json:"option_value_ids"`
 }
 
-// CreateProduct handles POST /api/v1/seller/products
+// CreateProduct godoc
+// @Summary      Create a new product
+// @Tags         Seller Products
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string               true  "Seller ID"
+// @Param        body       body    createProductRequest  true  "Product data"
+// @Success      201  {object}  domain.Product
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Router       /seller/products [post]
+// @Security     BearerAuth
 func (h *Handler) CreateProduct(c *gin.Context) {
 	sellerID := c.GetHeader("X-User-ID")
 	if sellerID == "" {
@@ -231,7 +277,19 @@ type updateProductRequest struct {
 	AttributeGroupID *string               `json:"attribute_group_id"`
 }
 
-// UpdateProduct handles PATCH /api/v1/seller/products/:id
+// UpdateProduct godoc
+// @Summary      Update a product (seller)
+// @Tags         Seller Products
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string               true  "Seller ID"
+// @Param        id         path    string               true  "Product ID"
+// @Param        body       body    updateProductRequest  true  "Fields to update"
+// @Success      200  {object}  domain.Product
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Router       /seller/products/{id} [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdateProduct(c *gin.Context) {
 	sellerID := c.GetHeader("X-User-ID")
 	if sellerID == "" {
@@ -268,7 +326,17 @@ func (h *Handler) UpdateProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, product)
 }
 
-// DeleteProduct handles DELETE /api/v1/seller/products/:id
+// DeleteProduct godoc
+// @Summary      Delete a product (seller)
+// @Tags         Seller Products
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "Seller ID"
+// @Param        id         path    string  true  "Product ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Router       /seller/products/{id} [delete]
+// @Security     BearerAuth
 func (h *Handler) DeleteProduct(c *gin.Context) {
 	sellerID := c.GetHeader("X-User-ID")
 	if sellerID == "" {
@@ -299,7 +367,19 @@ type optionValueInputRequest struct {
 	SortOrder int    `json:"sort_order"`
 }
 
-// AddOption handles POST /api/v1/seller/products/:id/options
+// AddOption godoc
+// @Summary      Add an option to a product (seller)
+// @Tags         Seller Products
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string           true  "Seller ID"
+// @Param        id         path    string           true  "Product ID"
+// @Param        body       body    addOptionRequest true  "Option data"
+// @Success      201  {object}  domain.ProductOption
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Router       /seller/products/{id}/options [post]
+// @Security     BearerAuth
 func (h *Handler) AddOption(c *gin.Context) {
 	sellerID := c.GetHeader("X-User-ID")
 	if sellerID == "" {
@@ -336,7 +416,18 @@ func (h *Handler) AddOption(c *gin.Context) {
 	c.JSON(http.StatusCreated, option)
 }
 
-// RemoveOption handles DELETE /api/v1/seller/products/:id/options/:optionId
+// RemoveOption godoc
+// @Summary      Remove an option from a product (seller)
+// @Tags         Seller Products
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "Seller ID"
+// @Param        id         path    string  true  "Product ID"
+// @Param        optionId   path    string  true  "Option ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Router       /seller/products/{id}/options/{optionId} [delete]
+// @Security     BearerAuth
 func (h *Handler) RemoveOption(c *gin.Context) {
 	sellerID := c.GetHeader("X-User-ID")
 	if sellerID == "" {
@@ -357,7 +448,17 @@ func (h *Handler) RemoveOption(c *gin.Context) {
 
 // --- Seller Variant Endpoints ---
 
-// GenerateVariants handles POST /api/v1/seller/products/:id/variants/generate
+// GenerateVariants godoc
+// @Summary      Generate variants from options (seller)
+// @Tags         Seller Products
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "Seller ID"
+// @Param        id         path    string  true  "Product ID"
+// @Success      201  {object}  object{variants=[]domain.Variant}
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Router       /seller/products/{id}/variants/generate [post]
+// @Security     BearerAuth
 func (h *Handler) GenerateVariants(c *gin.Context) {
 	sellerID := c.GetHeader("X-User-ID")
 	if sellerID == "" {
@@ -388,7 +489,20 @@ type updateVariantRequest struct {
 	LowStockAlert  *int     `json:"low_stock_alert"`
 }
 
-// UpdateVariant handles PATCH /api/v1/seller/products/:id/variants/:variantId
+// UpdateVariant godoc
+// @Summary      Update a variant (seller)
+// @Tags         Seller Products
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string                true  "Seller ID"
+// @Param        id         path    string                true  "Product ID"
+// @Param        variantId  path    string                true  "Variant ID"
+// @Param        body       body    updateVariantRequest  true  "Variant fields to update"
+// @Success      200  {object}  domain.Variant
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Router       /seller/products/{id}/variants/{variantId} [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdateVariant(c *gin.Context) {
 	sellerID := c.GetHeader("X-User-ID")
 	if sellerID == "" {
@@ -431,7 +545,20 @@ type updateStockRequest struct {
 	Delta int `json:"delta" binding:"required"`
 }
 
-// UpdateVariantStock handles PATCH /api/v1/seller/products/:id/variants/:variantId/stock
+// UpdateVariantStock godoc
+// @Summary      Update variant stock (seller)
+// @Tags         Seller Products
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string              true  "Seller ID"
+// @Param        id         path    string              true  "Product ID"
+// @Param        variantId  path    string              true  "Variant ID"
+// @Param        body       body    updateStockRequest  true  "Stock delta"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Router       /seller/products/{id}/variants/{variantId}/stock [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdateVariantStock(c *gin.Context) {
 	sellerID := c.GetHeader("X-User-ID")
 	if sellerID == "" {
@@ -458,7 +585,24 @@ func (h *Handler) UpdateVariantStock(c *gin.Context) {
 
 // --- Admin Product Endpoints ---
 
-// AdminListProducts handles GET /api/v1/admin/products — lists ALL products (all statuses, all sellers).
+// AdminListProducts godoc
+// @Summary      List all products (admin)
+// @Description  Lists ALL products across all statuses and sellers
+// @Tags         Admin Products
+// @Produce      json
+// @Param        seller_id   query  string  false  "Filter by seller ID"
+// @Param        category_id query  string  false  "Filter by category ID"
+// @Param        status      query  string  false  "Filter by status"
+// @Param        q           query  string  false  "Search query"
+// @Param        sort_by     query  string  false  "Sort field"
+// @Param        min_price   query  int     false  "Minimum price in cents"
+// @Param        max_price   query  int     false  "Maximum price in cents"
+// @Param        page        query  int     false  "Page number"
+// @Param        page_size   query  int     false  "Page size"
+// @Success      200  {object}  object{products=[]domain.Product,total=int,page=int,pageSize=int}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/products [get]
+// @Security     BearerAuth
 func (h *Handler) AdminListProducts(c *gin.Context) {
 	filter := domain.ProductFilter{
 		SellerID:   c.Query("seller_id"),
@@ -505,7 +649,18 @@ func (h *Handler) AdminListProducts(c *gin.Context) {
 	})
 }
 
-// AdminUpdateProduct handles PATCH /api/v1/admin/products/:id — updates any product regardless of seller.
+// AdminUpdateProduct godoc
+// @Summary      Update any product (admin)
+// @Description  Updates a product regardless of seller ownership
+// @Tags         Admin Products
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string               true  "Product ID"
+// @Param        body  body  updateProductRequest  true  "Fields to update"
+// @Success      200  {object}  domain.Product
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/products/{id} [patch]
+// @Security     BearerAuth
 func (h *Handler) AdminUpdateProduct(c *gin.Context) {
 	id := c.Param("id")
 	var req updateProductRequest
@@ -536,7 +691,16 @@ func (h *Handler) AdminUpdateProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, product)
 }
 
-// AdminDeleteProduct handles DELETE /api/v1/admin/products/:id — deletes any product regardless of seller.
+// AdminDeleteProduct godoc
+// @Summary      Delete any product (admin)
+// @Description  Deletes a product regardless of seller ownership
+// @Tags         Admin Products
+// @Produce      json
+// @Param        id  path  string  true  "Product ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/products/{id} [delete]
+// @Security     BearerAuth
 func (h *Handler) AdminDeleteProduct(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.productUC.AdminDeleteProduct(c.Request.Context(), id); err != nil {
@@ -556,7 +720,16 @@ type createCategoryRequest struct {
 	ImageURL  string `json:"image_url"`
 }
 
-// CreateCategory handles POST /api/v1/admin/categories
+// CreateCategory godoc
+// @Summary      Create a category
+// @Tags         Admin Categories
+// @Accept       json
+// @Produce      json
+// @Param        body  body  createCategoryRequest  true  "Category data"
+// @Success      201  {object}  domain.Category
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/categories [post]
+// @Security     BearerAuth
 func (h *Handler) CreateCategory(c *gin.Context) {
 	var req createCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -586,7 +759,17 @@ type updateCategoryRequest struct {
 	IsActive  *bool   `json:"is_active"`
 }
 
-// UpdateCategory handles PATCH /api/v1/admin/categories/:id
+// UpdateCategory godoc
+// @Summary      Update a category
+// @Tags         Admin Categories
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string                true  "Category ID"
+// @Param        body  body  updateCategoryRequest  true  "Fields to update"
+// @Success      200  {object}  domain.Category
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/categories/{id} [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdateCategory(c *gin.Context) {
 	id := c.Param("id")
 	var req updateCategoryRequest
@@ -610,7 +793,15 @@ func (h *Handler) UpdateCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, cat)
 }
 
-// DeleteCategory handles DELETE /api/v1/admin/categories/:id
+// DeleteCategory godoc
+// @Summary      Delete a category
+// @Tags         Admin Categories
+// @Produce      json
+// @Param        id  path  string  true  "Category ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/categories/{id} [delete]
+// @Security     BearerAuth
 func (h *Handler) DeleteCategory(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.categoryUC.DeleteCategory(c.Request.Context(), id); err != nil {
@@ -638,7 +829,16 @@ type createAttributeRequest struct {
 	SortOrder    int                  `json:"sort_order"`
 }
 
-// CreateAttributeDefinition handles POST /api/v1/admin/attributes
+// CreateAttributeDefinition godoc
+// @Summary      Create an attribute definition
+// @Tags         Admin Attributes
+// @Accept       json
+// @Produce      json
+// @Param        body  body  createAttributeRequest  true  "Attribute definition data"
+// @Success      201  {object}  domain.AttributeDefinition
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/attributes [post]
+// @Security     BearerAuth
 func (h *Handler) CreateAttributeDefinition(c *gin.Context) {
 	var req createAttributeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -672,7 +872,14 @@ func (h *Handler) CreateAttributeDefinition(c *gin.Context) {
 	c.JSON(http.StatusCreated, attr)
 }
 
-// ListAttributeDefinitions handles GET /api/v1/admin/attributes
+// ListAttributeDefinitions godoc
+// @Summary      List all attribute definitions
+// @Tags         Admin Attributes
+// @Produce      json
+// @Success      200  {object}  object{attributes=[]domain.AttributeDefinition}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/attributes [get]
+// @Security     BearerAuth
 func (h *Handler) ListAttributeDefinitions(c *gin.Context) {
 	attrs, err := h.attributeUC.ListAttributeDefinitions(c.Request.Context())
 	if err != nil {
@@ -692,7 +899,17 @@ type updateAttributeRequest struct {
 	SortOrder    *int               `json:"sort_order"`
 }
 
-// UpdateAttributeDefinition handles PATCH /api/v1/admin/attributes/:id
+// UpdateAttributeDefinition godoc
+// @Summary      Update an attribute definition
+// @Tags         Admin Attributes
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string                  true  "Attribute definition ID"
+// @Param        body  body  updateAttributeRequest  true  "Fields to update"
+// @Success      200  {object}  domain.AttributeDefinition
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/attributes/{id} [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdateAttributeDefinition(c *gin.Context) {
 	id := c.Param("id")
 	var req updateAttributeRequest
@@ -727,7 +944,15 @@ func (h *Handler) UpdateAttributeDefinition(c *gin.Context) {
 	c.JSON(http.StatusOK, attr)
 }
 
-// DeleteAttributeDefinition handles DELETE /api/v1/admin/attributes/:id
+// DeleteAttributeDefinition godoc
+// @Summary      Delete an attribute definition
+// @Tags         Admin Attributes
+// @Produce      json
+// @Param        id  path  string  true  "Attribute definition ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/attributes/{id} [delete]
+// @Security     BearerAuth
 func (h *Handler) DeleteAttributeDefinition(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.attributeUC.DeleteAttributeDefinition(c.Request.Context(), id); err != nil {
@@ -744,7 +969,17 @@ type assignAttributeRequest struct {
 	SortOrder   int    `json:"sort_order"`
 }
 
-// AssignAttributeToCategory handles POST /api/v1/categories/:id/attributes
+// AssignAttributeToCategory godoc
+// @Summary      Assign an attribute to a category
+// @Tags         Categories
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string                  true  "Category ID"
+// @Param        body  body  assignAttributeRequest  true  "Attribute assignment"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Router       /categories/{id}/attributes [post]
+// @Security     BearerAuth
 func (h *Handler) AssignAttributeToCategory(c *gin.Context) {
 	categoryID := c.Param("id")
 	var req assignAttributeRequest
@@ -761,7 +996,16 @@ func (h *Handler) AssignAttributeToCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "attribute assigned to category"})
 }
 
-// RemoveAttributeFromCategory handles DELETE /api/v1/categories/:id/attributes/:attrId
+// RemoveAttributeFromCategory godoc
+// @Summary      Remove an attribute from a category
+// @Tags         Categories
+// @Produce      json
+// @Param        id      path  string  true  "Category ID"
+// @Param        attrId  path  string  true  "Attribute definition ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Router       /categories/{id}/attributes/{attrId} [delete]
+// @Security     BearerAuth
 func (h *Handler) RemoveAttributeFromCategory(c *gin.Context) {
 	categoryID := c.Param("id")
 	attrID := c.Param("attrId")
@@ -774,7 +1018,14 @@ func (h *Handler) RemoveAttributeFromCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "attribute removed from category"})
 }
 
-// ListCategoryAttributes handles GET /api/v1/categories/:id/attributes
+// ListCategoryAttributes godoc
+// @Summary      List attributes assigned to a category
+// @Tags         Categories
+// @Produce      json
+// @Param        id  path  string  true  "Category ID"
+// @Success      200  {object}  object{attributes=[]domain.AttributeDefinition}
+// @Failure      500  {object}  object{error=string}
+// @Router       /categories/{id}/attributes [get]
 func (h *Handler) ListCategoryAttributes(c *gin.Context) {
 	categoryID := c.Param("id")
 	attrs, err := h.attributeUC.ListCategoryAttributes(c.Request.Context(), categoryID)
@@ -787,7 +1038,14 @@ func (h *Handler) ListCategoryAttributes(c *gin.Context) {
 
 // --- Public Option & Variant Read Endpoints ---
 
-// ListProductOptions handles GET /api/v1/products/:id/options
+// ListProductOptions godoc
+// @Summary      List product options
+// @Tags         Public Products
+// @Produce      json
+// @Param        id  path  string  true  "Product ID"
+// @Success      200  {object}  object{options=[]domain.ProductOption}
+// @Failure      500  {object}  object{error=string}
+// @Router       /products/{id}/options [get]
 func (h *Handler) ListProductOptions(c *gin.Context) {
 	productID := c.Param("id")
 	options, err := h.variantUC.ListOptions(c.Request.Context(), productID)
@@ -798,7 +1056,14 @@ func (h *Handler) ListProductOptions(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"options": options})
 }
 
-// ListProductVariants handles GET /api/v1/products/:id/variants
+// ListProductVariants godoc
+// @Summary      List product variants
+// @Tags         Public Products
+// @Produce      json
+// @Param        id  path  string  true  "Product ID"
+// @Success      200  {object}  object{variants=[]domain.Variant}
+// @Failure      500  {object}  object{error=string}
+// @Router       /products/{id}/variants [get]
 func (h *Handler) ListProductVariants(c *gin.Context) {
 	productID := c.Param("id")
 	variants, err := h.variantUC.ListVariantsByProduct(c.Request.Context(), productID)
@@ -809,7 +1074,15 @@ func (h *Handler) ListProductVariants(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"variants": variants})
 }
 
-// GetVariant handles GET /api/v1/products/:id/variants/:variantId
+// GetVariant godoc
+// @Summary      Get a variant by ID
+// @Tags         Public Products
+// @Produce      json
+// @Param        id         path  string  true  "Product ID"
+// @Param        variantId  path  string  true  "Variant ID"
+// @Success      200  {object}  domain.Variant
+// @Failure      404  {object}  object{error=string}
+// @Router       /products/{id}/variants/{variantId} [get]
 func (h *Handler) GetVariant(c *gin.Context) {
 	variantID := c.Param("variantId")
 	variant, err := h.variantUC.GetVariant(c.Request.Context(), variantID)
@@ -826,7 +1099,21 @@ type setProductAttributesRequest struct {
 	Attributes []attributeValueInputRequest `json:"attributes" binding:"required"`
 }
 
-// SetProductAttributes handles PUT /api/v1/seller/products/:id/attributes
+// SetProductAttributes godoc
+// @Summary      Set product attribute values (seller)
+// @Tags         Seller Products
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string                       true  "Seller ID"
+// @Param        id         path    string                       true  "Product ID"
+// @Param        body       body    setProductAttributesRequest   true  "Attribute values"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Failure      403  {object}  object{error=string}
+// @Failure      404  {object}  object{error=string}
+// @Router       /seller/products/{id}/attributes [put]
+// @Security     BearerAuth
 func (h *Handler) SetProductAttributes(c *gin.Context) {
 	sellerID := c.GetHeader("X-User-ID")
 	if sellerID == "" {
@@ -873,7 +1160,14 @@ func (h *Handler) SetProductAttributes(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "attributes updated"})
 }
 
-// GetProductAttributes handles GET /api/v1/products/:id/attributes
+// GetProductAttributes godoc
+// @Summary      Get product attribute values
+// @Tags         Public Products
+// @Produce      json
+// @Param        id  path  string  true  "Product ID"
+// @Success      200  {object}  object{attributes=[]domain.ProductAttributeValue}
+// @Failure      500  {object}  object{error=string}
+// @Router       /products/{id}/attributes [get]
 func (h *Handler) GetProductAttributes(c *gin.Context) {
 	productID := c.Param("id")
 	attrs, err := h.attributeUC.GetProductAttributeValues(c.Request.Context(), productID)
@@ -892,7 +1186,16 @@ type createAttributeGroupRequest struct {
 	SortOrder   int    `json:"sort_order"`
 }
 
-// CreateAttributeGroup handles POST /api/v1/admin/attribute-groups
+// CreateAttributeGroup godoc
+// @Summary      Create an attribute group
+// @Tags         Admin Attribute Groups
+// @Accept       json
+// @Produce      json
+// @Param        body  body  createAttributeGroupRequest  true  "Attribute group data"
+// @Success      201  {object}  domain.AttributeGroup
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/attribute-groups [post]
+// @Security     BearerAuth
 func (h *Handler) CreateAttributeGroup(c *gin.Context) {
 	var req createAttributeGroupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -913,7 +1216,13 @@ func (h *Handler) CreateAttributeGroup(c *gin.Context) {
 	c.JSON(http.StatusCreated, group)
 }
 
-// ListAttributeGroups handles GET /api/v1/admin/attribute-groups and GET /api/v1/attribute-groups
+// ListAttributeGroups godoc
+// @Summary      List all attribute groups
+// @Tags         Attribute Groups
+// @Produce      json
+// @Success      200  {object}  object{attribute_groups=[]domain.AttributeGroup}
+// @Failure      500  {object}  object{error=string}
+// @Router       /attribute-groups [get]
 func (h *Handler) ListAttributeGroups(c *gin.Context) {
 	groups, err := h.attributeGroupUC.ListAttributeGroups(c.Request.Context())
 	if err != nil {
@@ -923,7 +1232,14 @@ func (h *Handler) ListAttributeGroups(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"attribute_groups": groups})
 }
 
-// GetAttributeGroup handles GET /api/v1/attribute-groups/:id
+// GetAttributeGroup godoc
+// @Summary      Get an attribute group by ID
+// @Tags         Attribute Groups
+// @Produce      json
+// @Param        id  path  string  true  "Attribute group ID"
+// @Success      200  {object}  domain.AttributeGroup
+// @Failure      404  {object}  object{error=string}
+// @Router       /attribute-groups/{id} [get]
 func (h *Handler) GetAttributeGroup(c *gin.Context) {
 	id := c.Param("id")
 	group, err := h.attributeGroupUC.GetAttributeGroup(c.Request.Context(), id)
@@ -940,7 +1256,17 @@ type updateAttributeGroupRequest struct {
 	SortOrder   *int    `json:"sort_order"`
 }
 
-// UpdateAttributeGroup handles PATCH /api/v1/admin/attribute-groups/:id
+// UpdateAttributeGroup godoc
+// @Summary      Update an attribute group
+// @Tags         Admin Attribute Groups
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string                       true  "Attribute group ID"
+// @Param        body  body  updateAttributeGroupRequest  true  "Fields to update"
+// @Success      200  {object}  domain.AttributeGroup
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/attribute-groups/{id} [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdateAttributeGroup(c *gin.Context) {
 	id := c.Param("id")
 	var req updateAttributeGroupRequest
@@ -962,7 +1288,15 @@ func (h *Handler) UpdateAttributeGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, group)
 }
 
-// DeleteAttributeGroup handles DELETE /api/v1/admin/attribute-groups/:id
+// DeleteAttributeGroup godoc
+// @Summary      Delete an attribute group
+// @Tags         Admin Attribute Groups
+// @Produce      json
+// @Param        id  path  string  true  "Attribute group ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/attribute-groups/{id} [delete]
+// @Security     BearerAuth
 func (h *Handler) DeleteAttributeGroup(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.attributeGroupUC.DeleteAttributeGroup(c.Request.Context(), id); err != nil {
@@ -977,7 +1311,17 @@ type addAttributeToGroupRequest struct {
 	SortOrder   int    `json:"sort_order"`
 }
 
-// AddAttributeToGroup handles POST /api/v1/admin/attribute-groups/:id/attributes
+// AddAttributeToGroup godoc
+// @Summary      Add an attribute to a group
+// @Tags         Admin Attribute Groups
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string                      true  "Attribute group ID"
+// @Param        body  body  addAttributeToGroupRequest  true  "Attribute to add"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/attribute-groups/{id}/attributes [post]
+// @Security     BearerAuth
 func (h *Handler) AddAttributeToGroup(c *gin.Context) {
 	groupID := c.Param("id")
 	var req addAttributeToGroupRequest
@@ -994,7 +1338,16 @@ func (h *Handler) AddAttributeToGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "attribute added to group"})
 }
 
-// RemoveAttributeFromGroup handles DELETE /api/v1/admin/attribute-groups/:id/attributes/:attrId
+// RemoveAttributeFromGroup godoc
+// @Summary      Remove an attribute from a group
+// @Tags         Admin Attribute Groups
+// @Produce      json
+// @Param        id      path  string  true  "Attribute group ID"
+// @Param        attrId  path  string  true  "Attribute definition ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/attribute-groups/{id}/attributes/{attrId} [delete]
+// @Security     BearerAuth
 func (h *Handler) RemoveAttributeFromGroup(c *gin.Context) {
 	groupID := c.Param("id")
 	attrID := c.Param("attrId")
@@ -1007,7 +1360,14 @@ func (h *Handler) RemoveAttributeFromGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "attribute removed from group"})
 }
 
-// ListGroupAttributes handles GET /api/v1/attribute-groups/:id/attributes
+// ListGroupAttributes godoc
+// @Summary      List attributes in a group
+// @Tags         Attribute Groups
+// @Produce      json
+// @Param        id  path  string  true  "Attribute group ID"
+// @Success      200  {object}  object{attributes=[]domain.AttributeDefinition}
+// @Failure      500  {object}  object{error=string}
+// @Router       /attribute-groups/{id}/attributes [get]
 func (h *Handler) ListGroupAttributes(c *gin.Context) {
 	groupID := c.Param("id")
 	attrs, err := h.attributeGroupUC.ListGroupAttributes(c.Request.Context(), groupID)
@@ -1020,7 +1380,16 @@ func (h *Handler) ListGroupAttributes(c *gin.Context) {
 
 // --- Admin Product Management Endpoints (options, variants, attributes — no seller check) ---
 
-// AdminGetProduct handles GET /api/v1/admin/products/:id — returns full product with preloaded relations.
+// AdminGetProduct godoc
+// @Summary      Get any product by ID (admin)
+// @Description  Returns full product with preloaded relations
+// @Tags         Admin Products
+// @Produce      json
+// @Param        id  path  string  true  "Product ID"
+// @Success      200  {object}  domain.Product
+// @Failure      404  {object}  object{error=string}
+// @Router       /admin/products/{id} [get]
+// @Security     BearerAuth
 func (h *Handler) AdminGetProduct(c *gin.Context) {
 	id := c.Param("id")
 	product, err := h.productUC.GetProduct(c.Request.Context(), id)
@@ -1031,7 +1400,15 @@ func (h *Handler) AdminGetProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, product)
 }
 
-// AdminListOptions handles GET /api/v1/admin/products/:id/options
+// AdminListOptions godoc
+// @Summary      List product options (admin)
+// @Tags         Admin Products
+// @Produce      json
+// @Param        id  path  string  true  "Product ID"
+// @Success      200  {object}  object{options=[]domain.ProductOption}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/products/{id}/options [get]
+// @Security     BearerAuth
 func (h *Handler) AdminListOptions(c *gin.Context) {
 	productID := c.Param("id")
 	options, err := h.variantUC.ListOptions(c.Request.Context(), productID)
@@ -1042,7 +1419,17 @@ func (h *Handler) AdminListOptions(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"options": options})
 }
 
-// AdminAddOption handles POST /api/v1/admin/products/:id/options
+// AdminAddOption godoc
+// @Summary      Add an option to a product (admin)
+// @Tags         Admin Products
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string           true  "Product ID"
+// @Param        body  body  addOptionRequest true  "Option data"
+// @Success      201  {object}  domain.ProductOption
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/products/{id}/options [post]
+// @Security     BearerAuth
 func (h *Handler) AdminAddOption(c *gin.Context) {
 	productID := c.Param("id")
 	var req addOptionRequest
@@ -1073,7 +1460,16 @@ func (h *Handler) AdminAddOption(c *gin.Context) {
 	c.JSON(http.StatusCreated, option)
 }
 
-// AdminRemoveOption handles DELETE /api/v1/admin/products/:id/options/:optionId
+// AdminRemoveOption godoc
+// @Summary      Remove an option from a product (admin)
+// @Tags         Admin Products
+// @Produce      json
+// @Param        id        path  string  true  "Product ID"
+// @Param        optionId  path  string  true  "Option ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/products/{id}/options/{optionId} [delete]
+// @Security     BearerAuth
 func (h *Handler) AdminRemoveOption(c *gin.Context) {
 	optionID := c.Param("optionId")
 
@@ -1085,7 +1481,15 @@ func (h *Handler) AdminRemoveOption(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "option removed"})
 }
 
-// AdminListVariants handles GET /api/v1/admin/products/:id/variants
+// AdminListVariants godoc
+// @Summary      List product variants (admin)
+// @Tags         Admin Products
+// @Produce      json
+// @Param        id  path  string  true  "Product ID"
+// @Success      200  {object}  object{variants=[]domain.Variant}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/products/{id}/variants [get]
+// @Security     BearerAuth
 func (h *Handler) AdminListVariants(c *gin.Context) {
 	productID := c.Param("id")
 	variants, err := h.variantUC.ListVariantsByProduct(c.Request.Context(), productID)
@@ -1096,7 +1500,15 @@ func (h *Handler) AdminListVariants(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"variants": variants})
 }
 
-// AdminGenerateVariants handles POST /api/v1/admin/products/:id/variants/generate
+// AdminGenerateVariants godoc
+// @Summary      Generate variants from options (admin)
+// @Tags         Admin Products
+// @Produce      json
+// @Param        id  path  string  true  "Product ID"
+// @Success      201  {object}  object{variants=[]domain.Variant}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/products/{id}/variants/generate [post]
+// @Security     BearerAuth
 func (h *Handler) AdminGenerateVariants(c *gin.Context) {
 	productID := c.Param("id")
 	variants, err := h.variantUC.AdminGenerateVariants(c.Request.Context(), productID)
@@ -1108,7 +1520,18 @@ func (h *Handler) AdminGenerateVariants(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"variants": variants})
 }
 
-// AdminUpdateVariant handles PATCH /api/v1/admin/products/:id/variants/:variantId
+// AdminUpdateVariant godoc
+// @Summary      Update a variant (admin)
+// @Tags         Admin Products
+// @Accept       json
+// @Produce      json
+// @Param        id         path  string                true  "Product ID"
+// @Param        variantId  path  string                true  "Variant ID"
+// @Param        body       body  updateVariantRequest  true  "Variant fields to update"
+// @Success      200  {object}  domain.Variant
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/products/{id}/variants/{variantId} [patch]
+// @Security     BearerAuth
 func (h *Handler) AdminUpdateVariant(c *gin.Context) {
 	productID := c.Param("id")
 	variantID := c.Param("variantId")
@@ -1141,7 +1564,18 @@ func (h *Handler) AdminUpdateVariant(c *gin.Context) {
 	c.JSON(http.StatusOK, variant)
 }
 
-// AdminUpdateVariantStock handles PATCH /api/v1/admin/products/:id/variants/:variantId/stock
+// AdminUpdateVariantStock godoc
+// @Summary      Update variant stock (admin)
+// @Tags         Admin Products
+// @Accept       json
+// @Produce      json
+// @Param        id         path  string              true  "Product ID"
+// @Param        variantId  path  string              true  "Variant ID"
+// @Param        body       body  updateStockRequest  true  "Stock delta"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/products/{id}/variants/{variantId}/stock [patch]
+// @Security     BearerAuth
 func (h *Handler) AdminUpdateVariantStock(c *gin.Context) {
 	productID := c.Param("id")
 	variantID := c.Param("variantId")
@@ -1160,7 +1594,17 @@ func (h *Handler) AdminUpdateVariantStock(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "stock updated"})
 }
 
-// AdminSetProductAttributes handles PUT /api/v1/admin/products/:id/attributes
+// AdminSetProductAttributes godoc
+// @Summary      Set product attribute values (admin)
+// @Tags         Admin Products
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string                       true  "Product ID"
+// @Param        body  body  setProductAttributesRequest   true  "Attribute values"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/products/{id}/attributes [put]
+// @Security     BearerAuth
 func (h *Handler) AdminSetProductAttributes(c *gin.Context) {
 	productID := c.Param("id")
 
@@ -1190,7 +1634,15 @@ func (h *Handler) AdminSetProductAttributes(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "attributes updated"})
 }
 
-// AdminGetProductAttributes handles GET /api/v1/admin/products/:id/attributes
+// AdminGetProductAttributes godoc
+// @Summary      Get product attribute values (admin)
+// @Tags         Admin Products
+// @Produce      json
+// @Param        id  path  string  true  "Product ID"
+// @Success      200  {object}  object{attributes=[]domain.ProductAttributeValue}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/products/{id}/attributes [get]
+// @Security     BearerAuth
 func (h *Handler) AdminGetProductAttributes(c *gin.Context) {
 	productID := c.Param("id")
 	attrs, err := h.attributeUC.GetProductAttributeValues(c.Request.Context(), productID)

@@ -55,7 +55,14 @@ func (h *Handler) Ready(c *gin.Context) {
 
 // --- Public Banner Handlers ---
 
-// ListActiveBanners returns active banners, optionally filtered by position.
+// ListActiveBanners godoc
+// @Summary      List active banners
+// @Tags         CMS
+// @Produce      json
+// @Param        position  query  string  false  "Filter by banner position"
+// @Success      200  {object}  object{banners=[]domain.Banner}
+// @Failure      500  {object}  object{error=string}
+// @Router       /banners [get]
 func (h *Handler) ListActiveBanners(c *gin.Context) {
 	position := c.Query("position")
 
@@ -70,7 +77,14 @@ func (h *Handler) ListActiveBanners(c *gin.Context) {
 
 // --- Public Page Handlers ---
 
-// GetPageBySlug returns a page by its slug.
+// GetPageBySlug godoc
+// @Summary      Get a page by its slug
+// @Tags         CMS
+// @Produce      json
+// @Param        slug  path  string  true  "Page slug"
+// @Success      200  {object}  object{page=domain.Page}
+// @Failure      404  {object}  object{error=string}
+// @Router       /pages/{slug} [get]
 func (h *Handler) GetPageBySlug(c *gin.Context) {
 	slug := c.Param("slug")
 
@@ -97,6 +111,16 @@ type createBannerRequest struct {
 	IsActive       *bool      `json:"is_active"`
 }
 
+// CreateBanner godoc
+// @Summary      Create a new banner
+// @Tags         CMS
+// @Accept       json
+// @Produce      json
+// @Param        body  body  createBannerRequest  true  "Banner creation payload"
+// @Success      201  {object}  object{banner=domain.Banner}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/banners [post]
+// @Security     BearerAuth
 func (h *Handler) CreateBanner(c *gin.Context) {
 	var req createBannerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -141,6 +165,17 @@ type updateBannerRequest struct {
 	IsActive       *bool      `json:"is_active"`
 }
 
+// UpdateBanner godoc
+// @Summary      Update a banner
+// @Tags         CMS
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string               true  "Banner ID"
+// @Param        body  body  updateBannerRequest  true  "Banner update payload"
+// @Success      200  {object}  object{banner=domain.Banner}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/banners/{id} [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdateBanner(c *gin.Context) {
 	id := c.Param("id")
 	var req updateBannerRequest
@@ -179,6 +214,15 @@ func (h *Handler) UpdateBanner(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"banner": banner})
 }
 
+// DeleteBanner godoc
+// @Summary      Delete a banner
+// @Tags         CMS
+// @Produce      json
+// @Param        id  path  string  true  "Banner ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/banners/{id} [delete]
+// @Security     BearerAuth
 func (h *Handler) DeleteBanner(c *gin.Context) {
 	id := c.Param("id")
 
@@ -190,6 +234,16 @@ func (h *Handler) DeleteBanner(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "banner deleted"})
 }
 
+// ListAllBanners godoc
+// @Summary      List all banners with pagination (admin)
+// @Tags         CMS
+// @Produce      json
+// @Param        page       query  int  false  "Page number"
+// @Param        page_size  query  int  false  "Page size"
+// @Success      200  {object}  object{banners=[]domain.Banner,total=int,page=int,page_size=int}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/banners [get]
+// @Security     BearerAuth
 func (h *Handler) ListAllBanners(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
@@ -212,6 +266,16 @@ type createPageRequest struct {
 	MetaDescription string `json:"meta_description"`
 }
 
+// CreatePage godoc
+// @Summary      Create a new page
+// @Tags         CMS
+// @Accept       json
+// @Produce      json
+// @Param        body  body  createPageRequest  true  "Page creation payload"
+// @Success      201  {object}  object{page=domain.Page}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/pages [post]
+// @Security     BearerAuth
 func (h *Handler) CreatePage(c *gin.Context) {
 	var req createPageRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -241,6 +305,17 @@ type updatePageRequest struct {
 	MetaDescription string `json:"meta_description"`
 }
 
+// UpdatePage godoc
+// @Summary      Update a page
+// @Tags         CMS
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string             true  "Page ID"
+// @Param        body  body  updatePageRequest  true  "Page update payload"
+// @Success      200  {object}  object{page=domain.Page}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/pages/{id} [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdatePage(c *gin.Context) {
 	id := c.Param("id")
 	var req updatePageRequest
@@ -265,6 +340,15 @@ func (h *Handler) UpdatePage(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"page": page})
 }
 
+// DeletePage godoc
+// @Summary      Delete a page
+// @Tags         CMS
+// @Produce      json
+// @Param        id  path  string  true  "Page ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/pages/{id} [delete]
+// @Security     BearerAuth
 func (h *Handler) DeletePage(c *gin.Context) {
 	id := c.Param("id")
 
@@ -276,6 +360,16 @@ func (h *Handler) DeletePage(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "page deleted"})
 }
 
+// ListAllPages godoc
+// @Summary      List all pages with pagination (admin)
+// @Tags         CMS
+// @Produce      json
+// @Param        page       query  int  false  "Page number"
+// @Param        page_size  query  int  false  "Page size"
+// @Success      200  {object}  object{pages=[]domain.Page,total=int,page=int,page_size=int}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/pages [get]
+// @Security     BearerAuth
 func (h *Handler) ListAllPages(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
@@ -289,6 +383,15 @@ func (h *Handler) ListAllPages(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"pages": pages, "total": total, "page": page, "page_size": pageSize})
 }
 
+// PublishPage godoc
+// @Summary      Publish a page
+// @Tags         CMS
+// @Produce      json
+// @Param        id  path  string  true  "Page ID"
+// @Success      200  {object}  object{page=domain.Page}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/pages/{id}/publish [patch]
+// @Security     BearerAuth
 func (h *Handler) PublishPage(c *gin.Context) {
 	id := c.Param("id")
 
@@ -310,6 +413,16 @@ type scheduleContentRequest struct {
 	ScheduledAt time.Time `json:"scheduled_at" binding:"required"`
 }
 
+// ScheduleContent godoc
+// @Summary      Schedule a content action
+// @Tags         CMS
+// @Accept       json
+// @Produce      json
+// @Param        body  body  scheduleContentRequest  true  "Content schedule payload"
+// @Success      201  {object}  object{schedule=domain.ContentSchedule}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/content/schedule [post]
+// @Security     BearerAuth
 func (h *Handler) ScheduleContent(c *gin.Context) {
 	var req scheduleContentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

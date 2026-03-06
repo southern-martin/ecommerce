@@ -1,0 +1,285 @@
+basePath: /api/v1
+definitions:
+  internal_adapter_http.redeemRequest:
+    properties:
+      order_id:
+        type: string
+      points:
+        type: integer
+    required:
+    - order_id
+    - points
+    type: object
+host: localhost:28096
+info:
+  contact: {}
+  description: Loyalty points and membership tier management.
+  title: Loyalty Service API
+  version: "1.0"
+paths:
+  /loyalty/membership:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              membership:
+                properties:
+                  joined_at:
+                    type: string
+                  lifetime_points:
+                    type: integer
+                  points_balance:
+                    type: integer
+                  tier:
+                    type: string
+                  tier_expires_at:
+                    type: string
+                  user_id:
+                    type: string
+                type: object
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get or create loyalty membership
+      tags:
+      - Loyalty
+  /loyalty/points:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              points_balance:
+                format: int64
+                type: integer
+              user_id:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user points balance
+      tags:
+      - Loyalty
+  /loyalty/redeem:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Redeem request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.redeemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              transaction:
+                properties:
+                  created_at:
+                    type: string
+                  description:
+                    type: string
+                  id:
+                    type: string
+                  points:
+                    type: integer
+                  reference_id:
+                    type: string
+                  source:
+                    type: string
+                  type:
+                    type: string
+                  user_id:
+                    type: string
+                type: object
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Redeem loyalty points
+      tags:
+      - Loyalty
+  /loyalty/tiers:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              tiers:
+                items:
+                  properties:
+                    cashback_rate:
+                      type: number
+                    free_shipping:
+                      type: boolean
+                    min_points:
+                      type: integer
+                    name:
+                      type: string
+                    points_multiplier:
+                      type: number
+                  type: object
+                type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List all loyalty tiers
+      tags:
+      - Loyalty
+  /loyalty/transactions:
+    get:
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              page:
+                type: integer
+              page_size:
+                type: integer
+              total:
+                type: integer
+              transactions:
+                items:
+                  properties:
+                    created_at:
+                      type: string
+                    description:
+                      type: string
+                    id:
+                      type: string
+                    points:
+                      type: integer
+                    reference_id:
+                      type: string
+                    source:
+                      type: string
+                    type:
+                      type: string
+                    user_id:
+                      type: string
+                  type: object
+                type: array
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List user points transactions
+      tags:
+      - Loyalty
+securityDefinitions:
+  BearerAuth:
+    description: JWT Bearer token (via Kong gateway)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

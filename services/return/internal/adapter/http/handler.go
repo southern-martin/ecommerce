@@ -74,6 +74,18 @@ type createReturnItemRequest struct {
 	Reason      string `json:"reason"`
 }
 
+// CreateReturn godoc
+// @Summary      Create a return request
+// @Tags         Returns
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header    string               true  "User ID"
+// @Param        body       body      createReturnRequest  true  "Return request details"
+// @Success      201        {object}  object{return=object}
+// @Failure      400        {object}  object{error=string}
+// @Failure      401        {object}  object{error=string}
+// @Router       /returns [post]
+// @Security     BearerAuth
 func (h *Handler) CreateReturn(c *gin.Context) {
 	buyerID := c.GetHeader("X-User-ID")
 	if buyerID == "" {
@@ -117,6 +129,18 @@ func (h *Handler) CreateReturn(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"return": ret})
 }
 
+// ListBuyerReturns godoc
+// @Summary      List returns for the authenticated buyer
+// @Tags         Returns
+// @Produce      json
+// @Param        X-User-ID  header    string  true   "User ID"
+// @Param        page       query     int     false  "Page number"
+// @Param        page_size  query     int     false  "Page size"
+// @Success      200        {object}  object{returns=[]object,total=int,page=int,page_size=int}
+// @Failure      401        {object}  object{error=string}
+// @Failure      500        {object}  object{error=string}
+// @Router       /returns [get]
+// @Security     BearerAuth
 func (h *Handler) ListBuyerReturns(c *gin.Context) {
 	buyerID := c.GetHeader("X-User-ID")
 	if buyerID == "" {
@@ -136,6 +160,14 @@ func (h *Handler) ListBuyerReturns(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"returns": returns, "total": total, "page": page, "page_size": pageSize})
 }
 
+// GetReturn godoc
+// @Summary      Get a return by ID
+// @Tags         Returns
+// @Produce      json
+// @Param        id   path      string  true  "Return ID"
+// @Success      200  {object}  object{return=object}
+// @Failure      404  {object}  object{error=string}
+// @Router       /returns/{id} [get]
 func (h *Handler) GetReturn(c *gin.Context) {
 	id := c.Param("id")
 	ret, err := h.manageReturnUC.GetReturn(c.Request.Context(), id)
@@ -146,6 +178,18 @@ func (h *Handler) GetReturn(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"return": ret})
 }
 
+// ListSellerReturns godoc
+// @Summary      List returns for the authenticated seller
+// @Tags         Returns
+// @Produce      json
+// @Param        X-User-ID  header    string  true   "User ID"
+// @Param        page       query     int     false  "Page number"
+// @Param        page_size  query     int     false  "Page size"
+// @Success      200        {object}  object{returns=[]object,total=int,page=int,page_size=int}
+// @Failure      401        {object}  object{error=string}
+// @Failure      500        {object}  object{error=string}
+// @Router       /seller/returns [get]
+// @Security     BearerAuth
 func (h *Handler) ListSellerReturns(c *gin.Context) {
 	sellerID := c.GetHeader("X-User-ID")
 	if sellerID == "" {
@@ -169,6 +213,19 @@ type approveReturnRequest struct {
 	RefundAmountCents int64 `json:"refund_amount_cents"`
 }
 
+// ApproveReturn godoc
+// @Summary      Approve a return request (seller)
+// @Tags         Returns
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header    string                true  "User ID"
+// @Param        id         path      string                true  "Return ID"
+// @Param        body       body      approveReturnRequest  false "Optional refund amount override"
+// @Success      200        {object}  object{return=object}
+// @Failure      400        {object}  object{error=string}
+// @Failure      401        {object}  object{error=string}
+// @Router       /seller/returns/{id}/approve [patch]
+// @Security     BearerAuth
 func (h *Handler) ApproveReturn(c *gin.Context) {
 	sellerID := c.GetHeader("X-User-ID")
 	if sellerID == "" {
@@ -189,6 +246,17 @@ func (h *Handler) ApproveReturn(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"return": ret})
 }
 
+// RejectReturn godoc
+// @Summary      Reject a return request (seller)
+// @Tags         Returns
+// @Produce      json
+// @Param        X-User-ID  header    string  true  "User ID"
+// @Param        id         path      string  true  "Return ID"
+// @Success      200        {object}  object{return=object}
+// @Failure      400        {object}  object{error=string}
+// @Failure      401        {object}  object{error=string}
+// @Router       /seller/returns/{id}/reject [patch]
+// @Security     BearerAuth
 func (h *Handler) RejectReturn(c *gin.Context) {
 	sellerID := c.GetHeader("X-User-ID")
 	if sellerID == "" {
@@ -210,6 +278,19 @@ type updateReturnStatusRequest struct {
 	Status string `json:"status" binding:"required"`
 }
 
+// UpdateReturnStatus godoc
+// @Summary      Update return status (seller)
+// @Tags         Returns
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header    string                     true  "User ID"
+// @Param        id         path      string                     true  "Return ID"
+// @Param        body       body      updateReturnStatusRequest  true  "New status"
+// @Success      200        {object}  object{return=object}
+// @Failure      400        {object}  object{error=string}
+// @Failure      401        {object}  object{error=string}
+// @Router       /seller/returns/{id}/status [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdateReturnStatus(c *gin.Context) {
 	sellerID := c.GetHeader("X-User-ID")
 	if sellerID == "" {
@@ -243,6 +324,18 @@ type createDisputeRequest struct {
 	Description string `json:"description" binding:"required"`
 }
 
+// CreateDispute godoc
+// @Summary      Create a dispute
+// @Tags         Returns
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header    string                true  "User ID"
+// @Param        body       body      createDisputeRequest  true  "Dispute details"
+// @Success      201        {object}  object{dispute=object}
+// @Failure      400        {object}  object{error=string}
+// @Failure      401        {object}  object{error=string}
+// @Router       /disputes [post]
+// @Security     BearerAuth
 func (h *Handler) CreateDispute(c *gin.Context) {
 	buyerID := c.GetHeader("X-User-ID")
 	if buyerID == "" {
@@ -272,6 +365,18 @@ func (h *Handler) CreateDispute(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"dispute": dispute})
 }
 
+// ListBuyerDisputes godoc
+// @Summary      List disputes for the authenticated buyer
+// @Tags         Returns
+// @Produce      json
+// @Param        X-User-ID  header    string  true   "User ID"
+// @Param        page       query     int     false  "Page number"
+// @Param        page_size  query     int     false  "Page size"
+// @Success      200        {object}  object{disputes=[]object,total=int,page=int,page_size=int}
+// @Failure      401        {object}  object{error=string}
+// @Failure      500        {object}  object{error=string}
+// @Router       /disputes [get]
+// @Security     BearerAuth
 func (h *Handler) ListBuyerDisputes(c *gin.Context) {
 	buyerID := c.GetHeader("X-User-ID")
 	if buyerID == "" {
@@ -291,6 +396,14 @@ func (h *Handler) ListBuyerDisputes(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"disputes": disputes, "total": total, "page": page, "page_size": pageSize})
 }
 
+// GetDispute godoc
+// @Summary      Get a dispute by ID
+// @Tags         Returns
+// @Produce      json
+// @Param        id   path      string  true  "Dispute ID"
+// @Success      200  {object}  object{dispute=object}
+// @Failure      404  {object}  object{error=string}
+// @Router       /disputes/{id} [get]
 func (h *Handler) GetDispute(c *gin.Context) {
 	id := c.Param("id")
 	dispute, err := h.disputeUC.GetDispute(c.Request.Context(), id)
@@ -306,6 +419,20 @@ type addMessageRequest struct {
 	Attachments []string `json:"attachments"`
 }
 
+// AddMessage godoc
+// @Summary      Add a message to a dispute
+// @Tags         Returns
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header    string             true   "User ID"
+// @Param        id         path      string             true   "Dispute ID"
+// @Param        role       query     string             false  "Sender role (buyer or seller)"
+// @Param        body       body      addMessageRequest  true   "Message details"
+// @Success      201        {object}  object{message=object}
+// @Failure      400        {object}  object{error=string}
+// @Failure      401        {object}  object{error=string}
+// @Router       /disputes/{id}/messages [post]
+// @Security     BearerAuth
 func (h *Handler) AddMessage(c *gin.Context) {
 	senderID := c.GetHeader("X-User-ID")
 	if senderID == "" {
@@ -337,6 +464,16 @@ func (h *Handler) AddMessage(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": msg})
 }
 
+// ListAllDisputes godoc
+// @Summary      List all disputes (admin)
+// @Tags         Returns
+// @Produce      json
+// @Param        page       query     int  false  "Page number"
+// @Param        page_size  query     int  false  "Page size"
+// @Success      200        {object}  object{disputes=[]object,total=int,page=int,page_size=int}
+// @Failure      500        {object}  object{error=string}
+// @Router       /admin/disputes [get]
+// @Security     BearerAuth
 func (h *Handler) ListAllDisputes(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
@@ -355,6 +492,19 @@ type resolveDisputeRequest struct {
 	Status     string `json:"status" binding:"required"`
 }
 
+// ResolveDispute godoc
+// @Summary      Resolve a dispute (admin)
+// @Tags         Returns
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header    string                  true  "User ID"
+// @Param        id         path      string                  true  "Dispute ID"
+// @Param        body       body      resolveDisputeRequest   true  "Resolution details"
+// @Success      200        {object}  object{dispute=object}
+// @Failure      400        {object}  object{error=string}
+// @Failure      401        {object}  object{error=string}
+// @Router       /admin/disputes/{id}/resolve [patch]
+// @Security     BearerAuth
 func (h *Handler) ResolveDispute(c *gin.Context) {
 	adminID := c.GetHeader("X-User-ID")
 	if adminID == "" {

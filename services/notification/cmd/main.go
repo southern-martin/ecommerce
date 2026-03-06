@@ -1,3 +1,14 @@
+// @title          Notification Service API
+// @version        1.0
+// @description    User notifications management and delivery.
+//
+// @host           localhost:28087
+// @BasePath       /api/v1
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT Bearer token (via Kong gateway)
 package main
 
 import (

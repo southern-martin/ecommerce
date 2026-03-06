@@ -46,7 +46,24 @@ func (h *Handler) Ready(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
-// Search handles GET /api/v1/search
+// Search godoc
+// @Summary      Search products
+// @Description  Full-text search across products with filtering and pagination.
+// @Tags         Search
+// @Produce      json
+// @Param        q            query  string   false  "Search query"
+// @Param        category_id  query  string   false  "Filter by category"
+// @Param        seller_id    query  string   false  "Filter by seller"
+// @Param        min_price    query  integer  false  "Minimum price in cents"
+// @Param        max_price    query  integer  false  "Maximum price in cents"
+// @Param        in_stock     query  boolean  false  "Filter by stock availability"
+// @Param        sort_by      query  string   false  "Sort field"
+// @Param        sort_order   query  string   false  "Sort direction (asc/desc)"
+// @Param        page         query  integer  false  "Page number"
+// @Param        page_size    query  integer  false  "Items per page"
+// @Success      200  {object}  object{results=[]domain.SearchIndex,total=int,page=int,page_size=int}
+// @Failure      500  {object}  object{error=string}
+// @Router       /search [get]
 func (h *Handler) Search(c *gin.Context) {
 	filter := domain.SearchFilter{
 		Query:      c.Query("q"),
@@ -100,7 +117,17 @@ func (h *Handler) Search(c *gin.Context) {
 	})
 }
 
-// Suggest handles GET /api/v1/search/suggest
+// Suggest godoc
+// @Summary      Autocomplete suggestions
+// @Description  Returns search suggestions based on a partial query string.
+// @Tags         Search
+// @Produce      json
+// @Param        q      query  string   true   "Search query prefix"
+// @Param        limit  query  integer  false  "Max suggestions (default 10)"
+// @Success      200  {object}  object{suggestions=[]string}
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /search/suggest [get]
 func (h *Handler) Suggest(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
@@ -144,7 +171,19 @@ type IndexProductRequest struct {
 	Attributes  map[string]string `json:"attributes"`
 }
 
-// IndexProduct handles POST /api/v1/admin/search/index
+// IndexProduct godoc
+// @Summary      Index a product
+// @Description  Add or update a product in the search index.
+// @Tags         Admin Search Index
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string               true  "Admin user ID"
+// @Param        body       body    IndexProductRequest   true  "Product data to index"
+// @Success      200  {object}  object{message=string,product_id=string}
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/search/index [post]
+// @Security     BearerAuth
 func (h *Handler) IndexProduct(c *gin.Context) {
 	var req IndexProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -180,7 +219,18 @@ func (h *Handler) IndexProduct(c *gin.Context) {
 	})
 }
 
-// DeleteProduct handles DELETE /api/v1/admin/search/index/:product_id
+// DeleteProduct godoc
+// @Summary      Remove product from index
+// @Description  Delete a product from the search index.
+// @Tags         Admin Search Index
+// @Produce      json
+// @Param        X-User-ID   header  string  true  "Admin user ID"
+// @Param        product_id   path    string  true  "Product ID"
+// @Success      200  {object}  object{message=string,product_id=string}
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/search/index/{product_id} [delete]
+// @Security     BearerAuth
 func (h *Handler) DeleteProduct(c *gin.Context) {
 	productID := c.Param("product_id")
 	if productID == "" {

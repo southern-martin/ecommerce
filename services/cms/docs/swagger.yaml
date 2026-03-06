@@ -1,0 +1,577 @@
+basePath: /api/v1
+definitions:
+  github_com_southern-martin_ecommerce_services_cms_internal_domain.Banner:
+    properties:
+      createdAt:
+        type: string
+      endsAt:
+        type: string
+      id:
+        type: string
+      imageURL:
+        type: string
+      isActive:
+        type: boolean
+      linkURL:
+        type: string
+      position:
+        type: string
+      sortOrder:
+        type: integer
+      startsAt:
+        type: string
+      targetAudience:
+        type: string
+      title:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_cms_internal_domain.ContentSchedule:
+    properties:
+      action:
+        type: string
+      contentID:
+        type: string
+      contentType:
+        type: string
+      createdAt:
+        type: string
+      executed:
+        type: boolean
+      id:
+        type: string
+      scheduledAt:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_cms_internal_domain.Page:
+    properties:
+      contentHTML:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      metaDescription:
+        type: string
+      metaTitle:
+        type: string
+      publishedAt:
+        type: string
+      slug:
+        type: string
+      status:
+        $ref: '#/definitions/github_com_southern-martin_ecommerce_services_cms_internal_domain.PageStatus'
+      title:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  github_com_southern-martin_ecommerce_services_cms_internal_domain.PageStatus:
+    enum:
+    - draft
+    - published
+    - scheduled
+    type: string
+    x-enum-varnames:
+    - PageStatusDraft
+    - PageStatusPublished
+    - PageStatusScheduled
+  internal_adapter_http.createBannerRequest:
+    properties:
+      ends_at:
+        type: string
+      image_url:
+        type: string
+      is_active:
+        type: boolean
+      link_url:
+        type: string
+      position:
+        type: string
+      sort_order:
+        type: integer
+      starts_at:
+        type: string
+      target_audience:
+        type: string
+      title:
+        type: string
+    required:
+    - image_url
+    - starts_at
+    - title
+    type: object
+  internal_adapter_http.createPageRequest:
+    properties:
+      content_html:
+        type: string
+      meta_description:
+        type: string
+      meta_title:
+        type: string
+      title:
+        type: string
+    required:
+    - title
+    type: object
+  internal_adapter_http.scheduleContentRequest:
+    properties:
+      action:
+        type: string
+      content_id:
+        type: string
+      content_type:
+        type: string
+      scheduled_at:
+        type: string
+    required:
+    - action
+    - content_id
+    - content_type
+    - scheduled_at
+    type: object
+  internal_adapter_http.updateBannerRequest:
+    properties:
+      ends_at:
+        type: string
+      image_url:
+        type: string
+      is_active:
+        type: boolean
+      link_url:
+        type: string
+      position:
+        type: string
+      sort_order:
+        type: integer
+      starts_at:
+        type: string
+      target_audience:
+        type: string
+      title:
+        type: string
+    type: object
+  internal_adapter_http.updatePageRequest:
+    properties:
+      content_html:
+        type: string
+      meta_description:
+        type: string
+      meta_title:
+        type: string
+      title:
+        type: string
+    type: object
+host: localhost:28099
+info:
+  contact: {}
+  description: Content management for pages, banners, and scheduled content.
+  title: CMS Service API
+  version: "1.0"
+paths:
+  /admin/banners:
+    get:
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              banners:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_cms_internal_domain.Banner'
+                type: array
+              page:
+                type: integer
+              page_size:
+                type: integer
+              total:
+                type: integer
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List all banners with pagination (admin)
+      tags:
+      - CMS
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Banner creation payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.createBannerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              banner:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_cms_internal_domain.Banner'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new banner
+      tags:
+      - CMS
+  /admin/banners/{id}:
+    delete:
+      parameters:
+      - description: Banner ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a banner
+      tags:
+      - CMS
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Banner ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Banner update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updateBannerRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              banner:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_cms_internal_domain.Banner'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a banner
+      tags:
+      - CMS
+  /admin/content/schedule:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Content schedule payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.scheduleContentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              schedule:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_cms_internal_domain.ContentSchedule'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Schedule a content action
+      tags:
+      - CMS
+  /admin/pages:
+    get:
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              page:
+                type: integer
+              page_size:
+                type: integer
+              pages:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_cms_internal_domain.Page'
+                type: array
+              total:
+                type: integer
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List all pages with pagination (admin)
+      tags:
+      - CMS
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Page creation payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.createPageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              page:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_cms_internal_domain.Page'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new page
+      tags:
+      - CMS
+  /admin/pages/{id}:
+    delete:
+      parameters:
+      - description: Page ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a page
+      tags:
+      - CMS
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Page ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Page update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapter_http.updatePageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              page:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_cms_internal_domain.Page'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a page
+      tags:
+      - CMS
+  /admin/pages/{id}/publish:
+    patch:
+      parameters:
+      - description: Page ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              page:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_cms_internal_domain.Page'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Publish a page
+      tags:
+      - CMS
+  /banners:
+    get:
+      parameters:
+      - description: Filter by banner position
+        in: query
+        name: position
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              banners:
+                items:
+                  $ref: '#/definitions/github_com_southern-martin_ecommerce_services_cms_internal_domain.Banner'
+                type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List active banners
+      tags:
+      - CMS
+  /pages/{slug}:
+    get:
+      parameters:
+      - description: Page slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              page:
+                $ref: '#/definitions/github_com_southern-martin_ecommerce_services_cms_internal_domain.Page'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get a page by its slug
+      tags:
+      - CMS
+securityDefinitions:
+  BearerAuth:
+    description: JWT Bearer token (via Kong gateway)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -1,3 +1,14 @@
+// @title          Review Service API
+// @version        1.0
+// @description    Product reviews and ratings management.
+//
+// @host           localhost:28086
+// @BasePath       /api/v1
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT Bearer token (via Kong gateway)
 package main
 
 import (

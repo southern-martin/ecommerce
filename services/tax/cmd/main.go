@@ -1,3 +1,15 @@
+// @title          Tax Service API
+// @version        1.0
+// @description    Tax calculation, zone management, and tax rule configuration.
+//
+// @host           localhost:28098
+// @BasePath       /api/v1
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT Bearer token (via Kong gateway)
+
 package main
 
 import (

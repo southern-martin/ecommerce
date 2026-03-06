@@ -54,6 +54,19 @@ type createConversationRequest struct {
 	Subject  string `json:"subject"`
 }
 
+// CreateConversation godoc
+// @Summary      Create a new conversation
+// @Tags         Chat
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string                      true  "User ID"
+// @Param        body       body    createConversationRequest    true  "Conversation creation payload"
+// @Success      201  {object}  object{conversation=object{id=string,type=string,buyer_id=string,seller_id=string,order_id=string,subject=string,status=string,created_at=string}}
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /conversations [post]
+// @Security     BearerAuth
 func (h *Handler) CreateConversation(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -82,6 +95,20 @@ func (h *Handler) CreateConversation(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"conversation": conversation})
 }
 
+// ListConversations godoc
+// @Summary      List conversations for a user
+// @Tags         Chat
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string  true   "User ID"
+// @Param        status     query   string  false  "Filter by status"
+// @Param        page       query   int     false  "Page number"         default(1)
+// @Param        page_size  query   int     false  "Items per page"      default(20)
+// @Success      200  {object}  object{conversations=[]object{id=string,type=string,buyer_id=string,seller_id=string,subject=string,status=string,last_message_at=string,created_at=string},total=int,page=int,page_size=int}
+// @Failure      401  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /conversations [get]
+// @Security     BearerAuth
 func (h *Handler) ListConversations(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -102,6 +129,16 @@ func (h *Handler) ListConversations(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"conversations": conversations, "total": total, "page": page, "page_size": pageSize})
 }
 
+// GetConversation godoc
+// @Summary      Get a conversation with recent messages
+// @Tags         Chat
+// @Accept       json
+// @Produce      json
+// @Param        id  path  string  true  "Conversation ID"
+// @Success      200  {object}  object{conversation=object{id=string,type=string,buyer_id=string,seller_id=string,subject=string,status=string,created_at=string},messages=[]object{id=string,conversation_id=string,sender_id=string,sender_role=string,content=string,message_type=string,is_read=bool,created_at=string}}
+// @Failure      404  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /conversations/{id} [get]
 func (h *Handler) GetConversation(c *gin.Context) {
 	id := c.Param("id")
 	conversation, err := h.conversationUC.GetConversation(c.Request.Context(), id)
@@ -120,6 +157,15 @@ func (h *Handler) GetConversation(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"conversation": conversation, "messages": messages})
 }
 
+// ArchiveConversation godoc
+// @Summary      Archive a conversation
+// @Tags         Chat
+// @Accept       json
+// @Produce      json
+// @Param        id  path  string  true  "Conversation ID"
+// @Success      200  {object}  object{status=string}
+// @Failure      400  {object}  object{error=string}
+// @Router       /conversations/{id}/archive [patch]
 func (h *Handler) ArchiveConversation(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.conversationUC.ArchiveConversation(c.Request.Context(), id); err != nil {
@@ -139,6 +185,19 @@ type sendMessageRequest struct {
 	Attachments []string `json:"attachments"`
 }
 
+// SendMessage godoc
+// @Summary      Send a message in a conversation
+// @Tags         Chat
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string              true  "User ID"
+// @Param        id         path    string              true  "Conversation ID"
+// @Param        body       body    sendMessageRequest   true  "Message payload"
+// @Success      201  {object}  object{message=object{id=string,conversation_id=string,sender_id=string,sender_role=string,content=string,message_type=string,is_read=bool,created_at=string}}
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Router       /conversations/{id}/messages [post]
+// @Security     BearerAuth
 func (h *Handler) SendMessage(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -169,6 +228,17 @@ func (h *Handler) SendMessage(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": message})
 }
 
+// ListMessages godoc
+// @Summary      List messages in a conversation
+// @Tags         Chat
+// @Accept       json
+// @Produce      json
+// @Param        id         path   string  true   "Conversation ID"
+// @Param        page       query  int     false  "Page number"      default(1)
+// @Param        page_size  query  int     false  "Items per page"   default(50)
+// @Success      200  {object}  object{messages=[]object{id=string,conversation_id=string,sender_id=string,sender_role=string,content=string,message_type=string,is_read=bool,created_at=string},total=int,page=int,page_size=int}
+// @Failure      500  {object}  object{error=string}
+// @Router       /conversations/{id}/messages [get]
 func (h *Handler) ListMessages(c *gin.Context) {
 	conversationID := c.Param("id")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -183,6 +253,18 @@ func (h *Handler) ListMessages(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"messages": messages, "total": total, "page": page, "page_size": pageSize})
 }
 
+// MarkAsRead godoc
+// @Summary      Mark messages as read
+// @Tags         Chat
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "User ID"
+// @Param        id         path    string  true  "Conversation ID"
+// @Success      200  {object}  object{status=string}
+// @Failure      401  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /conversations/{id}/messages/read [patch]
+// @Security     BearerAuth
 func (h *Handler) MarkAsRead(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -199,6 +281,18 @@ func (h *Handler) MarkAsRead(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "read"})
 }
 
+// GetUnreadCount godoc
+// @Summary      Get unread message count
+// @Tags         Chat
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "User ID"
+// @Param        id         path    string  true  "Conversation ID"
+// @Success      200  {object}  object{unread_count=int}
+// @Failure      401  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /conversations/{id}/unread [get]
+// @Security     BearerAuth
 func (h *Handler) GetUnreadCount(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {

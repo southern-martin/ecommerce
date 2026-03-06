@@ -51,7 +51,19 @@ type createMediaRequest struct {
 	OwnerType    string `json:"owner_type"`
 }
 
-// CreateMedia handles POST /api/v1/media.
+// CreateMedia godoc
+// @Summary      Create media metadata and generate upload URL
+// @Tags         Media
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string             true  "User ID"
+// @Param        body       body    createMediaRequest  true  "Media metadata"
+// @Success      201  {object}  object{media=object{id=string,owner_id=string,file_name=string,original_name=string,content_type=string,size_bytes=int,url=string,status=string,created_at=string},upload_url=object{url=string,method=string,expires_at=string}}
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /media [post]
+// @Security     BearerAuth
 func (h *Handler) CreateMedia(c *gin.Context) {
 	ownerID := c.GetHeader("X-User-ID")
 	if ownerID == "" {
@@ -85,7 +97,16 @@ func (h *Handler) CreateMedia(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"media": result.Media, "upload_url": result.UploadURL})
 }
 
-// GetMedia handles GET /api/v1/media/:id.
+// GetMedia godoc
+// @Summary      Get media by ID
+// @Tags         Media
+// @Accept       json
+// @Produce      json
+// @Param        id  path  string  true  "Media ID"
+// @Success      200  {object}  object{media=object{id=string,owner_id=string,file_name=string,original_name=string,content_type=string,size_bytes=int,url=string,status=string,created_at=string}}
+// @Failure      404  {object}  object{error=string}
+// @Router       /media/{id} [get]
+// @Security     BearerAuth
 func (h *Handler) GetMedia(c *gin.Context) {
 	id := c.Param("id")
 	media, err := h.mediaUC.GetMedia(c.Request.Context(), id)
@@ -96,7 +117,19 @@ func (h *Handler) GetMedia(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"media": media})
 }
 
-// ListMedia handles GET /api/v1/media.
+// ListMedia godoc
+// @Summary      List media with optional filters and pagination
+// @Tags         Media
+// @Accept       json
+// @Produce      json
+// @Param        owner_id    query  string  false  "Owner ID"
+// @Param        owner_type  query  string  false  "Owner type"
+// @Param        page        query  int     false  "Page number"  default(1)
+// @Param        page_size   query  int     false  "Page size"    default(20)
+// @Success      200  {object}  object{media=[]object{id=string,owner_id=string,file_name=string,original_name=string,content_type=string,size_bytes=int,url=string,status=string,created_at=string},total=int,page=int,page_size=int}
+// @Failure      500  {object}  object{error=string}
+// @Router       /media [get]
+// @Security     BearerAuth
 func (h *Handler) ListMedia(c *gin.Context) {
 	ownerID := c.Query("owner_id")
 	ownerType := c.Query("owner_type")
@@ -112,7 +145,16 @@ func (h *Handler) ListMedia(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"media": media, "total": total, "page": page, "page_size": pageSize})
 }
 
-// DeleteMedia handles DELETE /api/v1/media/:id.
+// DeleteMedia godoc
+// @Summary      Delete media by ID
+// @Tags         Media
+// @Accept       json
+// @Produce      json
+// @Param        id  path  string  true  "Media ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      404  {object}  object{error=string}
+// @Router       /media/{id} [delete]
+// @Security     BearerAuth
 func (h *Handler) DeleteMedia(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.mediaUC.DeleteMedia(c.Request.Context(), id); err != nil {
@@ -122,7 +164,20 @@ func (h *Handler) DeleteMedia(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "media deleted"})
 }
 
-// UploadMedia handles POST /api/v1/media/upload (multipart/form-data).
+// UploadMedia godoc
+// @Summary      Upload a file directly
+// @Tags         Media
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        X-User-ID   header    string  true   "User ID"
+// @Param        file        formData  file    true   "File to upload"
+// @Param        owner_type  formData  string  false  "Owner type (default: product)"
+// @Success      201  {object}  object{media=object{id=string,owner_id=string,file_name=string,original_name=string,content_type=string,size_bytes=int,url=string,status=string,created_at=string}}
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /media/upload [post]
+// @Security     BearerAuth
 func (h *Handler) UploadMedia(c *gin.Context) {
 	ownerID := c.GetHeader("X-User-ID")
 	if ownerID == "" {
@@ -175,7 +230,17 @@ type getUploadURLRequest struct {
 	ContentType string `json:"content_type" binding:"required"`
 }
 
-// GetUploadURL handles POST /api/v1/media/upload-url.
+// GetUploadURL godoc
+// @Summary      Generate a presigned upload URL
+// @Tags         Media
+// @Accept       json
+// @Produce      json
+// @Param        body  body  getUploadURLRequest  true  "Upload URL parameters"
+// @Success      200  {object}  object{upload_url=object{url=string,method=string,expires_at=string}}
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /media/upload-url [post]
+// @Security     BearerAuth
 func (h *Handler) GetUploadURL(c *gin.Context) {
 	var req getUploadURLRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -192,7 +257,16 @@ func (h *Handler) GetUploadURL(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"upload_url": url})
 }
 
-// GetDownloadURL handles GET /api/v1/media/:id/download-url.
+// GetDownloadURL godoc
+// @Summary      Generate a presigned download URL for a media file
+// @Tags         Media
+// @Accept       json
+// @Produce      json
+// @Param        id  path  string  true  "Media ID"
+// @Success      200  {object}  object{download_url=object{url=string,method=string,expires_at=string}}
+// @Failure      404  {object}  object{error=string}
+// @Router       /media/{id}/download-url [get]
+// @Security     BearerAuth
 func (h *Handler) GetDownloadURL(c *gin.Context) {
 	id := c.Param("id")
 	url, err := h.mediaUC.GenerateDownloadURL(c.Request.Context(), id)

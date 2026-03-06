@@ -54,7 +54,16 @@ func getUserID(c *gin.Context) string {
 	return c.GetHeader("X-User-ID")
 }
 
-// GetCart handles GET /api/v1/cart
+// GetCart godoc
+// @Summary      Get current user's cart
+// @Tags         Cart
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "User ID"
+// @Success      200  {object}  cartResponse
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /cart [get]
+// @Security     BearerAuth
 func (h *CartHandler) GetCart(c *gin.Context) {
 	userID := getUserID(c)
 	if userID == "" {
@@ -85,7 +94,19 @@ type addItemRequest struct {
 	SellerID    string `json:"seller_id"`
 }
 
-// AddItem handles POST /api/v1/cart/items
+// AddItem godoc
+// @Summary      Add an item to the cart
+// @Tags         Cart
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string          true  "User ID"
+// @Param        body       body    addItemRequest  true  "Item to add"
+// @Success      200  {object}  cartResponse
+// @Failure      400  {object}  object{error=string}
+// @Failure      404  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /cart/items [post]
+// @Security     BearerAuth
 func (h *CartHandler) AddItem(c *gin.Context) {
 	userID := getUserID(c)
 	if userID == "" {
@@ -127,7 +148,19 @@ type updateQuantityRequest struct {
 	Quantity  int    `json:"quantity" binding:"required,min=1"`
 }
 
-// UpdateQuantity handles PATCH /api/v1/cart/items
+// UpdateQuantity godoc
+// @Summary      Update item quantity in the cart
+// @Tags         Cart
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string                 true  "User ID"
+// @Param        body       body    updateQuantityRequest  true  "Quantity update"
+// @Success      200  {object}  cartResponse
+// @Failure      400  {object}  object{error=string}
+// @Failure      404  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /cart/items [patch]
+// @Security     BearerAuth
 func (h *CartHandler) UpdateQuantity(c *gin.Context) {
 	userID := getUserID(c)
 	if userID == "" {
@@ -156,7 +189,19 @@ type removeItemRequest struct {
 	VariantID string `json:"variant_id"`
 }
 
-// RemoveItem handles DELETE /api/v1/cart/items
+// RemoveItem godoc
+// @Summary      Remove an item from the cart
+// @Tags         Cart
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string             true  "User ID"
+// @Param        body       body    removeItemRequest  true  "Item to remove"
+// @Success      200  {object}  cartResponse
+// @Failure      400  {object}  object{error=string}
+// @Failure      404  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /cart/items [delete]
+// @Security     BearerAuth
 func (h *CartHandler) RemoveItem(c *gin.Context) {
 	userID := getUserID(c)
 	if userID == "" {
@@ -179,7 +224,16 @@ func (h *CartHandler) RemoveItem(c *gin.Context) {
 	c.JSON(http.StatusOK, toCartResponse(cart))
 }
 
-// ClearCart handles DELETE /api/v1/cart
+// ClearCart godoc
+// @Summary      Clear all items from the cart
+// @Tags         Cart
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "User ID"
+// @Success      200  {object}  object{message=string}
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /cart [delete]
+// @Security     BearerAuth
 func (h *CartHandler) ClearCart(c *gin.Context) {
 	userID := getUserID(c)
 	if userID == "" {
@@ -201,7 +255,19 @@ type mergeCartRequest struct {
 	Items []domain.CartItem `json:"items" binding:"required"`
 }
 
-// MergeCart handles POST /api/v1/cart/merge
+// MergeCart godoc
+// @Summary      Merge guest cart items into authenticated user's cart
+// @Tags         Cart
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string            true  "User ID"
+// @Param        body       body    mergeCartRequest  true  "Guest cart items to merge"
+// @Success      200  {object}  cartResponse
+// @Failure      400  {object}  object{error=string}
+// @Failure      404  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /cart/merge [post]
+// @Security     BearerAuth
 func (h *CartHandler) MergeCart(c *gin.Context) {
 	userID := getUserID(c)
 	if userID == "" {

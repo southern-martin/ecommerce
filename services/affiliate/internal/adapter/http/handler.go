@@ -61,6 +61,18 @@ type createLinkRequest struct {
 	TargetURL string `json:"target_url" binding:"required"`
 }
 
+// CreateLink godoc
+// @Summary      Create a new affiliate link
+// @Tags         Affiliate
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string            true  "User ID"
+// @Param        body       body    createLinkRequest  true  "Link creation payload"
+// @Success      201  {object}  object{link=domain.AffiliateLink}
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Router       /affiliate/links [post]
+// @Security     BearerAuth
 func (h *Handler) CreateLink(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -86,6 +98,17 @@ func (h *Handler) CreateLink(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"link": link})
 }
 
+// ListLinks godoc
+// @Summary      List affiliate links for the current user
+// @Tags         Affiliate
+// @Produce      json
+// @Param        X-User-ID  header  string  true   "User ID"
+// @Param        page       query   int     false  "Page number"
+// @Param        page_size  query   int     false  "Page size"
+// @Success      200  {object}  object{links=[]domain.AffiliateLink,total=int,page=int,page_size=int}
+// @Failure      401  {object}  object{error=string}
+// @Router       /affiliate/links [get]
+// @Security     BearerAuth
 func (h *Handler) ListLinks(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -105,6 +128,15 @@ func (h *Handler) ListLinks(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"links": links, "total": total, "page": page, "page_size": pageSize})
 }
 
+// GetStats godoc
+// @Summary      Get affiliate statistics for the current user
+// @Tags         Affiliate
+// @Produce      json
+// @Param        X-User-ID  header  string  true  "User ID"
+// @Success      200  {object}  object{total_clicks=int,total_conversions=int,total_earnings_cents=int,link_count=int}
+// @Failure      401  {object}  object{error=string}
+// @Router       /affiliate/stats [get]
+// @Security     BearerAuth
 func (h *Handler) GetStats(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -133,6 +165,14 @@ func (h *Handler) GetStats(c *gin.Context) {
 	})
 }
 
+// TrackClick godoc
+// @Summary      Track a click on an affiliate link and redirect
+// @Tags         Affiliate
+// @Produce      json
+// @Param        code  path  string  true  "Affiliate link code"
+// @Success      302  {string}  string  "Redirect to target URL"
+// @Failure      404  {object}  object{error=string}
+// @Router       /r/{code} [get]
 func (h *Handler) TrackClick(c *gin.Context) {
 	code := c.Param("code")
 	link, err := h.linkUC.TrackClick(c.Request.Context(), code)
@@ -146,6 +186,17 @@ func (h *Handler) TrackClick(c *gin.Context) {
 
 // --- Referral Handlers ---
 
+// ListReferrals godoc
+// @Summary      List referrals for the current user
+// @Tags         Affiliate
+// @Produce      json
+// @Param        X-User-ID  header  string  true   "User ID"
+// @Param        page       query   int     false  "Page number"
+// @Param        page_size  query   int     false  "Page size"
+// @Success      200  {object}  object{referrals=[]domain.Referral,total=int,page=int,page_size=int}
+// @Failure      401  {object}  object{error=string}
+// @Router       /affiliate/referrals [get]
+// @Security     BearerAuth
 func (h *Handler) ListReferrals(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -172,6 +223,18 @@ type requestPayoutRequest struct {
 	PayoutMethod string `json:"payout_method" binding:"required"`
 }
 
+// RequestPayout godoc
+// @Summary      Request a payout for affiliate earnings
+// @Tags         Affiliate
+// @Accept       json
+// @Produce      json
+// @Param        X-User-ID  header  string                true  "User ID"
+// @Param        body       body    requestPayoutRequest  true  "Payout request payload"
+// @Success      201  {object}  object{payout=domain.AffiliatePayout}
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Router       /affiliate/payout [post]
+// @Security     BearerAuth
 func (h *Handler) RequestPayout(c *gin.Context) {
 	userID := c.GetHeader("X-User-ID")
 	if userID == "" {
@@ -200,6 +263,14 @@ func (h *Handler) RequestPayout(c *gin.Context) {
 
 // --- Admin Handlers ---
 
+// GetProgram godoc
+// @Summary      Get the affiliate program configuration
+// @Tags         Affiliate
+// @Produce      json
+// @Success      200  {object}  object{program=domain.AffiliateProgram}
+// @Failure      404  {object}  object{error=string}
+// @Router       /admin/affiliates/program [get]
+// @Security     BearerAuth
 func (h *Handler) GetProgram(c *gin.Context) {
 	program, err := h.programUC.GetProgram(c.Request.Context())
 	if err != nil {
@@ -218,6 +289,16 @@ type updateProgramRequest struct {
 	IsActive           *bool    `json:"is_active"`
 }
 
+// UpdateProgram godoc
+// @Summary      Update the affiliate program configuration
+// @Tags         Affiliate
+// @Accept       json
+// @Produce      json
+// @Param        body  body  updateProgramRequest  true  "Program update payload"
+// @Success      200  {object}  object{program=domain.AffiliateProgram}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/affiliates/program [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdateProgram(c *gin.Context) {
 	var req updateProgramRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -241,6 +322,16 @@ func (h *Handler) UpdateProgram(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"program": program})
 }
 
+// ListAllPayouts godoc
+// @Summary      List all affiliate payouts (admin)
+// @Tags         Affiliate
+// @Produce      json
+// @Param        page       query  int  false  "Page number"
+// @Param        page_size  query  int  false  "Page size"
+// @Success      200  {object}  object{payouts=[]domain.AffiliatePayout,total=int,page=int,page_size=int}
+// @Failure      500  {object}  object{error=string}
+// @Router       /admin/affiliates/payouts [get]
+// @Security     BearerAuth
 func (h *Handler) ListAllPayouts(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
@@ -258,6 +349,17 @@ type updatePayoutStatusRequest struct {
 	Status string `json:"status" binding:"required"`
 }
 
+// UpdatePayoutStatus godoc
+// @Summary      Update a payout status (admin)
+// @Tags         Affiliate
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string                    true  "Payout ID"
+// @Param        body  body  updatePayoutStatusRequest  true  "Payout status update payload"
+// @Success      200  {object}  object{payout=domain.AffiliatePayout}
+// @Failure      400  {object}  object{error=string}
+// @Router       /admin/affiliates/payouts/{id} [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdatePayoutStatus(c *gin.Context) {
 	id := c.Param("id")
 	var req updatePayoutStatusRequest
