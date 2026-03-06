@@ -49,6 +49,7 @@ plugins:
       path: /dev/stdout
 
   # Global JWT claim extraction -> sets X-User-ID + X-User-Role headers.
+  # Verifies HMAC-SHA256 signature before trusting any claims.
   # NOTE: This only runs on routes that do NOT have their own post-function.
   # Routes with role-checking post-functions inline their own JWT extraction.
   - name: post-function
@@ -64,7 +65,22 @@ plugins:
             for part in token:gmatch("[^%.]+") do
               table.insert(parts, part)
             end
-            if #parts < 2 then return end
+            if #parts < 3 then return end
+
+            -- Verify HMAC-SHA256 signature before trusting claims
+            local signing_input = parts[1] .. "." .. parts[2]
+            local sig_b64 = parts[3]
+            local sig_rem = #sig_b64 % 4
+            if sig_rem > 0 then sig_b64 = sig_b64 .. string.rep("=", 4 - sig_rem) end
+            sig_b64 = sig_b64:gsub("-", "+"):gsub("_", "/")
+            local decoded_sig = ngx.decode_base64(sig_b64)
+            if not decoded_sig then return end
+
+            local secret = os.getenv("KONG_JWT_SECRET") or os.getenv("JWT_SECRET") or "change-this-to-a-256-bit-secret-in-production"
+            local expected_sig = ngx.hmac_sha256(secret, signing_input)
+            if decoded_sig ~= expected_sig then return end
+
+            -- Signature valid — now extract claims
             local payload = parts[2]
             local rem = #payload % 4
             if rem > 0 then

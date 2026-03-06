@@ -114,6 +114,7 @@ services:
       KONG_PROXY_LISTEN: "0.0.0.0:8000"
       KONG_ADMIN_LISTEN: "0.0.0.0:8001"
       KONG_LOG_LEVEL: info
+      KONG_JWT_SECRET: ${JWT_SECRET:-change-this-to-a-256-bit-secret-in-production}
     volumes:
       - ./kong/kong.yml:/etc/kong/kong.yml:ro
     depends_on:

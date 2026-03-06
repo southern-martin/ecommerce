@@ -55,7 +55,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: web-build
-          path: apps/web/build
+          path: apps/web/dist
           retention-days: 7
 
       - name: Upload coverage
@@ -79,7 +79,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: web-build
-          path: apps/web/build
+          path: apps/web/dist
 
       # Option 1: Firebase Hosting
       - name: Deploy to Firebase Hosting
@@ -104,7 +104,7 @@ jobs:
       - name: Deploy to S3
         if: vars.DEPLOY_TARGET == 'aws'
         run: |
-          aws s3 sync apps/web/build s3://${{ vars.S3_BUCKET_NAME }} --delete
+          aws s3 sync apps/web/dist s3://${{ vars.S3_BUCKET_NAME }} --delete
           aws cloudfront create-invalidation \
             --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
@@ -120,6 +120,6 @@ jobs:
         if: vars.DEPLOY_TARGET == 'gcp'
         uses: google-github-actions/upload-cloud-storage@v2
         with:
-          path: apps/web/build
+          path: apps/web/dist
           destination: ${{ vars.GCS_BUCKET_NAME }}
           parent: false
