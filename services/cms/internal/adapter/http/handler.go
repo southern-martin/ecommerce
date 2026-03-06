@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/southern-martin/ecommerce/services/cms/internal/domain"
 	"github.com/southern-martin/ecommerce/services/cms/internal/usecase"
+	"gorm.io/gorm"
 )
 
 // Handler holds all HTTP handlers for the CMS service.
@@ -15,6 +16,7 @@ type Handler struct {
 	bannerUC   *usecase.BannerUseCase
 	pageUC     *usecase.PageUseCase
 	scheduleUC *usecase.ScheduleUseCase
+	db         *gorm.DB
 }
 
 // NewHandler creates a new Handler.
@@ -22,17 +24,33 @@ func NewHandler(
 	bannerUC *usecase.BannerUseCase,
 	pageUC *usecase.PageUseCase,
 	scheduleUC *usecase.ScheduleUseCase,
+	db *gorm.DB,
 ) *Handler {
 	return &Handler{
 		bannerUC:   bannerUC,
 		pageUC:     pageUC,
 		scheduleUC: scheduleUC,
+		db:         db,
 	}
 }
 
 // Health returns a health check response.
 func (h *Handler) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok", "service": "cms"})
+}
+
+// Ready handles GET /ready — deep health check including database connectivity.
+func (h *Handler) Ready(c *gin.Context) {
+	sqlDB, err := h.db.DB()
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db connection lost"})
+		return
+	}
+	if err := sqlDB.Ping(); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db ping failed"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
 // --- Public Banner Handlers ---

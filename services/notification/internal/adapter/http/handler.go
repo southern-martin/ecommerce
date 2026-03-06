@@ -5,6 +5,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+
 	"github.com/southern-martin/ecommerce/services/notification/internal/domain"
 	"github.com/southern-martin/ecommerce/services/notification/internal/usecase"
 )
@@ -13,19 +15,35 @@ import (
 type Handler struct {
 	notificationUC *usecase.NotificationUseCase
 	preferenceUC   *usecase.PreferenceUseCase
+	db             *gorm.DB
 }
 
 // NewHandler creates a new Handler.
-func NewHandler(notificationUC *usecase.NotificationUseCase, preferenceUC *usecase.PreferenceUseCase) *Handler {
+func NewHandler(notificationUC *usecase.NotificationUseCase, preferenceUC *usecase.PreferenceUseCase, db *gorm.DB) *Handler {
 	return &Handler{
 		notificationUC: notificationUC,
 		preferenceUC:   preferenceUC,
+		db:             db,
 	}
 }
 
 // Health handles health check requests.
 func (h *Handler) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok", "service": "notification"})
+}
+
+// Ready handles GET /ready — deep health check including database connectivity.
+func (h *Handler) Ready(c *gin.Context) {
+	sqlDB, err := h.db.DB()
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db connection lost"})
+		return
+	}
+	if err := sqlDB.Ping(); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db ping failed"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
 // SendNotification handles POST /api/v1/notifications.

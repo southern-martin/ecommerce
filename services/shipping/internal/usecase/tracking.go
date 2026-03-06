@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -80,14 +81,16 @@ func (uc *TrackingUseCase) AddTrackingEvent(ctx context.Context, req AddTracking
 		eventSubject = "shipping.shipment.delivered"
 	}
 
-	_ = uc.publisher.Publish(ctx, eventSubject, map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, eventSubject, map[string]interface{}{
 		"shipment_id":     shipment.ID,
 		"order_id":        shipment.OrderID,
 		"status":          string(newStatus),
 		"tracking_number": shipment.TrackingNumber,
 		"description":     req.Description,
 		"location":        req.Location,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", eventSubject, pubErr)
+	}
 
 	return event, nil
 }

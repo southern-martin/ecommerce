@@ -78,7 +78,7 @@ func main() {
 	cartUC := usecase.NewCartUseCase(cartRepo, eventPublisher, logger)
 
 	// HTTP server
-	handler := carthttp.NewCartHandler(cartUC, logger)
+	handler := carthttp.NewCartHandler(cartUC, logger, pgDB)
 	router := carthttp.NewRouter(handler)
 	httpServer := &http.Server{
 		Addr:         ":" + cfg.HTTPPort,

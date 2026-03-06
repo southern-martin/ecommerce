@@ -85,7 +85,7 @@ func main() {
 	contentUC := usecase.NewContentUseCase(contentRepo, aiClient, publisher)
 
 	// Setup HTTP server
-	h := handler.NewHandler(embeddingUC, recommendationUC, chatbotUC, contentUC)
+	h := handler.NewHandler(embeddingUC, recommendationUC, chatbotUC, contentUC, db)
 	router := handler.NewRouter(h)
 
 	// Start HTTP server

@@ -18,6 +18,7 @@ func SetupRouter(handler *Handler) *gin.Engine {
 	r.GET("/metrics", metrics.Handler())
 
 	r.GET("/health", handler.Health)
+	r.GET("/ready", handler.Ready)
 
 	v1 := r.Group("/api/v1/auth")
 	{

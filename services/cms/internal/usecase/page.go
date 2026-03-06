@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 	"regexp"
 	"strings"
 	"time"
@@ -45,11 +46,13 @@ func (uc *PageUseCase) CreatePage(ctx context.Context, page *domain.Page) error 
 		return fmt.Errorf("failed to create page: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "cms.page.created", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "cms.page.created", map[string]interface{}{
 		"page_id": page.ID,
 		"title":   page.Title,
 		"slug":    page.Slug,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "cms.page.created", pubErr)
+	}
 
 	return nil
 }
@@ -108,9 +111,11 @@ func (uc *PageUseCase) UpdatePage(ctx context.Context, page *domain.Page) error 
 		return fmt.Errorf("failed to update page: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "cms.page.updated", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "cms.page.updated", map[string]interface{}{
 		"page_id": page.ID,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "cms.page.updated", pubErr)
+	}
 
 	return nil
 }
@@ -125,9 +130,11 @@ func (uc *PageUseCase) DeletePage(ctx context.Context, id string) error {
 		return fmt.Errorf("failed to delete page: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "cms.page.deleted", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "cms.page.deleted", map[string]interface{}{
 		"page_id": id,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "cms.page.deleted", pubErr)
+	}
 
 	return nil
 }
@@ -147,10 +154,12 @@ func (uc *PageUseCase) PublishPage(ctx context.Context, id string) (*domain.Page
 		return nil, fmt.Errorf("failed to publish page: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "cms.page.published", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "cms.page.published", map[string]interface{}{
 		"page_id": page.ID,
 		"slug":    page.Slug,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "cms.page.published", pubErr)
+	}
 
 	return page, nil
 }

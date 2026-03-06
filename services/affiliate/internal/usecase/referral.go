@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 	"math"
 
 	"github.com/google/uuid"
@@ -73,14 +74,16 @@ func (uc *ReferralUseCase) TrackConversion(ctx context.Context, req TrackConvers
 	_ = uc.linkRepo.IncrementConversions(ctx, link.ID)
 	_ = uc.linkRepo.AddEarnings(ctx, link.ID, commissionCents)
 
-	_ = uc.publisher.Publish(ctx, "affiliate.conversion.tracked", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "affiliate.conversion.tracked", map[string]interface{}{
 		"referral_id":      referral.ID,
 		"referrer_id":      referral.ReferrerID,
 		"referred_id":      referral.ReferredID,
 		"order_id":         referral.OrderID,
 		"order_total_cents": referral.OrderTotalCents,
 		"commission_cents": referral.CommissionCents,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "affiliate.conversion.tracked", pubErr)
+	}
 
 	return referral, nil
 }

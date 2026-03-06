@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/southern-martin/ecommerce/services/cms/internal/domain"
@@ -32,11 +33,13 @@ func (uc *BannerUseCase) CreateBanner(ctx context.Context, banner *domain.Banner
 		return fmt.Errorf("failed to create banner: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "cms.banner.created", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "cms.banner.created", map[string]interface{}{
 		"banner_id": banner.ID,
 		"title":     banner.Title,
 		"position":  banner.Position,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "cms.banner.created", pubErr)
+	}
 
 	return nil
 }
@@ -54,9 +57,11 @@ func (uc *BannerUseCase) UpdateBanner(ctx context.Context, banner *domain.Banner
 		return fmt.Errorf("failed to update banner: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "cms.banner.updated", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "cms.banner.updated", map[string]interface{}{
 		"banner_id": banner.ID,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "cms.banner.updated", pubErr)
+	}
 
 	return nil
 }
@@ -71,9 +76,11 @@ func (uc *BannerUseCase) DeleteBanner(ctx context.Context, id string) error {
 		return fmt.Errorf("failed to delete banner: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "cms.banner.deleted", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "cms.banner.deleted", map[string]interface{}{
 		"banner_id": id,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "cms.banner.deleted", pubErr)
+	}
 
 	return nil
 }

@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/southern-martin/ecommerce/services/order/internal/domain"
 )
@@ -121,7 +122,9 @@ func (uc *CreateOrderUseCase) Execute(ctx context.Context, input CreateOrderInpu
 		Currency:    order.Currency,
 		Items:       eventItems,
 	}
-	_ = uc.publisher.Publish(ctx, domain.EventOrderCreated, event)
+	if pubErr := uc.publisher.Publish(ctx, domain.EventOrderCreated, event); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", domain.EventOrderCreated, pubErr)
+	}
 
 	return order, nil
 }

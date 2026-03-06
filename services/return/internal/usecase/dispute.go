@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -63,13 +64,15 @@ func (uc *DisputeUseCase) CreateDispute(ctx context.Context, req CreateDisputeRe
 		return nil, fmt.Errorf("failed to create dispute: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "dispute.opened", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "dispute.opened", map[string]interface{}{
 		"dispute_id": dispute.ID,
 		"order_id":   dispute.OrderID,
 		"type":       string(dispute.Type),
 		"buyer_id":   dispute.BuyerID,
 		"seller_id":  dispute.SellerID,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "dispute.opened", pubErr)
+	}
 
 	return dispute, nil
 }
@@ -179,12 +182,14 @@ func (uc *DisputeUseCase) ResolveDispute(ctx context.Context, req ResolveDispute
 		return nil, fmt.Errorf("failed to resolve dispute: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "dispute.resolved", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "dispute.resolved", map[string]interface{}{
 		"dispute_id": dispute.ID,
 		"order_id":   dispute.OrderID,
 		"status":     string(dispute.Status),
 		"resolution": dispute.Resolution,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "dispute.resolved", pubErr)
+	}
 
 	return dispute, nil
 }

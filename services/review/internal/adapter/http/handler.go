@@ -5,6 +5,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+
 	"github.com/southern-martin/ecommerce/services/review/internal/domain"
 	"github.com/southern-martin/ecommerce/services/review/internal/usecase"
 )
@@ -12,16 +14,31 @@ import (
 // Handler holds all HTTP handlers for the review service.
 type Handler struct {
 	reviewUC *usecase.ReviewUseCase
+	db       *gorm.DB
 }
 
 // NewHandler creates a new Handler.
-func NewHandler(reviewUC *usecase.ReviewUseCase) *Handler {
-	return &Handler{reviewUC: reviewUC}
+func NewHandler(reviewUC *usecase.ReviewUseCase, db *gorm.DB) *Handler {
+	return &Handler{reviewUC: reviewUC, db: db}
 }
 
 // Health returns a health check response.
 func (h *Handler) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok", "service": "review"})
+}
+
+// Ready handles GET /ready — deep health check including database connectivity.
+func (h *Handler) Ready(c *gin.Context) {
+	sqlDB, err := h.db.DB()
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db connection lost"})
+		return
+	}
+	if err := sqlDB.Ping(); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db ping failed"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
 // --- Review Handlers ---

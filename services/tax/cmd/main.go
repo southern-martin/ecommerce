@@ -75,7 +75,7 @@ func main() {
 	manageZonesUC := usecase.NewManageZonesUseCase(zoneRepo)
 
 	// Setup HTTP server
-	handler := httpAdapter.NewHandler(calculateTaxUC, manageRulesUC, manageZonesUC)
+	handler := httpAdapter.NewHandler(calculateTaxUC, manageRulesUC, manageZonesUC, db)
 	router := httpAdapter.NewRouter(handler)
 
 	// Setup gRPC server

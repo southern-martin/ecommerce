@@ -6,23 +6,40 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/southern-martin/ecommerce/services/media/internal/usecase"
+	"gorm.io/gorm"
 )
 
 // Handler holds all HTTP handlers for the media service.
 type Handler struct {
 	mediaUC *usecase.MediaUseCase
+	db      *gorm.DB
 }
 
 // NewHandler creates a new Handler.
-func NewHandler(mediaUC *usecase.MediaUseCase) *Handler {
+func NewHandler(mediaUC *usecase.MediaUseCase, db *gorm.DB) *Handler {
 	return &Handler{
 		mediaUC: mediaUC,
+		db:      db,
 	}
 }
 
 // Health returns a health check response.
 func (h *Handler) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok", "service": "media"})
+}
+
+// Ready handles GET /ready — deep health check including database connectivity.
+func (h *Handler) Ready(c *gin.Context) {
+	sqlDB, err := h.db.DB()
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db connection lost"})
+		return
+	}
+	if err := sqlDB.Ping(); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db ping failed"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
 // --- Media Handlers ---

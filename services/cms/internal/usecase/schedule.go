@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	stdlog "log"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -32,13 +33,15 @@ func (uc *ScheduleUseCase) ScheduleContent(ctx context.Context, schedule *domain
 		return fmt.Errorf("failed to create schedule: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "cms.content.scheduled", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "cms.content.scheduled", map[string]interface{}{
 		"schedule_id":  schedule.ID,
 		"content_type": schedule.ContentType,
 		"content_id":   schedule.ContentID,
 		"action":       schedule.Action,
 		"scheduled_at": schedule.ScheduledAt,
-	})
+	}); pubErr != nil {
+		stdlog.Printf("WARN: failed to publish %s event: %v", "cms.content.scheduled", pubErr)
+	}
 
 	return nil
 }

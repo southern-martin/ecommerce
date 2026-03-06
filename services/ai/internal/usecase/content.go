@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/southern-martin/ecommerce/services/ai/internal/domain"
@@ -61,11 +62,13 @@ func (uc *ContentUseCase) GenerateDescription(ctx context.Context, req GenerateD
 		return nil, fmt.Errorf("failed to store generated content: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "ai.description.generated", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "ai.description.generated", map[string]interface{}{
 		"content_id": content.ID,
 		"product_id": content.EntityID,
 		"model":      content.Model,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "ai.description.generated", pubErr)
+	}
 
 	return content, nil
 }

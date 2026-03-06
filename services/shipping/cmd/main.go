@@ -81,7 +81,7 @@ func main() {
 	carrierUC := usecase.NewCarrierUseCase(carrierRepo, credentialRepo)
 
 	// Initialize HTTP handler and router
-	handler := httpAdapter.NewHandler(rateUC, shipmentUC, labelUC, trackingUC, carrierUC)
+	handler := httpAdapter.NewHandler(rateUC, shipmentUC, labelUC, trackingUC, carrierUC, db)
 	router := httpAdapter.NewRouter(handler)
 
 	// Start HTTP server

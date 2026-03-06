@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/southern-martin/ecommerce/services/shipping/internal/domain"
@@ -71,13 +72,15 @@ func (uc *ShipmentUseCase) CreateShipment(ctx context.Context, req CreateShipmen
 	}
 
 	// Publish event
-	_ = uc.publisher.Publish(ctx, "shipping.shipment.created", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "shipping.shipment.created", map[string]interface{}{
 		"shipment_id":     shipment.ID,
 		"order_id":        shipment.OrderID,
 		"seller_id":       shipment.SellerID,
 		"carrier_code":    shipment.CarrierCode,
 		"tracking_number": shipment.TrackingNumber,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "shipping.shipment.created", pubErr)
+	}
 
 	return shipment, nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/southern-martin/ecommerce/services/review/internal/domain"
@@ -69,12 +70,14 @@ func (uc *ReviewUseCase) CreateReview(ctx context.Context, req CreateReviewReque
 	}
 
 	// Publish event
-	_ = uc.publisher.Publish(ctx, "review.created", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "review.created", map[string]interface{}{
 		"review_id":  review.ID,
 		"product_id": review.ProductID,
 		"user_id":    review.UserID,
 		"rating":     review.Rating,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "review.created", pubErr)
+	}
 
 	return review, nil
 }
@@ -171,12 +174,14 @@ func (uc *ReviewUseCase) ApproveReview(ctx context.Context, id string) (*domain.
 	}
 
 	// Publish event
-	_ = uc.publisher.Publish(ctx, "review.approved", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "review.approved", map[string]interface{}{
 		"review_id":  review.ID,
 		"product_id": review.ProductID,
 		"user_id":    review.UserID,
 		"rating":     review.Rating,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "review.approved", pubErr)
+	}
 
 	return review, nil
 }

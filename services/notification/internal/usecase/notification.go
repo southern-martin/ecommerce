@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	stdlog "log"
 	"time"
 
 	"github.com/google/uuid"
@@ -82,12 +83,14 @@ func (uc *NotificationUseCase) SendNotification(ctx context.Context, req SendNot
 	}
 
 	// Publish event
-	_ = uc.publisher.Publish(ctx, "notification.sent", map[string]string{
+	if pubErr := uc.publisher.Publish(ctx, "notification.sent", map[string]string{
 		"notification_id": notification.ID,
 		"user_id":         notification.UserID,
 		"type":            string(notification.Type),
 		"channel":         string(notification.Channel),
-	})
+	}); pubErr != nil {
+		stdlog.Printf("WARN: failed to publish %s event: %v", "notification.sent", pubErr)
+	}
 
 	log.Info().Str("id", notification.ID).Str("channel", string(notification.Channel)).Msg("notification sent")
 

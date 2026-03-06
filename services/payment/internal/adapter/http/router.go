@@ -18,6 +18,7 @@ func NewRouter(handler *Handler) *gin.Engine {
 
 	// Health check.
 	router.GET("/health", handler.Health)
+	router.GET("/ready", handler.Ready)
 
 	v1 := router.Group("/api/v1/payments")
 	{

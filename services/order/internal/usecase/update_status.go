@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/southern-martin/ecommerce/services/order/internal/domain"
 )
@@ -55,7 +56,9 @@ func (uc *UpdateOrderStatusUseCase) Execute(ctx context.Context, sellerOrderID s
 		}
 		subject := statusToEventSubject(newStatus)
 		if subject != "" {
-			_ = uc.publisher.Publish(ctx, subject, statusEvent)
+			if pubErr := uc.publisher.Publish(ctx, subject, statusEvent); pubErr != nil {
+				log.Printf("WARN: failed to publish %s event: %v", subject, pubErr)
+			}
 		}
 	}
 
@@ -88,7 +91,9 @@ func (uc *UpdateOrderStatusUseCase) UpdateOrderStatus(ctx context.Context, order
 	}
 	subject := statusToEventSubject(newStatus)
 	if subject != "" {
-		_ = uc.publisher.Publish(ctx, subject, statusEvent)
+		if pubErr := uc.publisher.Publish(ctx, subject, statusEvent); pubErr != nil {
+			log.Printf("WARN: failed to publish %s event: %v", subject, pubErr)
+		}
 	}
 
 	return order, nil

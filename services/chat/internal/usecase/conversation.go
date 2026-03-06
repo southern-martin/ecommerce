@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/southern-martin/ecommerce/services/chat/internal/domain"
@@ -83,13 +84,15 @@ func (uc *ConversationUseCase) CreateConversation(ctx context.Context, userID st
 	}
 
 	// Publish event
-	_ = uc.publisher.Publish(ctx, "chat.conversation.new", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "chat.conversation.new", map[string]interface{}{
 		"conversation_id": conversation.ID,
 		"type":            string(conversation.Type),
 		"buyer_id":        conversation.BuyerID,
 		"seller_id":       conversation.SellerID,
 		"order_id":        conversation.OrderID,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "chat.conversation.new", pubErr)
+	}
 
 	return conversation, nil
 }

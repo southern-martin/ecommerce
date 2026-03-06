@@ -126,7 +126,7 @@ func main() {
 	}
 
 	// Initialize HTTP handler and router
-	handler := producthttp.NewHandler(productUC, categoryUC, attributeUC, variantUC, attributeGroupUC)
+	handler := producthttp.NewHandler(productUC, categoryUC, attributeUC, variantUC, attributeGroupUC, db)
 	router := producthttp.NewRouter(handler)
 
 	// Start HTTP server

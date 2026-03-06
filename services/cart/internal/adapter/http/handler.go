@@ -6,6 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
+	"gorm.io/gorm"
+
 	"github.com/southern-martin/ecommerce/services/cart/internal/domain"
 	"github.com/southern-martin/ecommerce/services/cart/internal/usecase"
 )
@@ -14,13 +16,15 @@ import (
 type CartHandler struct {
 	cartUC *usecase.CartUseCase
 	logger zerolog.Logger
+	db     *gorm.DB
 }
 
 // NewCartHandler creates a new CartHandler.
-func NewCartHandler(cartUC *usecase.CartUseCase, logger zerolog.Logger) *CartHandler {
+func NewCartHandler(cartUC *usecase.CartUseCase, logger zerolog.Logger, db *gorm.DB) *CartHandler {
 	return &CartHandler{
 		cartUC: cartUC,
 		logger: logger.With().Str("component", "cart_handler").Logger(),
+		db:     db,
 	}
 }
 
@@ -223,6 +227,20 @@ func (h *CartHandler) MergeCart(c *gin.Context) {
 // Health handles GET /health
 func (h *CartHandler) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+// Ready handles GET /ready — deep health check including database connectivity.
+func (h *CartHandler) Ready(c *gin.Context) {
+	sqlDB, err := h.db.DB()
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db connection lost"})
+		return
+	}
+	if err := sqlDB.Ping(); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db ping failed"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
 // handleUseCaseError maps use case errors to appropriate HTTP responses.

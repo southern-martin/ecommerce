@@ -80,7 +80,7 @@ func main() {
 	mediaUC := usecase.NewMediaUseCase(mediaRepo, storageClient, publisher)
 
 	// Initialize HTTP handler and router
-	handler := httpAdapter.NewHandler(mediaUC)
+	handler := httpAdapter.NewHandler(mediaUC, db)
 	router := httpAdapter.NewRouter(handler)
 
 	// Start HTTP server

@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/southern-martin/ecommerce/services/promotion/internal/domain"
@@ -84,7 +85,9 @@ func (uc *FlashSaleUseCase) CreateFlashSale(ctx context.Context, input CreateFla
 			FlashSaleID: flashSale.ID,
 			Name:        flashSale.Name,
 		}
-		_ = uc.publisher.Publish(ctx, domain.EventFlashSaleStarted, event)
+		if pubErr := uc.publisher.Publish(ctx, domain.EventFlashSaleStarted, event); pubErr != nil {
+			log.Printf("WARN: failed to publish %s event: %v", domain.EventFlashSaleStarted, pubErr)
+		}
 	}
 
 	return flashSale, nil
@@ -129,11 +132,15 @@ func (uc *FlashSaleUseCase) UpdateFlashSale(ctx context.Context, flashSale *doma
 	}
 
 	if !flashSale.IsActive {
-		_ = uc.publisher.Publish(ctx, domain.EventFlashSaleEnded, event)
+		if pubErr := uc.publisher.Publish(ctx, domain.EventFlashSaleEnded, event); pubErr != nil {
+			log.Printf("WARN: failed to publish %s event: %v", domain.EventFlashSaleEnded, pubErr)
+		}
 	} else {
 		now := time.Now()
 		if now.After(flashSale.StartsAt) && now.Before(flashSale.EndsAt) {
-			_ = uc.publisher.Publish(ctx, domain.EventFlashSaleStarted, event)
+			if pubErr := uc.publisher.Publish(ctx, domain.EventFlashSaleStarted, event); pubErr != nil {
+				log.Printf("WARN: failed to publish %s event: %v", domain.EventFlashSaleStarted, pubErr)
+			}
 		}
 	}
 

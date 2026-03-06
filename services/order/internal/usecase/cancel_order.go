@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/southern-martin/ecommerce/services/order/internal/domain"
 )
@@ -67,7 +68,9 @@ func (uc *CancelOrderUseCase) Execute(ctx context.Context, orderID string, buyer
 		BuyerID:     order.BuyerID,
 		Status:      domain.OrderStatusCancelled,
 	}
-	_ = uc.publisher.Publish(ctx, domain.EventOrderCancelled, event)
+	if pubErr := uc.publisher.Publish(ctx, domain.EventOrderCancelled, event); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", domain.EventOrderCancelled, pubErr)
+	}
 
 	return order, nil
 }

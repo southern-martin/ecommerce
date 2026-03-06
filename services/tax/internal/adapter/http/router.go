@@ -18,6 +18,7 @@ func NewRouter(handler *Handler) *gin.Engine {
 
 	// Health check
 	r.GET("/health", handler.Health)
+	r.GET("/ready", handler.Ready)
 
 	// Public routes
 	v1 := r.Group("/api/v1")

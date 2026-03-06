@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"log"
 	"math/big"
 
 	"github.com/google/uuid"
@@ -83,11 +84,13 @@ func (uc *LinkUseCase) TrackClick(ctx context.Context, code string) (*domain.Aff
 		return nil, fmt.Errorf("failed to increment clicks: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "affiliate.click.tracked", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "affiliate.click.tracked", map[string]interface{}{
 		"link_id": link.ID,
 		"user_id": link.UserID,
 		"code":    link.Code,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "affiliate.click.tracked", pubErr)
+	}
 
 	link.ClickCount++
 	return link, nil

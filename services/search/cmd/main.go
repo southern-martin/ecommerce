@@ -66,7 +66,7 @@ func main() {
 	indexUC := usecase.NewIndexUseCase(searchRepo, publisher)
 
 	// Initialize HTTP handler and router
-	handler := httpAdapter.NewHandler(searchUC, indexUC)
+	handler := httpAdapter.NewHandler(searchUC, indexUC, db)
 	router := httpAdapter.NewRouter(handler)
 
 	// Start HTTP server
