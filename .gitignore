@@ -41,6 +41,7 @@ minio_data/
 # Node
 node_modules/
 .turbo/
+coverage/
 
 # Temp
 tmp/
