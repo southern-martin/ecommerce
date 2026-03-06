@@ -65,7 +65,7 @@ func main() {
 	reviewUC := usecase.NewReviewUseCase(reviewRepo, publisher)
 
 	// Initialize HTTP handler and router
-	handler := httpAdapter.NewHandler(reviewUC)
+	handler := httpAdapter.NewHandler(reviewUC, db)
 	router := httpAdapter.NewRouter(handler)
 
 	// Start HTTP server

@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/southern-martin/ecommerce/services/loyalty/internal/domain"
@@ -64,11 +65,13 @@ func (uc *MembershipUseCase) CheckAndUpgradeTier(ctx context.Context, userID str
 			return fmt.Errorf("failed to update tier: %w", err)
 		}
 
-		_ = uc.publisher.Publish(ctx, "loyalty.tier.upgraded", map[string]interface{}{
+		if pubErr := uc.publisher.Publish(ctx, "loyalty.tier.upgraded", map[string]interface{}{
 			"user_id":  userID,
 			"old_tier": string(oldTier),
 			"new_tier": newTier.Name,
-		})
+		}); pubErr != nil {
+			log.Printf("WARN: failed to publish %s event: %v", "loyalty.tier.upgraded", pubErr)
+		}
 	}
 
 	return nil

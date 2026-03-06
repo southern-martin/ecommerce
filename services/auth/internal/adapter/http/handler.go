@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	pkgerrors "github.com/southern-martin/ecommerce/pkg/errors"
 	"github.com/southern-martin/ecommerce/services/auth/internal/usecase"
@@ -18,6 +19,7 @@ type Handler struct {
 	forgotPassword *usecase.ForgotPasswordUseCase
 	resetPassword  *usecase.ResetPasswordUseCase
 	oauthLogin     *usecase.OAuthLoginUseCase
+	db             *gorm.DB
 }
 
 // NewHandler creates a new Handler with all use cases.
@@ -29,6 +31,7 @@ func NewHandler(
 	forgotPassword *usecase.ForgotPasswordUseCase,
 	resetPassword *usecase.ResetPasswordUseCase,
 	oauthLogin *usecase.OAuthLoginUseCase,
+	db *gorm.DB,
 ) *Handler {
 	return &Handler{
 		register:       register,
@@ -38,6 +41,7 @@ func NewHandler(
 		forgotPassword: forgotPassword,
 		resetPassword:  resetPassword,
 		oauthLogin:     oauthLogin,
+		db:             db,
 	}
 }
 
@@ -178,4 +182,18 @@ func (h *Handler) OAuthLogin(c *gin.Context) {
 // Health handles GET /health
 func (h *Handler) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+// Ready handles GET /ready — deep health check including database connectivity.
+func (h *Handler) Ready(c *gin.Context) {
+	sqlDB, err := h.db.DB()
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db connection lost"})
+		return
+	}
+	if err := sqlDB.Ping(); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db ping failed"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }

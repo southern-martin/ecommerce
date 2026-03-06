@@ -107,6 +107,7 @@ func main() {
 		walletUC,
 		payoutUC,
 		refundUC,
+		db,
 	)
 	router := httpAdapter.NewRouter(handler)
 

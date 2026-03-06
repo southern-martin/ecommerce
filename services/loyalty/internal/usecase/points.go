@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/southern-martin/ecommerce/services/loyalty/internal/domain"
@@ -70,12 +71,14 @@ func (uc *PointsUseCase) EarnPoints(ctx context.Context, req EarnPointsRequest) 
 	// Check for tier upgrade
 	_ = uc.membershipUC.CheckAndUpgradeTier(ctx, req.UserID)
 
-	_ = uc.publisher.Publish(ctx, "loyalty.points.earned", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "loyalty.points.earned", map[string]interface{}{
 		"user_id":      req.UserID,
 		"points":       req.Points,
 		"source":       string(req.Source),
 		"reference_id": req.ReferenceID,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "loyalty.points.earned", pubErr)
+	}
 
 	return tx, nil
 }
@@ -118,11 +121,13 @@ func (uc *PointsUseCase) RedeemPoints(ctx context.Context, req RedeemPointsReque
 		return nil, fmt.Errorf("failed to update points: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "loyalty.points.redeemed", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "loyalty.points.redeemed", map[string]interface{}{
 		"user_id":  req.UserID,
 		"points":   req.Points,
 		"order_id": req.OrderID,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "loyalty.points.redeemed", pubErr)
+	}
 
 	return tx, nil
 }

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
+	stdlog "log"
+
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/southern-martin/ecommerce/services/media/internal/domain"
@@ -71,11 +73,13 @@ func (uc *MediaUseCase) CreateMedia(ctx context.Context, req CreateMediaRequest)
 		return nil, err
 	}
 
-	_ = uc.publisher.Publish(ctx, "media.created", map[string]string{
+	if pubErr := uc.publisher.Publish(ctx, "media.created", map[string]string{
 		"media_id":   id,
 		"owner_id":   req.OwnerID,
 		"owner_type": req.OwnerType,
-	})
+	}); pubErr != nil {
+		stdlog.Printf("WARN: failed to publish %s event: %v", "media.created", pubErr)
+	}
 
 	return &CreateMediaResponse{
 		Media:     media,
@@ -116,11 +120,13 @@ func (uc *MediaUseCase) DeleteMedia(ctx context.Context, id string) error {
 		return err
 	}
 
-	_ = uc.publisher.Publish(ctx, "media.deleted", map[string]string{
+	if pubErr := uc.publisher.Publish(ctx, "media.deleted", map[string]string{
 		"media_id":   id,
 		"owner_id":   media.OwnerID,
 		"owner_type": media.OwnerType,
-	})
+	}); pubErr != nil {
+		stdlog.Printf("WARN: failed to publish %s event: %v", "media.deleted", pubErr)
+	}
 
 	return nil
 }
@@ -166,11 +172,13 @@ func (uc *MediaUseCase) UploadMedia(ctx context.Context, req UploadMediaRequest)
 		return nil, err
 	}
 
-	_ = uc.publisher.Publish(ctx, "media.created", map[string]string{
+	if pubErr := uc.publisher.Publish(ctx, "media.created", map[string]string{
 		"media_id":   id,
 		"owner_id":   req.OwnerID,
 		"owner_type": req.OwnerType,
-	})
+	}); pubErr != nil {
+		stdlog.Printf("WARN: failed to publish %s event: %v", "media.created", pubErr)
+	}
 
 	return media, nil
 }

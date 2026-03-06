@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/southern-martin/ecommerce/services/return/internal/domain"
@@ -90,14 +91,16 @@ func (uc *CreateReturnUseCase) Execute(ctx context.Context, req CreateReturnRequ
 	}
 
 	// Publish event
-	_ = uc.publisher.Publish(ctx, "return.requested", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "return.requested", map[string]interface{}{
 		"return_id":  ret.ID,
 		"order_id":   ret.OrderID,
 		"buyer_id":   ret.BuyerID,
 		"seller_id":  ret.SellerID,
 		"reason":     string(ret.Reason),
 		"item_count": len(ret.Items),
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "return.requested", pubErr)
+	}
 
 	return ret, nil
 }

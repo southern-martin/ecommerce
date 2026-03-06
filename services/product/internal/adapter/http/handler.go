@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	"github.com/southern-martin/ecommerce/services/product/internal/domain"
 	"github.com/southern-martin/ecommerce/services/product/internal/usecase"
@@ -17,6 +18,7 @@ type Handler struct {
 	attributeUC      *usecase.AttributeUseCase
 	variantUC        *usecase.VariantUseCase
 	attributeGroupUC *usecase.AttributeGroupUseCase
+	db               *gorm.DB
 }
 
 // NewHandler creates a new Handler.
@@ -26,6 +28,7 @@ func NewHandler(
 	attributeUC *usecase.AttributeUseCase,
 	variantUC *usecase.VariantUseCase,
 	attributeGroupUC *usecase.AttributeGroupUseCase,
+	db *gorm.DB,
 ) *Handler {
 	return &Handler{
 		productUC:        productUC,
@@ -33,6 +36,7 @@ func NewHandler(
 		attributeUC:      attributeUC,
 		variantUC:        variantUC,
 		attributeGroupUC: attributeGroupUC,
+		db:               db,
 	}
 }
 
@@ -41,6 +45,20 @@ func NewHandler(
 // Health returns service health status.
 func (h *Handler) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+// Ready handles GET /ready — deep health check including database connectivity.
+func (h *Handler) Ready(c *gin.Context) {
+	sqlDB, err := h.db.DB()
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db connection lost"})
+		return
+	}
+	if err := sqlDB.Ping(); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db ping failed"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
 // --- Public Product Endpoints ---

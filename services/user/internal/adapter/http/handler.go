@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	apperrors "github.com/southern-martin/ecommerce/pkg/errors"
 	"github.com/southern-martin/ecommerce/pkg/middleware"
@@ -19,6 +20,7 @@ type Handler struct {
 	seller   *usecase.SellerUseCase
 	follow   *usecase.FollowUseCase
 	wishlist *usecase.WishlistUseCase
+	db       *gorm.DB
 }
 
 // NewHandler creates a new Handler with the given use cases.
@@ -28,6 +30,7 @@ func NewHandler(
 	seller *usecase.SellerUseCase,
 	follow *usecase.FollowUseCase,
 	wishlist *usecase.WishlistUseCase,
+	db *gorm.DB,
 ) *Handler {
 	return &Handler{
 		profile:  profile,
@@ -35,6 +38,7 @@ func NewHandler(
 		seller:   seller,
 		follow:   follow,
 		wishlist: wishlist,
+		db:       db,
 	}
 }
 
@@ -56,6 +60,20 @@ func handleError(c *gin.Context, err error) {
 // Health returns a simple health check response.
 func (h *Handler) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+// Ready handles GET /ready — deep health check including database connectivity.
+func (h *Handler) Ready(c *gin.Context) {
+	sqlDB, err := h.db.DB()
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db connection lost"})
+		return
+	}
+	if err := sqlDB.Ping(); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db ping failed"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
 // GetProfile handles GET /api/v1/users/me

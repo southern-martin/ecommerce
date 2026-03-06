@@ -97,7 +97,7 @@ func main() {
 	// Setup HTTP handler and router
 	handler := authhttp.NewHandler(
 		registerUC, loginUC, refreshTokenUC, logoutUC,
-		forgotPasswordUC, resetPasswordUC, oauthLoginUC,
+		forgotPasswordUC, resetPasswordUC, oauthLoginUC, db,
 	)
 	router := authhttp.SetupRouter(handler)
 

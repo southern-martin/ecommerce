@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/southern-martin/ecommerce/services/ai/internal/domain"
 	"github.com/southern-martin/ecommerce/services/ai/internal/usecase"
+	"gorm.io/gorm"
 )
 
 // Handler holds all HTTP handlers for the AI service.
@@ -15,6 +16,7 @@ type Handler struct {
 	recommendationUC *usecase.RecommendationUseCase
 	chatbotUC        *usecase.ChatbotUseCase
 	contentUC        *usecase.ContentUseCase
+	db               *gorm.DB
 }
 
 // NewHandler creates a new Handler.
@@ -23,18 +25,34 @@ func NewHandler(
 	recommendationUC *usecase.RecommendationUseCase,
 	chatbotUC *usecase.ChatbotUseCase,
 	contentUC *usecase.ContentUseCase,
+	db *gorm.DB,
 ) *Handler {
 	return &Handler{
 		embeddingUC:      embeddingUC,
 		recommendationUC: recommendationUC,
 		chatbotUC:        chatbotUC,
 		contentUC:        contentUC,
+		db:               db,
 	}
 }
 
 // Health returns a health check response.
 func (h *Handler) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok", "service": "ai"})
+}
+
+// Ready handles GET /ready — deep health check including database connectivity.
+func (h *Handler) Ready(c *gin.Context) {
+	sqlDB, err := h.db.DB()
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db connection lost"})
+		return
+	}
+	if err := sqlDB.Ping(); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db ping failed"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
 // --- Chat Handlers ---

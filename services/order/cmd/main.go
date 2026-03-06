@@ -67,7 +67,7 @@ func main() {
 	cancelOrderUC := usecase.NewCancelOrderUseCase(orderRepo, sellerOrderRepo, publisher)
 
 	// Initialize HTTP handler and router
-	handler := httpAdapter.NewHandler(createOrderUC, getOrderUC, updateStatusUC, cancelOrderUC)
+	handler := httpAdapter.NewHandler(createOrderUC, getOrderUC, updateStatusUC, cancelOrderUC, db)
 	router := httpAdapter.NewRouter(handler)
 
 	// Start HTTP server

@@ -72,7 +72,7 @@ func main() {
 	scheduleUC := usecase.NewScheduleUseCase(scheduleRepo, publisher)
 
 	// Initialize HTTP handler and router
-	handler := httpAdapter.NewHandler(bannerUC, pageUC, scheduleUC)
+	handler := httpAdapter.NewHandler(bannerUC, pageUC, scheduleUC, db)
 	router := httpAdapter.NewRouter(handler)
 
 	// Start HTTP server

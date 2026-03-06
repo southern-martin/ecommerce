@@ -71,7 +71,7 @@ func main() {
 	messageUC := usecase.NewMessageUseCase(messageRepo, conversationRepo, participantRepo, publisher)
 
 	// Initialize HTTP handler and router
-	handler := httpAdapter.NewHandler(conversationUC, messageUC)
+	handler := httpAdapter.NewHandler(conversationUC, messageUC, db)
 	router := httpAdapter.NewRouter(handler)
 
 	// Start HTTP server

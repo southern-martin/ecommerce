@@ -68,7 +68,7 @@ func main() {
 	bundleUC := usecase.NewBundleUseCase(bundleRepo)
 
 	// Initialize HTTP handler and router
-	handler := httpAdapter.NewHandler(couponUC, flashSaleUC, bundleUC)
+	handler := httpAdapter.NewHandler(couponUC, flashSaleUC, bundleUC, db)
 	router := httpAdapter.NewRouter(handler)
 
 	// Start HTTP server

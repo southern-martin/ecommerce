@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/southern-martin/ecommerce/services/loyalty/internal/usecase"
+	"gorm.io/gorm"
 )
 
 // Handler holds all HTTP handlers for the loyalty service.
@@ -13,6 +14,7 @@ type Handler struct {
 	membershipUC *usecase.MembershipUseCase
 	pointsUC     *usecase.PointsUseCase
 	tierUC       *usecase.TierUseCase
+	db           *gorm.DB
 }
 
 // NewHandler creates a new Handler.
@@ -20,17 +22,33 @@ func NewHandler(
 	membershipUC *usecase.MembershipUseCase,
 	pointsUC *usecase.PointsUseCase,
 	tierUC *usecase.TierUseCase,
+	db *gorm.DB,
 ) *Handler {
 	return &Handler{
 		membershipUC: membershipUC,
 		pointsUC:     pointsUC,
 		tierUC:       tierUC,
+		db:           db,
 	}
 }
 
 // Health returns a health check response.
 func (h *Handler) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok", "service": "loyalty"})
+}
+
+// Ready handles GET /ready — deep health check including database connectivity.
+func (h *Handler) Ready(c *gin.Context) {
+	sqlDB, err := h.db.DB()
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db connection lost"})
+		return
+	}
+	if err := sqlDB.Ping(); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db ping failed"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
 // GetMembership returns a user's loyalty membership.

@@ -5,6 +5,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+
 	"github.com/southern-martin/ecommerce/services/search/internal/domain"
 	"github.com/southern-martin/ecommerce/services/search/internal/usecase"
 )
@@ -13,19 +15,35 @@ import (
 type Handler struct {
 	searchUC *usecase.SearchUseCase
 	indexUC  *usecase.IndexUseCase
+	db       *gorm.DB
 }
 
 // NewHandler creates a new Handler.
-func NewHandler(searchUC *usecase.SearchUseCase, indexUC *usecase.IndexUseCase) *Handler {
+func NewHandler(searchUC *usecase.SearchUseCase, indexUC *usecase.IndexUseCase, db *gorm.DB) *Handler {
 	return &Handler{
 		searchUC: searchUC,
 		indexUC:  indexUC,
+		db:       db,
 	}
 }
 
 // Health handles health check requests.
 func (h *Handler) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok", "service": "search"})
+}
+
+// Ready handles GET /ready — deep health check including database connectivity.
+func (h *Handler) Ready(c *gin.Context) {
+	sqlDB, err := h.db.DB()
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db connection lost"})
+		return
+	}
+	if err := sqlDB.Ping(); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db ping failed"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
 // Search handles GET /api/v1/search

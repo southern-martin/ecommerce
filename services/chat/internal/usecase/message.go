@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -80,14 +81,16 @@ func (uc *MessageUseCase) SendMessage(ctx context.Context, req SendMessageReques
 	_ = uc.conversationRepo.UpdateLastMessage(ctx, req.ConversationID, &now)
 
 	// Publish event
-	_ = uc.publisher.Publish(ctx, "chat.message.sent", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "chat.message.sent", map[string]interface{}{
 		"message_id":      message.ID,
 		"conversation_id": message.ConversationID,
 		"sender_id":       message.SenderID,
 		"sender_role":     string(message.SenderRole),
 		"content":         message.Content,
 		"message_type":    string(message.MessageType),
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "chat.message.sent", pubErr)
+	}
 
 	return message, nil
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 
 	"github.com/southern-martin/ecommerce/services/payment/internal/domain"
 	"github.com/southern-martin/ecommerce/services/payment/internal/usecase"
@@ -19,6 +20,7 @@ type Handler struct {
 	wallet         *usecase.WalletUseCase
 	payout         *usecase.PayoutUseCase
 	refund         *usecase.RefundUseCase
+	db             *gorm.DB
 }
 
 // NewHandler creates a new Handler.
@@ -29,6 +31,7 @@ func NewHandler(
 	wallet *usecase.WalletUseCase,
 	payout *usecase.PayoutUseCase,
 	refund *usecase.RefundUseCase,
+	db *gorm.DB,
 ) *Handler {
 	return &Handler{
 		paymentRepo:    paymentRepo,
@@ -37,12 +40,27 @@ func NewHandler(
 		wallet:         wallet,
 		payout:         payout,
 		refund:         refund,
+		db:             db,
 	}
 }
 
 // Health returns a health check response.
 func (h *Handler) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+// Ready handles GET /ready — deep health check including database connectivity.
+func (h *Handler) Ready(c *gin.Context) {
+	sqlDB, err := h.db.DB()
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db connection lost"})
+		return
+	}
+	if err := sqlDB.Ping(); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db ping failed"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
 // CreatePaymentIntent creates a new payment intent.

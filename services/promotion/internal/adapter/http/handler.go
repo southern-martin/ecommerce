@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+
 	"github.com/southern-martin/ecommerce/services/promotion/internal/domain"
 	"github.com/southern-martin/ecommerce/services/promotion/internal/usecase"
 )
@@ -15,6 +17,7 @@ type Handler struct {
 	couponUC    *usecase.CouponUseCase
 	flashSaleUC *usecase.FlashSaleUseCase
 	bundleUC    *usecase.BundleUseCase
+	db          *gorm.DB
 }
 
 // NewHandler creates a new Handler instance.
@@ -22,11 +25,13 @@ func NewHandler(
 	couponUC *usecase.CouponUseCase,
 	flashSaleUC *usecase.FlashSaleUseCase,
 	bundleUC *usecase.BundleUseCase,
+	db *gorm.DB,
 ) *Handler {
 	return &Handler{
 		couponUC:    couponUC,
 		flashSaleUC: flashSaleUC,
 		bundleUC:    bundleUC,
+		db:          db,
 	}
 }
 
@@ -824,6 +829,20 @@ func (h *Handler) AdminDeleteBundle(c *gin.Context) {
 // Health handles GET /health
 func (h *Handler) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+// Ready handles GET /ready — deep health check including database connectivity.
+func (h *Handler) Ready(c *gin.Context) {
+	sqlDB, err := h.db.DB()
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db connection lost"})
+		return
+	}
+	if err := sqlDB.Ping(); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "db ping failed"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
 // --- Converters ---

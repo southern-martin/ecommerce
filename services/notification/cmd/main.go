@@ -92,7 +92,7 @@ func main() {
 	}
 
 	// Initialize HTTP handler and router
-	handler := httpAdapter.NewHandler(notificationUC, preferenceUC)
+	handler := httpAdapter.NewHandler(notificationUC, preferenceUC, db)
 	router := httpAdapter.NewRouter(handler)
 
 	// Start HTTP server

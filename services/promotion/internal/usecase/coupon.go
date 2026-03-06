@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"log"
 	"strings"
 	"time"
 
@@ -227,7 +228,9 @@ func (uc *CouponUseCase) RedeemCoupon(ctx context.Context, code, userID, orderID
 		OrderID:       orderID,
 		DiscountCents: discountCents,
 	}
-	_ = uc.publisher.Publish(ctx, domain.EventCouponRedeemed, event)
+	if pubErr := uc.publisher.Publish(ctx, domain.EventCouponRedeemed, event); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", domain.EventCouponRedeemed, pubErr)
+	}
 
 	return usage, nil
 }

@@ -76,7 +76,7 @@ func main() {
 	tierUC := usecase.NewTierUseCase(tierRepo)
 
 	// Initialize HTTP handler and router
-	handler := httpAdapter.NewHandler(membershipUC, pointsUC, tierUC)
+	handler := httpAdapter.NewHandler(membershipUC, pointsUC, tierUC, db)
 	router := httpAdapter.NewRouter(handler)
 
 	// Start HTTP server

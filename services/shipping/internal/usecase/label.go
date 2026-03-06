@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/southern-martin/ecommerce/services/shipping/internal/domain"
@@ -50,13 +51,15 @@ func (uc *LabelUseCase) GenerateLabel(ctx context.Context, shipmentID, sellerID 
 	}
 
 	// Publish event
-	_ = uc.publisher.Publish(ctx, "shipping.shipment.updated", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "shipping.shipment.updated", map[string]interface{}{
 		"shipment_id":     shipment.ID,
 		"order_id":        shipment.OrderID,
 		"status":          string(shipment.Status),
 		"tracking_number": shipment.TrackingNumber,
 		"label_url":       shipment.LabelURL,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "shipping.shipment.updated", pubErr)
+	}
 
 	return shipment, nil
 }

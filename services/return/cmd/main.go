@@ -72,7 +72,7 @@ func main() {
 	disputeUC := usecase.NewDisputeUseCase(disputeRepo, messageRepo, publisher)
 
 	// Initialize HTTP handler and router
-	handler := httpAdapter.NewHandler(createReturnUC, manageReturnUC, disputeUC)
+	handler := httpAdapter.NewHandler(createReturnUC, manageReturnUC, disputeUC, db)
 	router := httpAdapter.NewRouter(handler)
 
 	// Start HTTP server

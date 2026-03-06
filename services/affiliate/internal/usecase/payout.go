@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -78,12 +79,14 @@ func (uc *PayoutUseCase) RequestPayout(ctx context.Context, req RequestPayoutReq
 		return nil, fmt.Errorf("failed to create payout: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "affiliate.payout.requested", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "affiliate.payout.requested", map[string]interface{}{
 		"payout_id":     payout.ID,
 		"user_id":       payout.UserID,
 		"amount_cents":  payout.AmountCents,
 		"payout_method": string(payout.PayoutMethod),
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "affiliate.payout.requested", pubErr)
+	}
 
 	return payout, nil
 }

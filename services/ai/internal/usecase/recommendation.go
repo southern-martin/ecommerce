@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 	"math/rand"
 
 	"github.com/google/uuid"
@@ -58,10 +59,12 @@ func (uc *RecommendationUseCase) GenerateRecommendations(ctx context.Context, us
 		recommendations = append(recommendations, rec)
 	}
 
-	_ = uc.publisher.Publish(ctx, "ai.recommendation.ready", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "ai.recommendation.ready", map[string]interface{}{
 		"user_id": userID,
 		"count":   len(recommendations),
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "ai.recommendation.ready", pubErr)
+	}
 
 	return recommendations, nil
 }

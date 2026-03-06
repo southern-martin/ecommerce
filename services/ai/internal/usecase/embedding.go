@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 	"math/rand"
 
 	"github.com/google/uuid"
@@ -57,12 +58,14 @@ func (uc *EmbeddingUseCase) GenerateEmbedding(ctx context.Context, req GenerateE
 		return nil, fmt.Errorf("failed to store embedding: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "ai.embedding.ready", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "ai.embedding.ready", map[string]interface{}{
 		"embedding_id": embedding.ID,
 		"entity_type":  string(embedding.EntityType),
 		"entity_id":    embedding.EntityID,
 		"dimensions":   embedding.Dimensions,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "ai.embedding.ready", pubErr)
+	}
 
 	return embedding, nil
 }

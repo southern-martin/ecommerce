@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/southern-martin/ecommerce/services/return/internal/domain"
 )
@@ -72,11 +73,13 @@ func (uc *ManageReturnUseCase) ApproveReturn(ctx context.Context, id, sellerID s
 		return nil, fmt.Errorf("failed to update return: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "return.approved", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "return.approved", map[string]interface{}{
 		"return_id":          ret.ID,
 		"order_id":           ret.OrderID,
 		"refund_amount_cents": ret.RefundAmountCents,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "return.approved", pubErr)
+	}
 
 	return ret, nil
 }
@@ -102,10 +105,12 @@ func (uc *ManageReturnUseCase) RejectReturn(ctx context.Context, id, sellerID st
 		return nil, fmt.Errorf("failed to update return: %w", err)
 	}
 
-	_ = uc.publisher.Publish(ctx, "return.rejected", map[string]interface{}{
+	if pubErr := uc.publisher.Publish(ctx, "return.rejected", map[string]interface{}{
 		"return_id": ret.ID,
 		"order_id":  ret.OrderID,
-	})
+	}); pubErr != nil {
+		log.Printf("WARN: failed to publish %s event: %v", "return.rejected", pubErr)
+	}
 
 	return ret, nil
 }
@@ -133,11 +138,13 @@ func (uc *ManageReturnUseCase) UpdateReturnStatus(ctx context.Context, id, selle
 
 	// Publish completed event if refunded
 	if newStatus == domain.ReturnStatusRefunded {
-		_ = uc.publisher.Publish(ctx, "return.completed", map[string]interface{}{
+		if pubErr := uc.publisher.Publish(ctx, "return.completed", map[string]interface{}{
 			"return_id":          ret.ID,
 			"order_id":           ret.OrderID,
 			"refund_amount_cents": ret.RefundAmountCents,
-		})
+		}); pubErr != nil {
+			log.Printf("WARN: failed to publish %s event: %v", "return.completed", pubErr)
+		}
 	}
 
 	return ret, nil

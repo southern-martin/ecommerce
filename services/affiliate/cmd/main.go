@@ -80,7 +80,7 @@ func main() {
 	payoutUC := usecase.NewPayoutUseCase(payoutRepo, programRepo, linkRepo, publisher)
 
 	// Initialize HTTP handler and router
-	handler := httpAdapter.NewHandler(programUC, linkUC, referralUC, payoutUC)
+	handler := httpAdapter.NewHandler(programUC, linkUC, referralUC, payoutUC, db)
 	router := httpAdapter.NewRouter(handler)
 
 	// Start HTTP server

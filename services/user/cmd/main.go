@@ -84,7 +84,7 @@ func main() {
 	l.Info().Msg("NATS subscriber started for user.registered events")
 
 	// Setup HTTP router
-	handler := userhttp.NewHandler(profileUC, addressUC, sellerUC, followUC, wishlistUC)
+	handler := userhttp.NewHandler(profileUC, addressUC, sellerUC, followUC, wishlistUC, db)
 	router := userhttp.NewRouter(handler)
 
 	// Setup gRPC server
