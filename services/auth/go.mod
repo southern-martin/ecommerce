@@ -7,7 +7,7 @@ require (
 	github.com/nats-io/nats.go v1.49.0
 	github.com/redis/go-redis/v9 v9.7.3
 	github.com/rs/zerolog v1.34.0
-	github.com/southern-martin/ecommerce/pkg v0.0.0
+	github.com/southern-martin/ecommerce/pkg v0.0.0-00010101000000-000000000000
 	golang.org/x/crypto v0.47.0
 	google.golang.org/grpc v1.79.1
 	gorm.io/driver/postgres v1.5.11
