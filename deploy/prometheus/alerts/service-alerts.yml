@@ -1,0 +1,151 @@
+groups:
+  - name: service-health
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }}/{{ $labels.instance }} is down"
+          description: "{{ $labels.instance }} has been unreachable for more than 1 minute."
+
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{code=~"5.."}[5m])) by (job)
+            /
+            sum(rate(http_requests_total[5m])) by (job)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP 5xx error rate on {{ $labels.job }}"
+          description: "{{ $labels.job }} has a 5xx error rate above 5% for the last 5 minutes (current: {{ $value | humanizePercentage }})."
+
+      - alert: CriticalErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{code=~"5.."}[5m])) by (job)
+            /
+            sum(rate(http_requests_total[5m])) by (job)
+          ) > 0.10
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical HTTP 5xx error rate on {{ $labels.job }}"
+          description: "{{ $labels.job }} has a 5xx error rate above 10% for the last 2 minutes (current: {{ $value | humanizePercentage }})."
+
+      - alert: HighLatencyP99
+        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, job)) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High p99 latency on {{ $labels.job }}"
+          description: "{{ $labels.job }} p99 response time is above 2 seconds (current: {{ $value | humanizeDuration }})."
+
+      - alert: HighLatencyP95
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, job)) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High p95 latency on {{ $labels.job }}"
+          description: "{{ $labels.job }} p95 response time is above 1 second for the last 10 minutes."
+
+  - name: grpc-health
+    rules:
+      - alert: GRPCHighErrorRate
+        expr: |
+          (
+            sum(rate(grpc_server_handled_total{grpc_code!="OK"}[5m])) by (job)
+            /
+            sum(rate(grpc_server_handled_total[5m])) by (job)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High gRPC error rate on {{ $labels.job }}"
+          description: "{{ $labels.job }} gRPC error rate is above 5% (current: {{ $value | humanizePercentage }})."
+
+  - name: resource-usage
+    rules:
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes / 1024 / 1024 > 512
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.job }}/{{ $labels.instance }}"
+          description: "{{ $labels.instance }} is using more than 512MB of memory (current: {{ $value | humanize }}MB)."
+
+      - alert: CriticalMemoryUsage
+        expr: process_resident_memory_bytes / 1024 / 1024 > 1024
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical memory usage on {{ $labels.job }}/{{ $labels.instance }}"
+          description: "{{ $labels.instance }} is using more than 1GB of memory (current: {{ $value | humanize }}MB)."
+
+      - alert: HighGoroutineCount
+        expr: go_goroutines > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High goroutine count on {{ $labels.job }}/{{ $labels.instance }}"
+          description: "{{ $labels.instance }} has more than 1000 goroutines (current: {{ $value }}). Possible goroutine leak."
+
+      - alert: TooManyOpenFiles
+        expr: process_open_fds / process_max_fds > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High file descriptor usage on {{ $labels.job }}/{{ $labels.instance }}"
+          description: "{{ $labels.instance }} is using more than 80% of available file descriptors."
+
+  - name: database
+    rules:
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL has been unreachable for more than 1 minute."
+
+  - name: infrastructure
+    rules:
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been unreachable for more than 1 minute."
+
+      - alert: NATSDown
+        expr: nats_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "NATS is down"
+          description: "NATS server has been unreachable for more than 1 minute."
+
+      - alert: ElasticsearchDown
+        expr: elasticsearch_cluster_health_status{color="red"} == 1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Elasticsearch cluster is RED"
+          description: "Elasticsearch cluster health has been red for more than 2 minutes."
