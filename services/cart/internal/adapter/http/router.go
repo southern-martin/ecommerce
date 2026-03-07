@@ -5,6 +5,7 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
+	"github.com/southern-martin/ecommerce/pkg/currency"
 	"github.com/southern-martin/ecommerce/pkg/i18n"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
@@ -25,6 +26,9 @@ func NewRouter(handler *CartHandler) *gin.Engine {
 	bundle := i18n.NewBundle()
 	bundle.SetupDefaults()
 	router.Use(i18n.GinMiddleware(bundle))
+
+	// Multi-currency: read X-Currency header and store resolved currency in context
+	router.Use(currency.GinMiddleware())
 	router.GET("/metrics", metrics.Handler())
 
 	// Health check
