@@ -5,6 +5,7 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
+	"github.com/southern-martin/ecommerce/pkg/i18n"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
 	_ "github.com/southern-martin/ecommerce/services/notification/docs"
@@ -18,6 +19,11 @@ func NewRouter(handler *Handler) *gin.Engine {
 	router.Use(gin.Logger())
 	router.Use(tracing.GinMiddleware("notification-service"))
 	router.Use(metrics.GinMiddleware("notification-service"))
+
+	// i18n: detect Accept-Language header and store resolved locale in context
+	bundle := i18n.NewBundle()
+	bundle.SetupDefaults()
+	router.Use(i18n.GinMiddleware(bundle))
 	router.GET("/metrics", metrics.Handler())
 
 	// Health check
