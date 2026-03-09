@@ -147,7 +147,7 @@ func main() {
 
 	// Initialize HTTP handler and router
 	handler := producthttp.NewHandler(productUC, categoryUC, attributeUC, variantUC, attributeGroupUC, db)
-	router := producthttp.NewRouter(handler, cacheClient)
+	router := producthttp.NewRouter(handler, cacheClient, log.Logger)
 
 	// Start HTTP server
 	httpServer := &http.Server{

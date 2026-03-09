@@ -24,6 +24,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 
+	"github.com/southern-martin/ecommerce/pkg/events"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
 
@@ -88,9 +89,20 @@ func main() {
 	eventPublisher := cartnats.NewEventPublisher(natsConn, logger)
 	cartUC := usecase.NewCartUseCase(cartRepo, eventPublisher, logger)
 
+	// Initialize NATS JetStream subscriber for order events
+	js, err := natsConn.JetStream()
+	if err != nil {
+		logger.Warn().Err(err).Msg("failed to create JetStream context for subscriber")
+	} else {
+		sub := events.NewSubscriber(js)
+		if err := cartnats.StartSubscriber(sub, cartUC, logger); err != nil {
+			logger.Warn().Err(err).Msg("failed to start NATS subscribers")
+		}
+	}
+
 	// HTTP server
 	handler := carthttp.NewCartHandler(cartUC, logger, pgDB)
-	router := carthttp.NewRouter(handler)
+	router := carthttp.NewRouter(handler, logger)
 	httpServer := &http.Server{
 		Addr:         ":" + cfg.HTTPPort,
 		Handler:      router,

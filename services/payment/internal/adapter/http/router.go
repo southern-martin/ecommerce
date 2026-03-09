@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
@@ -14,10 +15,11 @@ import (
 )
 
 // NewRouter creates and configures a new Gin router with all payment routes.
-func NewRouter(handler *Handler) *gin.Engine {
+func NewRouter(handler *Handler, logger zerolog.Logger) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
-	router.Use(gin.Recovery())
+	router.Use(middleware.RecoveryWithLogger(logger))
+	router.Use(middleware.RequestLogging(logger))
 	router.Use(middleware.CorrelationID())
 	router.Use(middleware.ExtractUserID())
 	router.Use(tracing.GinMiddleware("payment-service"))

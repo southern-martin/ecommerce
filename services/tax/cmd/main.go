@@ -88,7 +88,7 @@ func main() {
 
 	// Setup HTTP server
 	handler := httpAdapter.NewHandler(calculateTaxUC, manageRulesUC, manageZonesUC, db)
-	router := httpAdapter.NewRouter(handler)
+	router := httpAdapter.NewRouter(handler, log.Logger)
 
 	// Setup gRPC server
 	grpcServer := grpc.NewServer(

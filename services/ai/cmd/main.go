@@ -97,7 +97,7 @@ func main() {
 
 	// Setup HTTP server
 	h := handler.NewHandler(embeddingUC, recommendationUC, chatbotUC, contentUC, db)
-	router := handler.NewRouter(h)
+	router := handler.NewRouter(h, log.Logger)
 
 	// Start HTTP server
 	go func() {

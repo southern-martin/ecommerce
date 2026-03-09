@@ -112,7 +112,7 @@ func main() {
 
 	// Initialize HTTP handler and router
 	handler := httpAdapter.NewHandler(programUC, linkUC, referralUC, payoutUC, db)
-	router := httpAdapter.NewRouter(handler)
+	router := httpAdapter.NewRouter(handler, log.Logger)
 
 	// Start HTTP server
 	httpServer := &http.Server{

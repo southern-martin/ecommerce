@@ -130,7 +130,7 @@ func main() {
 
 	// Initialize HTTP handler and router
 	handler := httpAdapter.NewHandler(createOrderUC, getOrderUC, updateStatusUC, cancelOrderUC, db)
-	router := httpAdapter.NewRouter(handler)
+	router := httpAdapter.NewRouter(handler, log.Logger)
 
 	// Start HTTP server
 	httpServer := &http.Server{

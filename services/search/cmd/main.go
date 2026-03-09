@@ -126,7 +126,7 @@ func main() {
 
 	// Initialize HTTP handler and router
 	handler := httpAdapter.NewHandler(searchUC, indexUC, db)
-	router := httpAdapter.NewRouter(handler, cacheClient)
+	router := httpAdapter.NewRouter(handler, cacheClient, log.Logger)
 
 	// Start HTTP server
 	httpServer := &http.Server{

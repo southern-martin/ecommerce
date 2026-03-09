@@ -25,7 +25,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
+	"github.com/nats-io/nats.go"
+
 	"github.com/southern-martin/ecommerce/pkg/cache"
+	"github.com/southern-martin/ecommerce/pkg/events"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
 
@@ -87,9 +90,26 @@ func main() {
 	flashSaleUC := usecase.NewFlashSaleUseCase(flashSaleRepo, flashSaleItemRepo, publisher)
 	bundleUC := usecase.NewBundleUseCase(bundleRepo)
 
+	// Initialize NATS JetStream subscriber for order.completed events
+	nc, err := nats.Connect(cfg.NATS.URL)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to connect to NATS for subscriber")
+	} else {
+		js, err := nc.JetStream()
+		if err != nil {
+			log.Warn().Err(err).Msg("failed to create JetStream context for subscriber")
+		} else {
+			sub := events.NewSubscriber(js)
+			if err := natsInfra.StartSubscriber(sub, couponUC, log.Logger); err != nil {
+				log.Warn().Err(err).Msg("failed to start NATS subscribers")
+			}
+		}
+		defer nc.Close()
+	}
+
 	// Initialize HTTP handler and router
 	handler := httpAdapter.NewHandler(couponUC, flashSaleUC, bundleUC, db)
-	router := httpAdapter.NewRouter(handler, cacheClient)
+	router := httpAdapter.NewRouter(handler, cacheClient, log.Logger)
 
 	// Start HTTP server
 	httpServer := &http.Server{

@@ -111,7 +111,7 @@ func main() {
 		registerUC, loginUC, refreshTokenUC, logoutUC,
 		forgotPasswordUC, resetPasswordUC, oauthLoginUC, db,
 	)
-	router := authhttp.SetupRouter(handler)
+	router := authhttp.SetupRouter(handler, l)
 
 	// Setup gRPC server
 	grpcSrv := grpc.NewServer(
