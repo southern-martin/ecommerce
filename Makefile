@@ -16,7 +16,7 @@ POSTGRES_PASSWORD ?= ecommerce_secret
         docker-build docker-push deploy-dev deploy-staging deploy-prod \
         proto run-all stop migrate-up migrate-down migrate-status migrate-create test-coverage integration-test \
         e2e-test load-test-smoke load-test verify-all \
-        swagger swagger-one swagger-fmt
+        swagger swagger-one swagger-fmt seed
 
 # ─── Help ───────────────────────────────────────────────────────
 help: ## Show this help
@@ -229,6 +229,10 @@ swagger-fmt: ## Format swagger annotations
 	@for svc in $(SERVICES); do \
 		(cd services/$$svc && swag fmt ./internal/adapter/http/) || true; \
 	done
+
+# ─── Seed ───────────────────────────────────────────────────────
+seed: ## Seed development database with demo data
+	bash scripts/seed.sh
 
 # ─── Clean ──────────────────────────────────────────────────────
 clean: ## Clean build artifacts

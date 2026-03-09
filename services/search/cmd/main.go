@@ -26,6 +26,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
+	"github.com/nats-io/nats.go"
+
+	"github.com/southern-martin/ecommerce/pkg/events"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
 	esAdapter "github.com/southern-martin/ecommerce/services/search/internal/adapter/elasticsearch"
@@ -94,6 +97,23 @@ func main() {
 	// Initialize use cases
 	searchUC := usecase.NewSearchUseCase(searchRepo)
 	indexUC := usecase.NewIndexUseCase(searchRepo, publisher)
+
+	// Initialize NATS JetStream subscriber for product events
+	nc, err := nats.Connect(cfg.NATS.URL)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to connect to NATS for subscriber (search will work without event subscriptions)")
+	} else {
+		js, err := nc.JetStream()
+		if err != nil {
+			log.Warn().Err(err).Msg("failed to create JetStream context for subscriber")
+		} else {
+			sub := events.NewSubscriber(js)
+			if err := natsInfra.StartSubscriber(sub, indexUC, log.Logger); err != nil {
+				log.Warn().Err(err).Msg("failed to start NATS subscribers")
+			}
+		}
+		defer nc.Close()
+	}
 
 	// Initialize HTTP handler and router
 	handler := httpAdapter.NewHandler(searchUC, indexUC, db)
