@@ -28,9 +28,11 @@ import (
 
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
+	esAdapter "github.com/southern-martin/ecommerce/services/search/internal/adapter/elasticsearch"
 	grpcAdapter "github.com/southern-martin/ecommerce/services/search/internal/adapter/grpc"
 	httpAdapter "github.com/southern-martin/ecommerce/services/search/internal/adapter/http"
 	"github.com/southern-martin/ecommerce/services/search/internal/adapter/postgres"
+	"github.com/southern-martin/ecommerce/services/search/internal/domain"
 	"github.com/southern-martin/ecommerce/services/search/internal/infrastructure/config"
 	"github.com/southern-martin/ecommerce/services/search/internal/infrastructure/database"
 	natsInfra "github.com/southern-martin/ecommerce/services/search/internal/infrastructure/nats"
@@ -70,8 +72,24 @@ func main() {
 	}
 	defer publisher.Close()
 
-	// Initialize repositories
-	searchRepo := postgres.NewSearchRepo(db)
+	// Initialize search repository — prefer Elasticsearch if configured.
+	var searchRepo domain.SearchRepository
+
+	esURL := os.Getenv("ELASTICSEARCH_URL")
+	if esURL != "" {
+		esRepo, esErr := esAdapter.NewESSearchRepo(esURL)
+		if esErr != nil {
+			log.Warn().Err(esErr).Msg("failed to connect to elasticsearch, falling back to postgres")
+			searchRepo = postgres.NewSearchRepo(db)
+			log.Info().Msg("using postgres search backend")
+		} else {
+			searchRepo = esRepo
+			log.Info().Str("url", esURL).Msg("using elasticsearch search backend")
+		}
+	} else {
+		searchRepo = postgres.NewSearchRepo(db)
+		log.Info().Msg("ELASTICSEARCH_URL not set, using postgres search backend")
+	}
 
 	// Initialize use cases
 	searchUC := usecase.NewSearchUseCase(searchRepo)

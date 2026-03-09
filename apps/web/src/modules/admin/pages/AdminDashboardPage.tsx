@@ -5,6 +5,9 @@ import { useAdminDashboard } from '../hooks/useAdminDashboard';
 
 const RevenueOverviewChart = lazy(() => import('../components/RevenueOverviewChart'));
 const RecentActivityFeed = lazy(() => import('../components/RecentActivityFeed'));
+const OrderStatusChart = lazy(() => import('../components/OrderStatusChart'));
+const TopProductsTable = lazy(() => import('../components/TopProductsTable'));
+const SystemHealthWidget = lazy(() => import('../components/SystemHealthWidget'));
 
 export default function AdminDashboardPage() {
   const { data: stats, isLoading } = useAdminDashboard();
@@ -35,6 +38,19 @@ export default function AdminDashboardPage() {
           <RecentActivityFeed />
         </Suspense>
       </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Suspense fallback={<Skeleton className="h-[380px]" />}>
+          <OrderStatusChart />
+        </Suspense>
+        <Suspense fallback={<Skeleton className="h-[380px]" />}>
+          <TopProductsTable />
+        </Suspense>
+      </div>
+
+      <Suspense fallback={<Skeleton className="h-[200px]" />}>
+        <SystemHealthWidget />
+      </Suspense>
     </div>
   );
 }
