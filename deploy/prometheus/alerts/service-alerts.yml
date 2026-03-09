@@ -149,3 +149,52 @@ groups:
         annotations:
           summary: "Elasticsearch cluster is RED"
           description: "Elasticsearch cluster health has been red for more than 2 minutes."
+
+  - name: nats-health
+    rules:
+      - alert: NATSConsumerLag
+        expr: nats_consumer_num_pending > 10000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "NATS consumer lag on {{ $labels.stream }}/{{ $labels.consumer }}"
+          description: "Consumer {{ $labels.consumer }} on stream {{ $labels.stream }} has {{ $value }} pending messages for over 5 minutes."
+
+      - alert: NATSConsumerCriticalLag
+        expr: nats_consumer_num_pending > 50000
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical NATS consumer lag on {{ $labels.stream }}/{{ $labels.consumer }}"
+          description: "Consumer {{ $labels.consumer }} on stream {{ $labels.stream }} has {{ $value }} pending messages. Possible consumer failure."
+
+      - alert: NATSSlowConsumers
+        expr: nats_server_slow_consumers > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "NATS has slow consumers"
+          description: "NATS server reports {{ $value }} slow consumer(s) for over 5 minutes."
+
+  - name: redis-health
+    rules:
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis memory usage above 85%"
+          description: "Redis is using {{ $value | humanizePercentage }} of max memory. Consider eviction policy or scaling."
+
+      - alert: RedisHighConnectionCount
+        expr: redis_connected_clients > 500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Redis connection count"
+          description: "Redis has {{ $value }} connected clients. Check for connection leaks."

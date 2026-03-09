@@ -27,6 +27,9 @@ import (
 	"google.golang.org/grpc"
 	"gorm.io/gorm"
 
+	"github.com/nats-io/nats.go"
+
+	"github.com/southern-martin/ecommerce/pkg/events"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
 
@@ -89,6 +92,23 @@ func main() {
 	linkUC := usecase.NewLinkUseCase(linkRepo, publisher)
 	referralUC := usecase.NewReferralUseCase(referralRepo, linkRepo, programRepo, publisher)
 	payoutUC := usecase.NewPayoutUseCase(payoutRepo, programRepo, linkRepo, publisher)
+
+	// Initialize NATS JetStream subscriber for order events
+	nc, err := nats.Connect(cfg.NATS.URL)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to connect to NATS for subscriber (affiliate will work without event subscriptions)")
+	} else {
+		js, err := nc.JetStream()
+		if err != nil {
+			log.Warn().Err(err).Msg("failed to create JetStream context for subscriber")
+		} else {
+			sub := events.NewSubscriber(js)
+			if err := natsInfra.StartSubscriber(sub, referralUC, linkUC, log.Logger); err != nil {
+				log.Warn().Err(err).Msg("failed to start NATS subscribers")
+			}
+		}
+		defer nc.Close()
+	}
 
 	// Initialize HTTP handler and router
 	handler := httpAdapter.NewHandler(programUC, linkUC, referralUC, payoutUC, db)
