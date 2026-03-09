@@ -28,6 +28,9 @@ import (
 	"google.golang.org/grpc"
 	"gorm.io/gorm"
 
+	"github.com/nats-io/nats.go"
+
+	"github.com/southern-martin/ecommerce/pkg/events"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
 	grpcAdapter "github.com/southern-martin/ecommerce/services/shipping/internal/adapter/grpc"
@@ -91,6 +94,23 @@ func main() {
 	labelUC := usecase.NewLabelUseCase(shipmentRepo, publisher)
 	trackingUC := usecase.NewTrackingUseCase(shipmentRepo, trackingRepo, publisher)
 	carrierUC := usecase.NewCarrierUseCase(carrierRepo, credentialRepo)
+
+	// Initialize NATS JetStream subscriber for order events
+	nc, err := nats.Connect(cfg.NATS.URL)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to connect to NATS for subscriber (shipping will work without event subscriptions)")
+	} else {
+		js, err := nc.JetStream()
+		if err != nil {
+			log.Warn().Err(err).Msg("failed to create JetStream context for subscriber")
+		} else {
+			sub := events.NewSubscriber(js)
+			if err := natsInfra.StartSubscriber(sub, log.Logger); err != nil {
+				log.Warn().Err(err).Msg("failed to start NATS subscribers")
+			}
+		}
+		defer nc.Close()
+	}
 
 	// Initialize HTTP handler and router
 	handler := httpAdapter.NewHandler(rateUC, shipmentUC, labelUC, trackingUC, carrierUC, db)

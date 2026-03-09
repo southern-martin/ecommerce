@@ -25,6 +25,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
+	"github.com/nats-io/nats.go"
+
+	"github.com/southern-martin/ecommerce/pkg/events"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
 
@@ -76,6 +79,23 @@ func main() {
 	getOrderUC := usecase.NewGetOrderUseCase(orderRepo, sellerOrderRepo)
 	updateStatusUC := usecase.NewUpdateOrderStatusUseCase(orderRepo, sellerOrderRepo, publisher)
 	cancelOrderUC := usecase.NewCancelOrderUseCase(orderRepo, sellerOrderRepo, publisher)
+
+	// Initialize NATS JetStream subscriber for payment and shipping events
+	nc, err := nats.Connect(cfg.NATS.URL)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to connect to NATS for subscriber (order will work without event subscriptions)")
+	} else {
+		js, err := nc.JetStream()
+		if err != nil {
+			log.Warn().Err(err).Msg("failed to create JetStream context for subscriber")
+		} else {
+			sub := events.NewSubscriber(js)
+			if err := natsInfra.StartSubscriber(sub, updateStatusUC, log.Logger); err != nil {
+				log.Warn().Err(err).Msg("failed to start NATS subscribers")
+			}
+		}
+		defer nc.Close()
+	}
 
 	// Initialize HTTP handler and router
 	handler := httpAdapter.NewHandler(createOrderUC, getOrderUC, updateStatusUC, cancelOrderUC, db)

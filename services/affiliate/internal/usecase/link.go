@@ -73,6 +73,11 @@ func (uc *LinkUseCase) ListUserLinks(ctx context.Context, userID string, page, p
 	return uc.linkRepo.ListByUser(ctx, userID, page, pageSize)
 }
 
+// GetByCode retrieves an affiliate link by its referral code.
+func (uc *LinkUseCase) GetByCode(ctx context.Context, code string) (*domain.AffiliateLink, error) {
+	return uc.linkRepo.GetByCode(ctx, code)
+}
+
 // TrackClick increments the click count for an affiliate link and publishes an event.
 func (uc *LinkUseCase) TrackClick(ctx context.Context, code string) (*domain.AffiliateLink, error) {
 	link, err := uc.linkRepo.GetByCode(ctx, code)
