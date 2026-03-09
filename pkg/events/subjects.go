@@ -103,6 +103,14 @@ const (
 	SubjectAIDescriptionGenerated = "ai.description.generated"
 )
 
+// Retry and dead-letter queue subject prefixes and stream names.
+const (
+	SubjectRetryPrefix = "retry."
+	SubjectDLQPrefix   = "dlq."
+	StreamRetry        = "RETRY"
+	StreamDLQ          = "DLQ"
+)
+
 // Stream names for NATS JetStream.
 const (
 	StreamAuth         = "AUTH"

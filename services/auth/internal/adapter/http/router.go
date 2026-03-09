@@ -21,6 +21,7 @@ func SetupRouter(handler *Handler, logger zerolog.Logger) *gin.Engine {
 	r.Use(middleware.RequestLogging(logger))
 	r.Use(middleware.CorrelationID())
 	r.Use(middleware.ExtractUserID())
+	r.Use(middleware.APIVersion())
 	r.Use(tracing.GinMiddleware("auth-service"))
 	r.Use(metrics.GinMiddleware("auth-service"))
 	r.GET("/metrics", metrics.Handler())
@@ -29,6 +30,7 @@ func SetupRouter(handler *Handler, logger zerolog.Logger) *gin.Engine {
 	r.GET("/ready", handler.Ready)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	// --- v1 routes (current) ---------------------------------------------------
 	v1 := r.Group("/api/v1/auth")
 	{
 		v1.POST("/register", handler.Register)
@@ -39,6 +41,26 @@ func SetupRouter(handler *Handler, logger zerolog.Logger) *gin.Engine {
 		v1.POST("/reset-password", handler.ResetPassword)
 		v1.POST("/oauth/:provider", handler.OAuthLogin)
 	}
+
+	// --- Versioning guide -------------------------------------------------------
+	// When v2 routes are introduced:
+	//
+	// 1. Add deprecation middleware to the v1 group:
+	//    v1.Use(middleware.DeprecateVersion(
+	//        "Sat, 01 Jun 2027 00:00:00 GMT", // sunset date (RFC 7231)
+	//        "/api/v2/auth",                   // successor path
+	//    ))
+	//
+	// 2. Create the v2 route group:
+	//    v2 := r.Group("/api/v2/auth")
+	//    {
+	//        v2.POST("/register", handler.RegisterV2)
+	//        // ... v2 handlers
+	//    }
+	//
+	// 3. Optionally, catch unsupported versions:
+	//    r.Any("/api/v3/*path", middleware.VersionNotFound([]string{"v1", "v2"}))
+	// ---------------------------------------------------------------------------
 
 	return r
 }

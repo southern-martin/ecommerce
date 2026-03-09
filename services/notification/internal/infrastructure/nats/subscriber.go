@@ -65,60 +65,87 @@ type ReviewEvent struct {
 	Rating    int    `json:"rating"`
 }
 
-// StartSubscriber subscribes to order events and creates notifications.
-func StartSubscriber(sub *events.Subscriber, notificationUC *usecase.NotificationUseCase, logger zerolog.Logger) error {
-	// Subscribe to order.created
-	if err := sub.Subscribe(events.SubjectOrderCreated, "notification-service-order-created", func(data []byte) {
-		var evt OrderCreatedEvent
-		if err := json.Unmarshal(data, &evt); err != nil {
-			logger.Error().Err(err).Msg("failed to unmarshal order.created event")
-			return
-		}
-
-		logger.Info().
-			Str("order_id", evt.OrderID).
-			Str("order_number", evt.OrderNumber).
-			Str("buyer_id", evt.BuyerID).
-			Msg("received order.created event")
-
-		itemCount := 0
-		for _, item := range evt.Items {
-			itemCount += item.Quantity
-		}
-
-		totalFormatted := fmt.Sprintf("%s %.2f", evt.Currency, float64(evt.TotalCents)/100)
-		subject := fmt.Sprintf("Order #%s Confirmed", evt.OrderNumber)
-		body := fmt.Sprintf("Your order #%s with %d item(s) totaling %s has been confirmed.", evt.OrderNumber, itemCount, totalFormatted)
-
-		// Create in_app notification
-		_, err := notificationUC.SendNotification(context.Background(), usecase.SendNotificationRequest{
-			UserID:  evt.BuyerID,
-			Type:    "order_update",
-			Channel: "in_app",
-			Subject: subject,
-			Body:    body,
-			Data:    evt.BuyerID,
-		})
-		if err != nil {
-			logger.Error().Err(err).Str("order_id", evt.OrderID).Msg("failed to create order confirmation notification")
-		}
-
-		// Send confirmation email if buyer email is available
-		if evt.BuyerEmail != "" {
-			emailHTML := buildOrderConfirmationEmail(evt.OrderNumber, itemCount, totalFormatted)
-			_, emailErr := notificationUC.SendNotification(context.Background(), usecase.SendNotificationRequest{
-				UserID:  evt.BuyerID,
-				Type:    "order_update",
-				Channel: "email",
-				Subject: subject,
-				Body:    emailHTML,
-				Data:    evt.BuyerEmail,
-			})
-			if emailErr != nil {
-				logger.Error().Err(emailErr).Str("order_id", evt.OrderID).Msg("failed to send order confirmation email")
+// withRetry wraps a handler so that if it returns an error, the message is
+// published to the retry topic for later redelivery with exponential backoff.
+// If retryPub is nil, errors are only logged (no retry).
+func withRetry(retryPub *events.RetryPublisher, subject string, logger zerolog.Logger, handler func(data []byte) error) func(data []byte) {
+	return func(data []byte) {
+		if err := handler(data); err != nil {
+			if retryPub != nil {
+				if retryErr := retryPub.PublishToRetry(subject, data, err); retryErr != nil {
+					logger.Error().Err(retryErr).Str("subject", subject).Msg("failed to publish to retry topic")
+				}
+			} else {
+				logger.Error().Err(err).Str("subject", subject).Msg("handler failed (no retry publisher configured)")
 			}
 		}
-	}); err != nil {
+	}
+}
+
+// StartSubscriber subscribes to order events and creates notifications.
+// The retryPub parameter is optional; pass nil to disable retry behaviour.
+func StartSubscriber(sub *events.Subscriber, notificationUC *usecase.NotificationUseCase, logger zerolog.Logger, retryPub ...*events.RetryPublisher) error {
+	var rp *events.RetryPublisher
+	if len(retryPub) > 0 {
+		rp = retryPub[0]
+	}
+	_ = rp // used by withRetry calls below
+	// Subscribe to order.created — uses withRetry so that failures are retried
+	// with exponential backoff before landing in the dead-letter queue.
+	if err := sub.Subscribe(events.SubjectOrderCreated, "notification-service-order-created",
+		withRetry(rp, events.SubjectOrderCreated, logger, func(data []byte) error {
+			var evt OrderCreatedEvent
+			if err := json.Unmarshal(data, &evt); err != nil {
+				logger.Error().Err(err).Msg("failed to unmarshal order.created event")
+				return nil // bad payload, don't retry
+			}
+
+			logger.Info().
+				Str("order_id", evt.OrderID).
+				Str("order_number", evt.OrderNumber).
+				Str("buyer_id", evt.BuyerID).
+				Msg("received order.created event")
+
+			itemCount := 0
+			for _, item := range evt.Items {
+				itemCount += item.Quantity
+			}
+
+			totalFormatted := fmt.Sprintf("%s %.2f", evt.Currency, float64(evt.TotalCents)/100)
+			subject := fmt.Sprintf("Order #%s Confirmed", evt.OrderNumber)
+			body := fmt.Sprintf("Your order #%s with %d item(s) totaling %s has been confirmed.", evt.OrderNumber, itemCount, totalFormatted)
+
+			// Create in_app notification
+			_, err := notificationUC.SendNotification(context.Background(), usecase.SendNotificationRequest{
+				UserID:  evt.BuyerID,
+				Type:    "order_update",
+				Channel: "in_app",
+				Subject: subject,
+				Body:    body,
+				Data:    evt.BuyerID,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to create order confirmation notification: %w", err)
+			}
+
+			// Send confirmation email if buyer email is available
+			if evt.BuyerEmail != "" {
+				emailHTML := buildOrderConfirmationEmail(evt.OrderNumber, itemCount, totalFormatted)
+				_, emailErr := notificationUC.SendNotification(context.Background(), usecase.SendNotificationRequest{
+					UserID:  evt.BuyerID,
+					Type:    "order_update",
+					Channel: "email",
+					Subject: subject,
+					Body:    emailHTML,
+					Data:    evt.BuyerEmail,
+				})
+				if emailErr != nil {
+					return fmt.Errorf("failed to send order confirmation email: %w", emailErr)
+				}
+			}
+
+			return nil
+		})); err != nil {
 		return fmt.Errorf("failed to subscribe to order.created: %w", err)
 	}
 
