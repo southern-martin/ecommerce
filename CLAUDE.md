@@ -110,11 +110,15 @@ middleware, money, pagination, server, tax, tracing, unitofwork, validator
 | chat | 28088 | 29088 | | redis | 16379 | — |
 | media | 28089 | 29089 | | nats | 14222 | — |
 
-## Git Workflow
+## Git Workflow (Git Flow)
 
-- Feature branch → merge to `develop` with `--no-ff`
-- Never push directly to main (releases only)
-- `gh` CLI is NOT authenticated on this machine
+- **Branches**: `main` (production), `develop` (integration), `feature/*`, `release/*`, `hotfix/*`
+- **Never push directly** to `main` or `develop`
+- **Feature work**: branch from `develop` → `feature/<name>` → merge to `develop` with `--no-ff`
+- **Releases**: branch from `develop` → `release/<version>` → merge to both `main` and `develop` with `--no-ff`, tag `main`
+- **Hotfixes**: branch from `main` → `hotfix/<name>` → merge to both `main` and `develop` with `--no-ff`, tag `main`
+- **Commit format**: `<type>(<scope>): <description>` — types: feat, fix, refactor, test, docs, chore
+- **Delete feature branches** after merge
 
 ## Frontend
 
