@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
@@ -13,9 +14,10 @@ import (
 )
 
 // NewRouter creates a new Gin engine with all user service routes.
-func NewRouter(h *Handler) *gin.Engine {
+func NewRouter(h *Handler, logger zerolog.Logger) *gin.Engine {
 	r := gin.New()
-	r.Use(gin.Recovery())
+	r.Use(middleware.RecoveryWithLogger(logger))
+	r.Use(middleware.RequestLogging(logger))
 	r.Use(middleware.CorrelationID())
 	r.Use(middleware.ExtractUserID())
 	r.Use(tracing.GinMiddleware("user-service"))

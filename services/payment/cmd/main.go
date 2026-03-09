@@ -26,7 +26,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
+	"github.com/nats-io/nats.go"
+
 	"github.com/southern-martin/ecommerce/pkg/circuitbreaker"
+	"github.com/southern-martin/ecommerce/pkg/events"
 	"github.com/southern-martin/ecommerce/pkg/grpcclient"
 	"github.com/southern-martin/ecommerce/pkg/grpcclient/orderclient"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
@@ -127,6 +130,23 @@ func main() {
 	// Subscribe to order.created events.
 	subscribeOrderCreated(publisher, paymentRepo)
 
+	// Initialize NATS JetStream subscriber for return.approved events
+	nc, err := nats.Connect(cfg.NatsURL)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to connect to NATS for subscriber")
+	} else {
+		js, err := nc.JetStream()
+		if err != nil {
+			log.Warn().Err(err).Msg("failed to create JetStream context for subscriber")
+		} else {
+			sub := events.NewSubscriber(js)
+			if err := natsInfra.StartSubscriber(sub, refundUC, log.Logger); err != nil {
+				log.Warn().Err(err).Msg("failed to start NATS subscribers")
+			}
+		}
+		defer nc.Close()
+	}
+
 	// Initialize HTTP handler and router.
 	handler := httpAdapter.NewHandler(
 		paymentRepo,
@@ -137,7 +157,7 @@ func main() {
 		refundUC,
 		db,
 	)
-	router := httpAdapter.NewRouter(handler)
+	router := httpAdapter.NewRouter(handler, log.Logger)
 
 	// Start gRPC server.
 	grpcServer := grpc.NewServer(

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
@@ -18,10 +19,10 @@ import (
 )
 
 // NewRouter creates and configures the Gin router with all product service routes.
-func NewRouter(h *Handler, cacheClient *cache.Client) *gin.Engine {
+func NewRouter(h *Handler, cacheClient *cache.Client, logger zerolog.Logger) *gin.Engine {
 	r := gin.New()
-	r.Use(gin.Logger())
-	r.Use(gin.Recovery())
+	r.Use(middleware.RequestLogging(logger))
+	r.Use(middleware.RecoveryWithLogger(logger))
 	r.Use(middleware.CorrelationID())
 	r.Use(middleware.ExtractUserID())
 	r.Use(tracing.GinMiddleware("product-service"))

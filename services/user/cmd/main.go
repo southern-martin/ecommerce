@@ -97,7 +97,7 @@ func main() {
 
 	// Setup HTTP router
 	handler := userhttp.NewHandler(profileUC, addressUC, sellerUC, followUC, wishlistUC, db)
-	router := userhttp.NewRouter(handler)
+	router := userhttp.NewRouter(handler, l)
 
 	// Setup gRPC server
 	grpcServer := grpc.NewServer(

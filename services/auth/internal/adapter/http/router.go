@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
@@ -13,11 +14,11 @@ import (
 )
 
 // SetupRouter configures and returns the Gin router with all auth routes.
-func SetupRouter(handler *Handler) *gin.Engine {
+func SetupRouter(handler *Handler, logger zerolog.Logger) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
-	r.Use(gin.Recovery())
-	r.Use(gin.Logger())
+	r.Use(middleware.RecoveryWithLogger(logger))
+	r.Use(middleware.RequestLogging(logger))
 	r.Use(middleware.CorrelationID())
 	r.Use(middleware.ExtractUserID())
 	r.Use(tracing.GinMiddleware("auth-service"))

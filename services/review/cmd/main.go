@@ -25,6 +25,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
+	"github.com/nats-io/nats.go"
+
+	"github.com/southern-martin/ecommerce/pkg/events"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
 	grpcAdapter "github.com/southern-martin/ecommerce/services/review/internal/adapter/grpc"
@@ -75,9 +78,26 @@ func main() {
 	// Initialize use cases
 	reviewUC := usecase.NewReviewUseCase(reviewRepo, publisher)
 
+	// Initialize NATS JetStream subscriber for order.delivered events
+	nc, err := nats.Connect(cfg.NATS.URL)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to connect to NATS for subscriber")
+	} else {
+		js, err := nc.JetStream()
+		if err != nil {
+			log.Warn().Err(err).Msg("failed to create JetStream context for subscriber")
+		} else {
+			sub := events.NewSubscriber(js)
+			if err := natsInfra.StartSubscriber(sub, reviewUC, log.Logger); err != nil {
+				log.Warn().Err(err).Msg("failed to start NATS subscribers")
+			}
+		}
+		defer nc.Close()
+	}
+
 	// Initialize HTTP handler and router
 	handler := httpAdapter.NewHandler(reviewUC, db)
-	router := httpAdapter.NewRouter(handler)
+	router := httpAdapter.NewRouter(handler, log.Logger)
 
 	// Start HTTP server
 	httpServer := &http.Server{
