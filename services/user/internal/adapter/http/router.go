@@ -16,6 +16,7 @@ import (
 func NewRouter(h *Handler) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(middleware.CorrelationID())
 	r.Use(middleware.ExtractUserID())
 	r.Use(tracing.GinMiddleware("user-service"))
 	r.Use(metrics.GinMiddleware("user-service"))
