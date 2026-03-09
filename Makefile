@@ -14,7 +14,7 @@ POSTGRES_PASSWORD ?= ecommerce_secret
 
 .PHONY: help build test lint vet fmt run-infra stop-infra clean \
         docker-build docker-push deploy-dev deploy-staging deploy-prod \
-        proto run-all stop migrate-up test-coverage integration-test \
+        proto run-all stop migrate-up migrate-down migrate-status migrate-create test-coverage integration-test \
         e2e-test load-test-smoke load-test verify-all \
         swagger swagger-one swagger-fmt
 
@@ -128,6 +128,34 @@ migrate-up: ## Run database migrations for all services
 		done; \
 	done
 	@echo "All migrations applied."
+
+migrate-down: ## Rollback last migration for all services
+	@for svc in $(SERVICES); do \
+		echo "Rolling back $$svc..."; \
+		latest=$$(ls -1r services/$$svc/migrations/*.down.sql 2>/dev/null | head -1); \
+		if [ -n "$$latest" ]; then \
+			PGPASSWORD=$(POSTGRES_PASSWORD) psql -h $(POSTGRES_HOST) -p $(POSTGRES_PORT) -U $(POSTGRES_USER) -d ecommerce_$$svc -f $$latest || true; \
+		else \
+			echo "  No down migration found for $$svc"; \
+		fi; \
+	done
+	@echo "All rollbacks applied."
+
+migrate-status: ## Show migration status for all services
+	@echo "=== Migration Status ==="
+	@for svc in $(SERVICES); do \
+		up_count=$$(ls -1 services/$$svc/migrations/*.up.sql 2>/dev/null | wc -l | tr -d ' '); \
+		down_count=$$(ls -1 services/$$svc/migrations/*.down.sql 2>/dev/null | wc -l | tr -d ' '); \
+		printf "  %-15s %s up, %s down\n" "$$svc:" "$$up_count" "$$down_count"; \
+	done
+
+migrate-create: ## Create a new migration (usage: make migrate-create SVC=product NAME=add_column)
+	@mkdir -p services/$(SVC)/migrations
+	@num=$$(printf "%03d" $$(( $$(ls -1 services/$(SVC)/migrations/*.up.sql 2>/dev/null | wc -l | tr -d ' ') + 1 ))); \
+	touch services/$(SVC)/migrations/$${num}_$(NAME).up.sql; \
+	touch services/$(SVC)/migrations/$${num}_$(NAME).down.sql; \
+	echo "Created services/$(SVC)/migrations/$${num}_$(NAME).up.sql"; \
+	echo "Created services/$(SVC)/migrations/$${num}_$(NAME).down.sql"
 
 # ─── Docker ─────────────────────────────────────────────────────
 docker-build: ## Build Docker images for all services
