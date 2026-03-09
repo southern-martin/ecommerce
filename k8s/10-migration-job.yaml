@@ -1,0 +1,53 @@
+# Database Migration Job
+# Runs before application deployment to apply all .up.sql migrations
+# Build the migration image: docker build -t your-registry/ecommerce-migrate:latest -f tools/migrate/Dockerfile .
+# (Run from project root so COPY paths resolve correctly)
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrations
+  namespace: ecommerce
+  labels:
+    app: db-migrations
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app: db-migrations
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migrate
+          image: your-registry/ecommerce-migrate:latest
+          imagePullPolicy: Always
+          env:
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: ecommerce-config
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: ecommerce-config
+                  key: POSTGRES_PORT
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
