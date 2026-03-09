@@ -61,7 +61,7 @@ func TestConfirmPayment_Success(t *testing.T) {
 		},
 	}
 
-	uc := NewConfirmPaymentUseCase(repo, walletRepo, pub, 0.10) // 10% commission
+	uc := NewConfirmPaymentUseCase(repo, walletRepo, pub, 0.10, nil) // 10% commission
 	err := uc.Execute(context.Background(), WebhookEvent{
 		Type:            "payment_intent.succeeded",
 		StripePaymentID: "pi_stripe_1",
@@ -93,7 +93,7 @@ func TestConfirmPayment_CommissionCalculation(t *testing.T) {
 		},
 	}
 
-	uc := NewConfirmPaymentUseCase(repo, walletRepo, &mockEventPublisher{}, 0.15) // 15%
+	uc := NewConfirmPaymentUseCase(repo, walletRepo, &mockEventPublisher{}, 0.15, nil) // 15%
 	err := uc.Execute(context.Background(), WebhookEvent{
 		Type:            "payment_intent.succeeded",
 		StripePaymentID: "pi_stripe_1",
@@ -126,7 +126,7 @@ func TestConfirmPayment_ZeroCommission(t *testing.T) {
 		},
 	}
 
-	uc := NewConfirmPaymentUseCase(repo, walletRepo, &mockEventPublisher{}, 0.0) // 0% commission
+	uc := NewConfirmPaymentUseCase(repo, walletRepo, &mockEventPublisher{}, 0.0, nil) // 0% commission
 	err := uc.Execute(context.Background(), WebhookEvent{
 		Type:            "payment_intent.succeeded",
 		StripePaymentID: "pi_stripe_1",
@@ -161,7 +161,7 @@ func TestConfirmPayment_FailureEvent(t *testing.T) {
 		},
 	}
 
-	uc := NewConfirmPaymentUseCase(repo, &mockWalletRepo{}, pub, 0.10)
+	uc := NewConfirmPaymentUseCase(repo, &mockWalletRepo{}, pub, 0.10, nil)
 	err := uc.Execute(context.Background(), WebhookEvent{
 		Type:            "payment_intent.payment_failed",
 		StripePaymentID: "pi_stripe_1",
@@ -187,7 +187,7 @@ func TestConfirmPayment_FailureDefaultReason(t *testing.T) {
 		},
 	}
 
-	uc := NewConfirmPaymentUseCase(repo, &mockWalletRepo{}, &mockEventPublisher{}, 0.10)
+	uc := NewConfirmPaymentUseCase(repo, &mockWalletRepo{}, &mockEventPublisher{}, 0.10, nil)
 	err := uc.Execute(context.Background(), WebhookEvent{
 		Type:            "payment_intent.payment_failed",
 		StripePaymentID: "pi_stripe_1",
@@ -205,7 +205,7 @@ func TestConfirmPayment_UnknownEventType(t *testing.T) {
 		},
 	}
 
-	uc := NewConfirmPaymentUseCase(repo, &mockWalletRepo{}, &mockEventPublisher{}, 0.10)
+	uc := NewConfirmPaymentUseCase(repo, &mockWalletRepo{}, &mockEventPublisher{}, 0.10, nil)
 	err := uc.Execute(context.Background(), WebhookEvent{
 		Type:            "charge.dispute.created",
 		StripePaymentID: "pi_stripe_1",
@@ -222,7 +222,7 @@ func TestConfirmPayment_PaymentNotFound(t *testing.T) {
 		},
 	}
 
-	uc := NewConfirmPaymentUseCase(repo, &mockWalletRepo{}, &mockEventPublisher{}, 0.10)
+	uc := NewConfirmPaymentUseCase(repo, &mockWalletRepo{}, &mockEventPublisher{}, 0.10, nil)
 	err := uc.Execute(context.Background(), WebhookEvent{
 		Type:            "payment_intent.succeeded",
 		StripePaymentID: "pi_unknown",
@@ -242,7 +242,7 @@ func TestConfirmPayment_UpdateStatusError(t *testing.T) {
 		},
 	}
 
-	uc := NewConfirmPaymentUseCase(repo, &mockWalletRepo{}, &mockEventPublisher{}, 0.10)
+	uc := NewConfirmPaymentUseCase(repo, &mockWalletRepo{}, &mockEventPublisher{}, 0.10, nil)
 	err := uc.Execute(context.Background(), WebhookEvent{
 		Type:            "payment_intent.succeeded",
 		StripePaymentID: "pi_stripe_1",

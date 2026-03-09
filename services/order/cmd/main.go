@@ -78,11 +78,11 @@ func main() {
 	orderRepo := postgres.NewOrderRepo(db)
 	sellerOrderRepo := postgres.NewSellerOrderRepo(db)
 
-	// Initialize use cases
-	createOrderUC := usecase.NewCreateOrderUseCase(orderRepo, sellerOrderRepo, publisher)
+	// Initialize use cases (productClient injected after gRPC client init below)
+	var createOrderUC *usecase.CreateOrderUseCase
 	getOrderUC := usecase.NewGetOrderUseCase(orderRepo, sellerOrderRepo)
 	updateStatusUC := usecase.NewUpdateOrderStatusUseCase(orderRepo, sellerOrderRepo, publisher)
-	cancelOrderUC := usecase.NewCancelOrderUseCase(orderRepo, sellerOrderRepo, publisher)
+	var cancelOrderUC *usecase.CancelOrderUseCase
 
 	// Initialize gRPC clients for cross-service calls.
 	cbRegistry := circuitbreaker.NewRegistry(circuitbreaker.Config{})
@@ -103,8 +103,12 @@ func main() {
 	userClient := userclient.New(userConn)
 	log.Info().Str("addr", cfg.UserGRPCAddr).Msg("user gRPC client ready")
 
-	// Assign clients to _ to avoid unused variable errors until use cases consume them.
-	_ = productClient
+	// Wire gRPC clients into use cases.
+	productAdapter := &productClientAdapter{client: productClient}
+	createOrderUC = usecase.NewCreateOrderUseCase(orderRepo, sellerOrderRepo, publisher, productAdapter)
+	cancelOrderUC = usecase.NewCancelOrderUseCase(orderRepo, sellerOrderRepo, publisher, productAdapter)
+
+	// userClient is available for future use (e.g. buyer validation).
 	_ = userClient
 
 	// Initialize NATS JetStream subscriber for payment and shipping events
@@ -179,6 +183,16 @@ func main() {
 	}
 
 	log.Info().Msg("order service stopped")
+}
+
+// productClientAdapter adapts productclient.Client to the usecase.ProductServiceClient interface.
+type productClientAdapter struct {
+	client *productclient.Client
+}
+
+func (a *productClientAdapter) UpdateStock(ctx context.Context, variantID string, delta int32) error {
+	_, err := a.client.UpdateStock(ctx, variantID, delta)
+	return err
 }
 
 func setupLogger(level string) {

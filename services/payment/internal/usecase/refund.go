@@ -18,6 +18,7 @@ type RefundUseCase struct {
 	walletRepo  domain.WalletRepository
 	stripe      stripe.StripeClient
 	publisher   domain.EventPublisher
+	orderClient OrderServiceClient
 }
 
 // NewRefundUseCase creates a new RefundUseCase.
@@ -26,12 +27,14 @@ func NewRefundUseCase(
 	walletRepo domain.WalletRepository,
 	stripeClient stripe.StripeClient,
 	publisher domain.EventPublisher,
+	orderClient OrderServiceClient,
 ) *RefundUseCase {
 	return &RefundUseCase{
 		paymentRepo: paymentRepo,
 		walletRepo:  walletRepo,
 		stripe:      stripeClient,
 		publisher:   publisher,
+		orderClient: orderClient,
 	}
 }
 
@@ -97,6 +100,13 @@ func (uc *RefundUseCase) ProcessRefund(ctx context.Context, input RefundInput) e
 		}
 		if err := uc.walletRepo.CreateTransaction(ctx, tx); err != nil {
 			log.Error().Err(err).Msg("Failed to create refund wallet transaction")
+		}
+	}
+
+	// Update order status to REFUNDED via order service.
+	if uc.orderClient != nil {
+		if err := uc.orderClient.UpdateOrderStatus(ctx, payment.OrderID, "REFUNDED"); err != nil {
+			log.Warn().Err(err).Str("order_id", payment.OrderID).Msg("failed to update order status to REFUNDED")
 		}
 	}
 

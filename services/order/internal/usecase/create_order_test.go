@@ -80,7 +80,7 @@ func TestCreateOrder_Success(t *testing.T) {
 		},
 	}
 	pub := &mockEventPublisher{}
-	uc := NewCreateOrderUseCase(repo, soRepo, pub)
+	uc := NewCreateOrderUseCase(repo, soRepo, pub, nil)
 
 	order, err := uc.Execute(context.Background(), validInput())
 	require.NoError(t, err)
@@ -93,7 +93,7 @@ func TestCreateOrder_Success(t *testing.T) {
 }
 
 func TestCreateOrder_EmptyBuyerID(t *testing.T) {
-	uc := NewCreateOrderUseCase(&mockOrderRepo{}, &mockSellerOrderRepo{}, &mockEventPublisher{})
+	uc := NewCreateOrderUseCase(&mockOrderRepo{}, &mockSellerOrderRepo{}, &mockEventPublisher{}, nil)
 	input := validInput()
 	input.BuyerID = ""
 	_, err := uc.Execute(context.Background(), input)
@@ -101,7 +101,7 @@ func TestCreateOrder_EmptyBuyerID(t *testing.T) {
 }
 
 func TestCreateOrder_NoItems(t *testing.T) {
-	uc := NewCreateOrderUseCase(&mockOrderRepo{}, &mockSellerOrderRepo{}, &mockEventPublisher{})
+	uc := NewCreateOrderUseCase(&mockOrderRepo{}, &mockSellerOrderRepo{}, &mockEventPublisher{}, nil)
 	input := validInput()
 	input.Items = nil
 	_, err := uc.Execute(context.Background(), input)
@@ -109,7 +109,7 @@ func TestCreateOrder_NoItems(t *testing.T) {
 }
 
 func TestCreateOrder_InvalidQuantity(t *testing.T) {
-	uc := NewCreateOrderUseCase(&mockOrderRepo{}, &mockSellerOrderRepo{}, &mockEventPublisher{})
+	uc := NewCreateOrderUseCase(&mockOrderRepo{}, &mockSellerOrderRepo{}, &mockEventPublisher{}, nil)
 	input := validInput()
 	input.Items[0].Quantity = 0
 	_, err := uc.Execute(context.Background(), input)
@@ -117,7 +117,7 @@ func TestCreateOrder_InvalidQuantity(t *testing.T) {
 }
 
 func TestCreateOrder_InvalidPrice(t *testing.T) {
-	uc := NewCreateOrderUseCase(&mockOrderRepo{}, &mockSellerOrderRepo{}, &mockEventPublisher{})
+	uc := NewCreateOrderUseCase(&mockOrderRepo{}, &mockSellerOrderRepo{}, &mockEventPublisher{}, nil)
 	input := validInput()
 	input.Items[0].UnitPriceCents = -100
 	_, err := uc.Execute(context.Background(), input)
@@ -125,7 +125,7 @@ func TestCreateOrder_InvalidPrice(t *testing.T) {
 }
 
 func TestCreateOrder_MissingSellerID(t *testing.T) {
-	uc := NewCreateOrderUseCase(&mockOrderRepo{}, &mockSellerOrderRepo{}, &mockEventPublisher{})
+	uc := NewCreateOrderUseCase(&mockOrderRepo{}, &mockSellerOrderRepo{}, &mockEventPublisher{}, nil)
 	input := validInput()
 	input.Items[0].SellerID = ""
 	_, err := uc.Execute(context.Background(), input)
@@ -135,7 +135,7 @@ func TestCreateOrder_MissingSellerID(t *testing.T) {
 func TestCreateOrder_DefaultCurrency(t *testing.T) {
 	repo := &mockOrderRepo{createFn: func(_ context.Context, _ *domain.Order) error { return nil }}
 	soRepo := &mockSellerOrderRepo{createFn: func(_ context.Context, _ *domain.SellerOrder) error { return nil }}
-	uc := NewCreateOrderUseCase(repo, soRepo, &mockEventPublisher{})
+	uc := NewCreateOrderUseCase(repo, soRepo, &mockEventPublisher{}, nil)
 
 	input := validInput()
 	input.Currency = ""
@@ -148,7 +148,7 @@ func TestCreateOrder_RepoError(t *testing.T) {
 	repo := &mockOrderRepo{
 		createFn: func(_ context.Context, _ *domain.Order) error { return errors.New("db error") },
 	}
-	uc := NewCreateOrderUseCase(repo, &mockSellerOrderRepo{}, &mockEventPublisher{})
+	uc := NewCreateOrderUseCase(repo, &mockSellerOrderRepo{}, &mockEventPublisher{}, nil)
 	_, err := uc.Execute(context.Background(), validInput())
 	assert.EqualError(t, err, "db error")
 }
@@ -158,7 +158,7 @@ func TestCreateOrder_SellerRepoError(t *testing.T) {
 	soRepo := &mockSellerOrderRepo{
 		createFn: func(_ context.Context, _ *domain.SellerOrder) error { return errors.New("seller db error") },
 	}
-	uc := NewCreateOrderUseCase(repo, soRepo, &mockEventPublisher{})
+	uc := NewCreateOrderUseCase(repo, soRepo, &mockEventPublisher{}, nil)
 	_, err := uc.Execute(context.Background(), validInput())
 	assert.EqualError(t, err, "seller db error")
 }

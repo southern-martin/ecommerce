@@ -31,7 +31,7 @@ func TestCancelOrder_Success(t *testing.T) {
 		updateStatusFn: func(_ context.Context, _ string, _ domain.OrderStatus) error { return nil },
 	}
 
-	uc := NewCancelOrderUseCase(oRepo, soRepo, &mockEventPublisher{})
+	uc := NewCancelOrderUseCase(oRepo, soRepo, &mockEventPublisher{}, nil)
 	order, err := uc.Execute(context.Background(), "o-1", "b-1")
 	require.NoError(t, err)
 	assert.Equal(t, domain.OrderStatusCancelled, order.Status)
@@ -44,7 +44,7 @@ func TestCancelOrder_WrongBuyer(t *testing.T) {
 			return &domain.Order{ID: "o-1", BuyerID: "b-1", Status: domain.OrderStatusPending}, nil
 		},
 	}
-	uc := NewCancelOrderUseCase(oRepo, &mockSellerOrderRepo{}, &mockEventPublisher{})
+	uc := NewCancelOrderUseCase(oRepo, &mockSellerOrderRepo{}, &mockEventPublisher{}, nil)
 
 	_, err := uc.Execute(context.Background(), "o-1", "wrong-buyer")
 	assert.Error(t, err)
@@ -57,7 +57,7 @@ func TestCancelOrder_InvalidTransition(t *testing.T) {
 			return &domain.Order{ID: "o-1", BuyerID: "b-1", Status: domain.OrderStatusShipped}, nil
 		},
 	}
-	uc := NewCancelOrderUseCase(oRepo, &mockSellerOrderRepo{}, &mockEventPublisher{})
+	uc := NewCancelOrderUseCase(oRepo, &mockSellerOrderRepo{}, &mockEventPublisher{}, nil)
 
 	_, err := uc.Execute(context.Background(), "o-1", "b-1")
 	assert.Error(t, err)
@@ -70,7 +70,7 @@ func TestCancelOrder_NotFound(t *testing.T) {
 			return nil, errors.New("not found")
 		},
 	}
-	uc := NewCancelOrderUseCase(oRepo, &mockSellerOrderRepo{}, &mockEventPublisher{})
+	uc := NewCancelOrderUseCase(oRepo, &mockSellerOrderRepo{}, &mockEventPublisher{}, nil)
 
 	_, err := uc.Execute(context.Background(), "o-99", "b-1")
 	assert.EqualError(t, err, "not found")
@@ -98,7 +98,7 @@ func TestCancelOrder_CascadesToSellerOrders(t *testing.T) {
 		},
 	}
 
-	uc := NewCancelOrderUseCase(oRepo, soRepo, &mockEventPublisher{})
+	uc := NewCancelOrderUseCase(oRepo, soRepo, &mockEventPublisher{}, nil)
 	_, err := uc.Execute(context.Background(), "o-1", "b-1")
 	require.NoError(t, err)
 
