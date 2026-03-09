@@ -1,0 +1,73 @@
+name: Load Test (Smoke)
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Base URL for services (e.g., https://api.example.com)'
+        required: false
+        default: 'http://localhost'
+      k6_args:
+        description: 'Additional k6 arguments'
+        required: false
+        default: ''
+  push:
+    branches: [main]
+    paths:
+      - 'tests/load/**'
+      - '.github/workflows/load-test.yml'
+
+env:
+  K6_VERSION: 'v0.54.0'
+
+jobs:
+  load-test-smoke:
+    name: K6 Smoke Test
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D68
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install -y k6
+
+      - name: Run smoke test
+        run: |
+          k6 run tests/load/smoke.js \
+            --env AUTH_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8090 \
+            --env PRODUCT_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8081 \
+            --env CART_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8082 \
+            --env ORDER_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8083 \
+            --env PAYMENT_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8084 \
+            --env SHIPPING_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8085 \
+            --env RETURN_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8086 \
+            --env SEARCH_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8087 \
+            --env REVIEW_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8088 \
+            --env MEDIA_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8089 \
+            --env USER_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8091 \
+            --env NOTIFICATION_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8092 \
+            --env PROMOTION_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8093 \
+            --env CHAT_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8094 \
+            --env LOYALTY_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8096 \
+            --env AFFILIATE_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8097 \
+            --env TAX_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8098 \
+            --env CMS_BASE_URL=${{ inputs.base_url || 'http://localhost' }}:8099 \
+            ${{ inputs.k6_args }}
+
+      - name: Upload k6 results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-smoke-results
+          path: tests/load/results/
+          retention-days: 30
+          if-no-files-found: ignore
