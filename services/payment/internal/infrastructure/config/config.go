@@ -10,6 +10,7 @@ import (
 type Config struct {
 	HTTPPort               string
 	GRPCPort               string
+	OrderGRPCAddr          string
 	PostgresDSN            string
 	NatsURL                string
 	LogLevel               string
@@ -40,6 +41,7 @@ func Load() (*Config, error) {
 	return &Config{
 		HTTPPort:               getEnv("HTTP_PORT", "8084"),
 		GRPCPort:               getEnv("GRPC_PORT", "9084"),
+		OrderGRPCAddr:          getEnv("ORDER_GRPC_ADDR", "localhost:9083"),
 		PostgresDSN:            dsn,
 		NatsURL:                getEnv("NATS_URL", "nats://localhost:4222"),
 		LogLevel:               getEnv("LOG_LEVEL", "info"),

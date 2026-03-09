@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 // Config holds all configuration for the product service.
@@ -16,6 +17,9 @@ type Config struct {
 	HTTPPort         string
 	GRPCPort         string
 	LogLevel         string
+	RedisAddr        string
+	RedisPassword    string
+	RedisDB          int
 }
 
 // Load reads configuration from environment variables with sensible defaults.
@@ -30,6 +34,9 @@ func Load() *Config {
 		HTTPPort:         getEnv("HTTP_PORT", "8081"),
 		GRPCPort:         getEnv("GRPC_PORT", "9081"),
 		LogLevel:         getEnv("LOG_LEVEL", "info"),
+		RedisAddr:        getEnv("REDIS_ADDR", "localhost:6379"),
+		RedisPassword:    getEnv("REDIS_PASSWORD", ""),
+		RedisDB:          func() int { v, _ := strconv.Atoi(getEnv("REDIS_DB", "0")); return v }(),
 	}
 }
 

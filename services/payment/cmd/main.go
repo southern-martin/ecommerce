@@ -26,6 +26,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
+	"github.com/southern-martin/ecommerce/pkg/circuitbreaker"
+	"github.com/southern-martin/ecommerce/pkg/grpcclient"
+	"github.com/southern-martin/ecommerce/pkg/grpcclient/orderclient"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
 
@@ -106,6 +109,20 @@ func main() {
 	walletUC := usecase.NewWalletUseCase(walletRepo)
 	payoutUC := usecase.NewPayoutUseCase(payoutRepo, walletRepo, stripeClient)
 	refundUC := usecase.NewRefundUseCase(paymentRepo, walletRepo, stripeClient, publisher)
+
+	// Initialize gRPC client for cross-service calls to order service.
+	cbRegistry := circuitbreaker.NewRegistry(circuitbreaker.Config{})
+
+	orderConn, err := grpcclient.Dial(cfg.OrderGRPCAddr, cbRegistry)
+	if err != nil {
+		log.Fatal().Err(err).Str("addr", cfg.OrderGRPCAddr).Msg("Failed to connect to order gRPC")
+	}
+	defer orderConn.Close()
+	orderClient := orderclient.New(orderConn)
+	log.Info().Str("addr", cfg.OrderGRPCAddr).Msg("order gRPC client ready")
+
+	// Assign client to _ to avoid unused variable errors until use cases consume it.
+	_ = orderClient
 
 	// Subscribe to order.created events.
 	subscribeOrderCreated(publisher, paymentRepo)

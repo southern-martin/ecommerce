@@ -1,10 +1,13 @@
 package http
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
+	"github.com/southern-martin/ecommerce/pkg/cache"
 	"github.com/southern-martin/ecommerce/pkg/currency"
 	"github.com/southern-martin/ecommerce/pkg/i18n"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
@@ -15,7 +18,7 @@ import (
 )
 
 // NewRouter creates and configures the Gin router with all product service routes.
-func NewRouter(h *Handler) *gin.Engine {
+func NewRouter(h *Handler, cacheClient *cache.Client) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
@@ -44,6 +47,11 @@ func NewRouter(h *Handler) *gin.Engine {
 	{
 		// Public product endpoints
 		products := v1.Group("/products")
+		if cacheClient != nil {
+			products.Use(cache.CacheResponse(cacheClient, 5*time.Minute, func(c *gin.Context) string {
+				return "product:" + c.Request.URL.RequestURI()
+			}))
+		}
 		{
 			products.GET("", h.ListProducts)
 			products.GET("/:id", h.GetProduct)
@@ -55,10 +63,19 @@ func NewRouter(h *Handler) *gin.Engine {
 		}
 
 		// Public category endpoints
-		v1.GET("/categories", h.ListCategories)
+		categories_public := v1.Group("")
+		if cacheClient != nil {
+			categories_public.Use(cache.CacheResponse(cacheClient, 10*time.Minute, func(c *gin.Context) string {
+				return "category:" + c.Request.URL.RequestURI()
+			}))
+		}
+		categories_public.GET("/categories", h.ListCategories)
 
 		// Seller endpoints (X-User-ID header required via Kong)
 		seller := v1.Group("/seller")
+		if cacheClient != nil {
+			seller.Use(cache.InvalidateCache(cacheClient, "product:*", "category:*"))
+		}
 		{
 			sellerProducts := seller.Group("/products")
 			{
@@ -80,6 +97,11 @@ func NewRouter(h *Handler) *gin.Engine {
 
 		// Public attribute group endpoints
 		attrGroups := v1.Group("/attribute-groups")
+		if cacheClient != nil {
+			attrGroups.Use(cache.CacheResponse(cacheClient, 10*time.Minute, func(c *gin.Context) string {
+				return "attr-group:" + c.Request.URL.RequestURI()
+			}))
+		}
 		{
 			attrGroups.GET("", h.ListAttributeGroups)
 			attrGroups.GET("/:id", h.GetAttributeGroup)
@@ -88,6 +110,9 @@ func NewRouter(h *Handler) *gin.Engine {
 
 		// Admin endpoints
 		admin := v1.Group("/admin")
+		if cacheClient != nil {
+			admin.Use(cache.InvalidateCache(cacheClient, "product:*", "category:*", "attr-group:*"))
+		}
 		{
 			// Admin product management (no seller ownership check)
 			adminProducts := admin.Group("/products")

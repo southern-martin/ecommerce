@@ -135,6 +135,58 @@ func parseFullMethod(fullMethod string) (string, string) {
 	return name, ""
 }
 
+// GRPCUnaryClientInterceptor returns a grpc.UnaryClientInterceptor that creates
+// spans for each outgoing gRPC call and propagates trace context via gRPC metadata.
+func GRPCUnaryClientInterceptor() grpc.UnaryClientInterceptor {
+	tracer := otel.Tracer("grpc-client")
+
+	return func(
+		ctx context.Context,
+		method string,
+		req, reply interface{},
+		cc *grpc.ClientConn,
+		invoker grpc.UnaryInvoker,
+		opts ...grpc.CallOption,
+	) error {
+		serviceName, methodName := parseFullMethod(method)
+
+		ctx, span := tracer.Start(ctx, method,
+			trace.WithSpanKind(trace.SpanKindClient),
+			trace.WithAttributes(
+				semconv.RPCSystemGRPC,
+				semconv.RPCService(serviceName),
+				semconv.RPCMethod(methodName),
+			),
+		)
+		defer span.End()
+
+		// Inject trace context into outgoing gRPC metadata.
+		md, ok := metadata.FromOutgoingContext(ctx)
+		if !ok {
+			md = metadata.MD{}
+		} else {
+			md = md.Copy()
+		}
+		propagator := otel.GetTextMapPropagator()
+		propagator.Inject(ctx, metadataCarrier(md))
+		ctx = metadata.NewOutgoingContext(ctx, md)
+
+		err := invoker(ctx, method, req, reply, cc, opts...)
+		if err != nil {
+			st, _ := status.FromError(err)
+			span.SetAttributes(attribute.Int("rpc.grpc.status_code", int(st.Code())))
+			if st.Code() != grpccodes.OK {
+				span.SetStatus(codes.Error, st.Message())
+			}
+		} else {
+			span.SetAttributes(attribute.Int("rpc.grpc.status_code", int(grpccodes.OK)))
+			span.SetStatus(codes.Ok, "")
+		}
+
+		return err
+	}
+}
+
 // metadataCarrier adapts gRPC metadata to the TextMapCarrier interface
 // used by OpenTelemetry propagators.
 type metadataCarrier metadata.MD

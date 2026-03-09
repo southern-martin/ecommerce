@@ -7,11 +7,13 @@ import (
 
 // Config holds all configuration for the order service.
 type Config struct {
-	HTTPPort string
-	GRPCPort string
-	Postgres PostgresConfig
-	NATS     NATSConfig
-	LogLevel string
+	HTTPPort        string
+	GRPCPort        string
+	ProductGRPCAddr string
+	UserGRPCAddr    string
+	Postgres        PostgresConfig
+	NATS            NATSConfig
+	LogLevel        string
 }
 
 // PostgresConfig holds Postgres connection configuration.
@@ -39,9 +41,11 @@ func (c PostgresConfig) DSN() string {
 // Load reads configuration from environment variables with sensible defaults.
 func Load() *Config {
 	return &Config{
-		HTTPPort: getEnv("HTTP_PORT", "8083"),
-		GRPCPort: getEnv("GRPC_PORT", "9083"),
-		LogLevel: getEnv("LOG_LEVEL", "info"),
+		HTTPPort:        getEnv("HTTP_PORT", "8083"),
+		GRPCPort:        getEnv("GRPC_PORT", "9083"),
+		ProductGRPCAddr: getEnv("PRODUCT_GRPC_ADDR", "localhost:9081"),
+		UserGRPCAddr:    getEnv("USER_GRPC_ADDR", "localhost:9082"),
+		LogLevel:        getEnv("LOG_LEVEL", "info"),
 		Postgres: PostgresConfig{
 			User:     getEnv("POSTGRES_USER", "postgres"),
 			Password: getEnv("POSTGRES_PASSWORD", "postgres"),
