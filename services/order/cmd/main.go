@@ -27,7 +27,11 @@ import (
 
 	"github.com/nats-io/nats.go"
 
+	"github.com/southern-martin/ecommerce/pkg/circuitbreaker"
 	"github.com/southern-martin/ecommerce/pkg/events"
+	"github.com/southern-martin/ecommerce/pkg/grpcclient"
+	"github.com/southern-martin/ecommerce/pkg/grpcclient/productclient"
+	"github.com/southern-martin/ecommerce/pkg/grpcclient/userclient"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
 
@@ -79,6 +83,29 @@ func main() {
 	getOrderUC := usecase.NewGetOrderUseCase(orderRepo, sellerOrderRepo)
 	updateStatusUC := usecase.NewUpdateOrderStatusUseCase(orderRepo, sellerOrderRepo, publisher)
 	cancelOrderUC := usecase.NewCancelOrderUseCase(orderRepo, sellerOrderRepo, publisher)
+
+	// Initialize gRPC clients for cross-service calls.
+	cbRegistry := circuitbreaker.NewRegistry(circuitbreaker.Config{})
+
+	productConn, err := grpcclient.Dial(cfg.ProductGRPCAddr, cbRegistry)
+	if err != nil {
+		log.Fatal().Err(err).Str("addr", cfg.ProductGRPCAddr).Msg("failed to connect to product gRPC")
+	}
+	defer productConn.Close()
+	productClient := productclient.New(productConn)
+	log.Info().Str("addr", cfg.ProductGRPCAddr).Msg("product gRPC client ready")
+
+	userConn, err := grpcclient.Dial(cfg.UserGRPCAddr, cbRegistry)
+	if err != nil {
+		log.Fatal().Err(err).Str("addr", cfg.UserGRPCAddr).Msg("failed to connect to user gRPC")
+	}
+	defer userConn.Close()
+	userClient := userclient.New(userConn)
+	log.Info().Str("addr", cfg.UserGRPCAddr).Msg("user gRPC client ready")
+
+	// Assign clients to _ to avoid unused variable errors until use cases consume them.
+	_ = productClient
+	_ = userClient
 
 	// Initialize NATS JetStream subscriber for payment and shipping events
 	nc, err := nats.Connect(cfg.NATS.URL)

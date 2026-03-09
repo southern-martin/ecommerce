@@ -26,6 +26,7 @@ import (
 
 	"github.com/nats-io/nats.go"
 
+	"github.com/southern-martin/ecommerce/pkg/cache"
 	"github.com/southern-martin/ecommerce/pkg/events"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
@@ -112,6 +113,14 @@ func main() {
 		}
 	}
 
+	// Initialize Redis cache
+	cacheClient := cache.New(cfg.RedisAddr, cfg.RedisPassword, cfg.RedisDB)
+	defer cacheClient.Close()
+	if err := cacheClient.Ping(context.Background()); err != nil {
+		log.Warn().Err(err).Msg("Redis not available, caching disabled")
+		cacheClient = nil
+	}
+
 	// Initialize repositories
 	productRepo := postgres.NewProductRepo(db)
 	categoryRepo := postgres.NewCategoryRepo(db)
@@ -138,7 +147,7 @@ func main() {
 
 	// Initialize HTTP handler and router
 	handler := producthttp.NewHandler(productUC, categoryUC, attributeUC, variantUC, attributeGroupUC, db)
-	router := producthttp.NewRouter(handler)
+	router := producthttp.NewRouter(handler, cacheClient)
 
 	// Start HTTP server
 	httpServer := &http.Server{

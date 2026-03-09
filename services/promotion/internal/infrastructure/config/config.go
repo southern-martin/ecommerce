@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 // Config holds all configuration for the promotion service.
@@ -11,7 +12,10 @@ type Config struct {
 	GRPCPort string
 	Postgres PostgresConfig
 	NATS     NATSConfig
-	LogLevel string
+	LogLevel      string
+	RedisAddr     string
+	RedisPassword string
+	RedisDB       int
 }
 
 // PostgresConfig holds Postgres connection configuration.
@@ -41,7 +45,10 @@ func Load() *Config {
 	return &Config{
 		HTTPPort: getEnv("HTTP_PORT", "8093"),
 		GRPCPort: getEnv("GRPC_PORT", "9093"),
-		LogLevel: getEnv("LOG_LEVEL", "info"),
+		LogLevel:      getEnv("LOG_LEVEL", "info"),
+		RedisAddr:     getEnv("REDIS_ADDR", "localhost:6379"),
+		RedisPassword: getEnv("REDIS_PASSWORD", ""),
+		RedisDB:       func() int { v, _ := strconv.Atoi(getEnv("REDIS_DB", "0")); return v }(),
 		Postgres: PostgresConfig{
 			User:     getEnv("POSTGRES_USER", "postgres"),
 			Password: getEnv("POSTGRES_PASSWORD", "postgres"),

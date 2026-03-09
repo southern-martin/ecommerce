@@ -1,10 +1,13 @@
 package http
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
+	"github.com/southern-martin/ecommerce/pkg/cache"
 	"github.com/southern-martin/ecommerce/pkg/currency"
 	"github.com/southern-martin/ecommerce/pkg/i18n"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
@@ -15,7 +18,7 @@ import (
 )
 
 // NewRouter creates and configures the Gin router with all promotion service routes.
-func NewRouter(handler *Handler) *gin.Engine {
+func NewRouter(handler *Handler, cacheClient *cache.Client) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(gin.Recovery())
@@ -47,6 +50,11 @@ func NewRouter(handler *Handler) *gin.Engine {
 	{
 		// Public coupon routes
 		coupons := v1.Group("/coupons")
+		if cacheClient != nil {
+			coupons.Use(cache.CacheResponse(cacheClient, 5*time.Minute, func(c *gin.Context) string {
+				return "promo:" + c.Request.URL.RequestURI()
+			}))
+		}
 		{
 			coupons.POST("/validate", handler.ValidateCoupon)
 			coupons.GET("", handler.ListActiveCoupons)
@@ -54,6 +62,9 @@ func NewRouter(handler *Handler) *gin.Engine {
 
 		// Seller coupon routes
 		seller := v1.Group("/seller")
+		if cacheClient != nil {
+			seller.Use(cache.InvalidateCache(cacheClient, "promo:*"))
+		}
 		{
 			seller.POST("/coupons", handler.CreateSellerCoupon)
 			seller.GET("/coupons", handler.ListSellerCoupons)
@@ -63,13 +74,28 @@ func NewRouter(handler *Handler) *gin.Engine {
 		}
 
 		// Public flash sale routes
-		v1.GET("/flash-sales", handler.ListActiveFlashSales)
+		flashSales := v1.Group("")
+		if cacheClient != nil {
+			flashSales.Use(cache.CacheResponse(cacheClient, 3*time.Minute, func(c *gin.Context) string {
+				return "promo:" + c.Request.URL.RequestURI()
+			}))
+		}
+		flashSales.GET("/flash-sales", handler.ListActiveFlashSales)
 
 		// Public bundle routes
-		v1.GET("/bundles", handler.ListActiveBundles)
+		bundles := v1.Group("")
+		if cacheClient != nil {
+			bundles.Use(cache.CacheResponse(cacheClient, 5*time.Minute, func(c *gin.Context) string {
+				return "promo:" + c.Request.URL.RequestURI()
+			}))
+		}
+		bundles.GET("/bundles", handler.ListActiveBundles)
 
 		// Admin routes
 		admin := v1.Group("/admin/promotions")
+		if cacheClient != nil {
+			admin.Use(cache.InvalidateCache(cacheClient, "promo:*"))
+		}
 		{
 			// Admin coupon routes
 			adminCoupons := admin.Group("/coupons")

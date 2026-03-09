@@ -25,6 +25,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
+	"github.com/southern-martin/ecommerce/pkg/cache"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
 
@@ -66,6 +67,14 @@ func main() {
 	}
 	defer publisher.Close()
 
+	// Initialize Redis cache
+	cacheClient := cache.New(cfg.RedisAddr, cfg.RedisPassword, cfg.RedisDB)
+	defer cacheClient.Close()
+	if err := cacheClient.Ping(context.Background()); err != nil {
+		log.Warn().Err(err).Msg("Redis not available, caching disabled")
+		cacheClient = nil
+	}
+
 	// Initialize repositories
 	couponRepo := postgres.NewCouponRepo(db)
 	couponUsageRepo := postgres.NewCouponUsageRepo(db)
@@ -80,7 +89,7 @@ func main() {
 
 	// Initialize HTTP handler and router
 	handler := httpAdapter.NewHandler(couponUC, flashSaleUC, bundleUC, db)
-	router := httpAdapter.NewRouter(handler)
+	router := httpAdapter.NewRouter(handler, cacheClient)
 
 	// Start HTTP server
 	httpServer := &http.Server{

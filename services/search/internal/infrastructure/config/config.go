@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 // Config holds all configuration for the search service.
@@ -13,6 +14,9 @@ type Config struct {
 	NATS             NATSConfig
 	ElasticsearchURL string
 	LogLevel         string
+	RedisAddr        string
+	RedisPassword    string
+	RedisDB          int
 }
 
 // PostgresConfig holds Postgres connection configuration.
@@ -44,6 +48,9 @@ func Load() *Config {
 		GRPCPort:         getEnv("GRPC_PORT", "9085"),
 		LogLevel:         getEnv("LOG_LEVEL", "info"),
 		ElasticsearchURL: getEnv("ELASTICSEARCH_URL", "http://localhost:9200"),
+		RedisAddr:        getEnv("REDIS_ADDR", "localhost:6379"),
+		RedisPassword:    getEnv("REDIS_PASSWORD", ""),
+		RedisDB:          func() int { v, _ := strconv.Atoi(getEnv("REDIS_DB", "0")); return v }(),
 		Postgres: PostgresConfig{
 			User:     getEnv("POSTGRES_USER", "postgres"),
 			Password: getEnv("POSTGRES_PASSWORD", "postgres"),
