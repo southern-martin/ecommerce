@@ -15,6 +15,7 @@ go.work.sum
 
 # Environment
 .env
+.env.production
 *.env.local
 
 # IDE
