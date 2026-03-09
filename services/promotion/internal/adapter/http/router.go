@@ -8,6 +8,7 @@ import (
 	"github.com/southern-martin/ecommerce/pkg/currency"
 	"github.com/southern-martin/ecommerce/pkg/i18n"
 	"github.com/southern-martin/ecommerce/pkg/metrics"
+	"github.com/southern-martin/ecommerce/pkg/middleware"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
 
 	_ "github.com/southern-martin/ecommerce/services/promotion/docs"
@@ -19,6 +20,8 @@ func NewRouter(handler *Handler) *gin.Engine {
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(gin.Logger())
+	router.Use(middleware.CorrelationID())
+	router.Use(middleware.ExtractUserID())
 
 	router.Use(tracing.GinMiddleware("promotion-service"))
 	router.Use(metrics.GinMiddleware("promotion-service"))

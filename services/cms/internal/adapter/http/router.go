@@ -6,6 +6,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/southern-martin/ecommerce/pkg/metrics"
+	"github.com/southern-martin/ecommerce/pkg/middleware"
 	"github.com/southern-martin/ecommerce/pkg/tracing"
 
 	_ "github.com/southern-martin/ecommerce/services/cms/docs"
@@ -17,6 +18,8 @@ func NewRouter(handler *Handler) *gin.Engine {
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(gin.Logger())
+	router.Use(middleware.CorrelationID())
+	router.Use(middleware.ExtractUserID())
 
 	router.Use(tracing.GinMiddleware("cms-service"))
 	router.Use(metrics.GinMiddleware("cms-service"))

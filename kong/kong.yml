@@ -121,11 +121,23 @@ services:
         paths: [/api/v1/auth/register]
         methods: [POST]
         strip_path: false
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 10
+              hour: 50
+              policy: local
 
       - name: auth-login
         paths: [/api/v1/auth/login]
         methods: [POST]
         strip_path: false
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 20
+              hour: 100
+              policy: local
 
       - name: auth-refresh
         paths: [/api/v1/auth/refresh]
@@ -136,6 +148,12 @@ services:
         paths: [/api/v1/auth/forgot-password]
         methods: [POST]
         strip_path: false
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 5
+              hour: 20
+              policy: local
 
       - name: auth-reset-password
         paths: [/api/v1/auth/reset-password]
@@ -390,6 +408,11 @@ services:
         paths: [/api/v1/payments]
         strip_path: false
         plugins:
+          - name: rate-limiting
+            config:
+              minute: 30
+              hour: 200
+              policy: local
           - name: jwt
 
   # == Shipping Service ==============================================
