@@ -54,7 +54,7 @@ func TestRefund_FullRefund(t *testing.T) {
 		},
 	}
 
-	uc := NewRefundUseCase(repo, &mockWalletRepo{}, sc, pub)
+	uc := NewRefundUseCase(repo, &mockWalletRepo{}, sc, pub, nil)
 	err := uc.ProcessRefund(context.Background(), RefundInput{
 		OrderID:     "order-r1",
 		AmountCents: 0, // 0 means full refund
@@ -81,7 +81,7 @@ func TestRefund_PartialRefund(t *testing.T) {
 		},
 	}
 
-	uc := NewRefundUseCase(repo, &mockWalletRepo{}, sc, &mockEventPublisher{})
+	uc := NewRefundUseCase(repo, &mockWalletRepo{}, sc, &mockEventPublisher{}, nil)
 	err := uc.ProcessRefund(context.Background(), RefundInput{
 		OrderID:     "order-r1",
 		AmountCents: 3000, // partial
@@ -98,7 +98,7 @@ func TestRefund_ExceedsPaymentAmount(t *testing.T) {
 		},
 	}
 
-	uc := NewRefundUseCase(repo, &mockWalletRepo{}, &mockStripeClient{}, &mockEventPublisher{})
+	uc := NewRefundUseCase(repo, &mockWalletRepo{}, &mockStripeClient{}, &mockEventPublisher{}, nil)
 	err := uc.ProcessRefund(context.Background(), RefundInput{
 		OrderID:     "order-r1",
 		AmountCents: 9000, // exceeds 8000
@@ -118,7 +118,7 @@ func TestRefund_NonCompletedStatus(t *testing.T) {
 		},
 	}
 
-	uc := NewRefundUseCase(repo, &mockWalletRepo{}, &mockStripeClient{}, &mockEventPublisher{})
+	uc := NewRefundUseCase(repo, &mockWalletRepo{}, &mockStripeClient{}, &mockEventPublisher{}, nil)
 	err := uc.ProcessRefund(context.Background(), RefundInput{
 		OrderID:     "order-r1",
 		AmountCents: 1000,
@@ -140,7 +140,7 @@ func TestRefund_StripeError(t *testing.T) {
 		},
 	}
 
-	uc := NewRefundUseCase(repo, &mockWalletRepo{}, sc, &mockEventPublisher{})
+	uc := NewRefundUseCase(repo, &mockWalletRepo{}, sc, &mockEventPublisher{}, nil)
 	err := uc.ProcessRefund(context.Background(), RefundInput{
 		OrderID:     "order-r1",
 		AmountCents: 2000,
@@ -172,7 +172,7 @@ func TestRefund_SellerWalletDebit(t *testing.T) {
 		},
 	}
 
-	uc := NewRefundUseCase(repo, walletRepo, &mockStripeClient{}, &mockEventPublisher{})
+	uc := NewRefundUseCase(repo, walletRepo, &mockStripeClient{}, &mockEventPublisher{}, nil)
 	err := uc.ProcessRefund(context.Background(), RefundInput{
 		OrderID:     "order-r1",
 		AmountCents: 4000,
@@ -203,7 +203,7 @@ func TestRefund_NoSeller_SkipsWalletDebit(t *testing.T) {
 		},
 	}
 
-	uc := NewRefundUseCase(repo, walletRepo, &mockStripeClient{}, &mockEventPublisher{})
+	uc := NewRefundUseCase(repo, walletRepo, &mockStripeClient{}, &mockEventPublisher{}, nil)
 	err := uc.ProcessRefund(context.Background(), RefundInput{
 		OrderID:     "order-r1",
 		AmountCents: 2000,
@@ -221,7 +221,7 @@ func TestRefund_PaymentNotFound(t *testing.T) {
 		},
 	}
 
-	uc := NewRefundUseCase(repo, &mockWalletRepo{}, &mockStripeClient{}, &mockEventPublisher{})
+	uc := NewRefundUseCase(repo, &mockWalletRepo{}, &mockStripeClient{}, &mockEventPublisher{}, nil)
 	err := uc.ProcessRefund(context.Background(), RefundInput{
 		OrderID: "order-missing",
 	})

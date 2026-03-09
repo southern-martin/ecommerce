@@ -3,10 +3,16 @@ package usecase
 import (
 	"context"
 	"errors"
-	"log"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/southern-martin/ecommerce/services/order/internal/domain"
 )
+
+// ProductServiceClient defines the interface for cross-service product calls.
+type ProductServiceClient interface {
+	UpdateStock(ctx context.Context, variantID string, delta int32) error
+}
 
 // CreateOrderInput represents the input for creating a new order.
 type CreateOrderInput struct {
@@ -35,6 +41,7 @@ type CreateOrderUseCase struct {
 	orderRepo       domain.OrderRepository
 	sellerOrderRepo domain.SellerOrderRepository
 	publisher       domain.EventPublisher
+	productClient   ProductServiceClient
 }
 
 // NewCreateOrderUseCase creates a new CreateOrderUseCase instance.
@@ -42,11 +49,13 @@ func NewCreateOrderUseCase(
 	orderRepo domain.OrderRepository,
 	sellerOrderRepo domain.SellerOrderRepository,
 	publisher domain.EventPublisher,
+	productClient ProductServiceClient,
 ) *CreateOrderUseCase {
 	return &CreateOrderUseCase{
 		orderRepo:       orderRepo,
 		sellerOrderRepo: sellerOrderRepo,
 		publisher:       publisher,
+		productClient:   productClient,
 	}
 }
 
@@ -102,6 +111,18 @@ func (uc *CreateOrderUseCase) Execute(ctx context.Context, input CreateOrderInpu
 		}
 	}
 
+	// Reserve inventory by decrementing stock for each item.
+	if uc.productClient != nil {
+		for _, item := range order.Items {
+			if err := uc.productClient.UpdateStock(ctx, item.VariantID, -int32(item.Quantity)); err != nil {
+				log.Warn().Err(err).
+					Str("variant_id", item.VariantID).
+					Int("quantity", item.Quantity).
+					Msg("failed to reserve stock for order item")
+			}
+		}
+	}
+
 	// Publish order.created event
 	var eventItems []domain.ItemEvent
 	for _, item := range order.Items {
@@ -123,7 +144,7 @@ func (uc *CreateOrderUseCase) Execute(ctx context.Context, input CreateOrderInpu
 		Items:       eventItems,
 	}
 	if pubErr := uc.publisher.Publish(ctx, domain.EventOrderCreated, event); pubErr != nil {
-		log.Printf("WARN: failed to publish %s event: %v", domain.EventOrderCreated, pubErr)
+		log.Warn().Err(pubErr).Str("event", domain.EventOrderCreated).Msg("failed to publish event")
 	}
 
 	return order, nil

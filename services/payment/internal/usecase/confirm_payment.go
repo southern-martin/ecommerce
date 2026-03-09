@@ -28,6 +28,7 @@ type ConfirmPaymentUseCase struct {
 	walletRepo     domain.WalletRepository
 	publisher      domain.EventPublisher
 	commissionRate float64
+	orderClient    OrderServiceClient
 }
 
 // NewConfirmPaymentUseCase creates a new ConfirmPaymentUseCase.
@@ -36,12 +37,14 @@ func NewConfirmPaymentUseCase(
 	walletRepo domain.WalletRepository,
 	publisher domain.EventPublisher,
 	commissionRate float64,
+	orderClient OrderServiceClient,
 ) *ConfirmPaymentUseCase {
 	return &ConfirmPaymentUseCase{
 		paymentRepo:    paymentRepo,
 		walletRepo:     walletRepo,
 		publisher:      publisher,
 		commissionRate: commissionRate,
+		orderClient:    orderClient,
 	}
 }
 
@@ -107,6 +110,13 @@ func (uc *ConfirmPaymentUseCase) handleSuccess(ctx context.Context, payment *dom
 		}
 		if err := uc.walletRepo.CreateTransaction(ctx, commissionTx); err != nil {
 			log.Error().Err(err).Msg("Failed to create commission transaction")
+		}
+	}
+
+	// Update order status to PAID via order service.
+	if uc.orderClient != nil {
+		if err := uc.orderClient.UpdateOrderStatus(ctx, payment.OrderID, "PAID"); err != nil {
+			log.Warn().Err(err).Str("order_id", payment.OrderID).Msg("failed to update order status to PAID")
 		}
 	}
 

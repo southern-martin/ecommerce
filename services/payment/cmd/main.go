@@ -103,13 +103,6 @@ func main() {
 	walletRepo := postgres.NewWalletRepo(db)
 	payoutRepo := postgres.NewPayoutRepo(db)
 
-	// Initialize use cases.
-	createPaymentUC := usecase.NewCreatePaymentUseCase(paymentRepo, stripeClient, publisher)
-	confirmPaymentUC := usecase.NewConfirmPaymentUseCase(paymentRepo, walletRepo, publisher, cfg.PlatformCommissionRate)
-	walletUC := usecase.NewWalletUseCase(walletRepo)
-	payoutUC := usecase.NewPayoutUseCase(payoutRepo, walletRepo, stripeClient)
-	refundUC := usecase.NewRefundUseCase(paymentRepo, walletRepo, stripeClient, publisher)
-
 	// Initialize gRPC client for cross-service calls to order service.
 	cbRegistry := circuitbreaker.NewRegistry(circuitbreaker.Config{})
 
@@ -121,8 +114,15 @@ func main() {
 	orderClient := orderclient.New(orderConn)
 	log.Info().Str("addr", cfg.OrderGRPCAddr).Msg("order gRPC client ready")
 
-	// Assign client to _ to avoid unused variable errors until use cases consume it.
-	_ = orderClient
+	// Wire gRPC client into use cases.
+	orderAdapter := &orderClientAdapter{client: orderClient}
+
+	// Initialize use cases.
+	createPaymentUC := usecase.NewCreatePaymentUseCase(paymentRepo, stripeClient, publisher, orderAdapter)
+	confirmPaymentUC := usecase.NewConfirmPaymentUseCase(paymentRepo, walletRepo, publisher, cfg.PlatformCommissionRate, orderAdapter)
+	walletUC := usecase.NewWalletUseCase(walletRepo)
+	payoutUC := usecase.NewPayoutUseCase(payoutRepo, walletRepo, stripeClient)
+	refundUC := usecase.NewRefundUseCase(paymentRepo, walletRepo, stripeClient, publisher, orderAdapter)
 
 	// Subscribe to order.created events.
 	subscribeOrderCreated(publisher, paymentRepo)
@@ -223,4 +223,27 @@ func subscribeOrderCreated(publisher *natsInfra.Publisher, paymentRepo domain.Pa
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to subscribe to order.created")
 	}
+}
+
+// orderClientAdapter adapts orderclient.Client to the usecase.OrderServiceClient interface.
+type orderClientAdapter struct {
+	client *orderclient.Client
+}
+
+func (a *orderClientAdapter) GetOrder(ctx context.Context, orderID string) (*usecase.OrderInfo, error) {
+	resp, err := a.client.GetOrder(ctx, orderID)
+	if err != nil {
+		return nil, err
+	}
+	return &usecase.OrderInfo{
+		ID:         resp.ID,
+		TotalCents: resp.TotalCents,
+		Currency:   resp.Currency,
+		Status:     resp.Status,
+	}, nil
+}
+
+func (a *orderClientAdapter) UpdateOrderStatus(ctx context.Context, orderID string, status string) error {
+	_, err := a.client.UpdateOrderStatus(ctx, orderID, status)
+	return err
 }

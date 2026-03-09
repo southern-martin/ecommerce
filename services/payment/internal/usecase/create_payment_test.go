@@ -235,7 +235,7 @@ func TestCreatePayment_Success(t *testing.T) {
 		},
 	}
 
-	uc := NewCreatePaymentUseCase(repo, sc, pub)
+	uc := NewCreatePaymentUseCase(repo, sc, pub, nil)
 	out, err := uc.Execute(context.Background(), CreatePaymentInput{
 		OrderID:     "order-1",
 		BuyerID:     "buyer-1",
@@ -270,7 +270,7 @@ func TestCreatePayment_DefaultCurrency(t *testing.T) {
 			return nil
 		},
 	}
-	uc := NewCreatePaymentUseCase(repo, &mockStripeClient{}, &mockEventPublisher{})
+	uc := NewCreatePaymentUseCase(repo, &mockStripeClient{}, &mockEventPublisher{}, nil)
 
 	out, err := uc.Execute(context.Background(), CreatePaymentInput{
 		OrderID:     "order-2",
@@ -292,7 +292,7 @@ func TestCreatePayment_DefaultMethod(t *testing.T) {
 			return nil
 		},
 	}
-	uc := NewCreatePaymentUseCase(repo, &mockStripeClient{}, &mockEventPublisher{})
+	uc := NewCreatePaymentUseCase(repo, &mockStripeClient{}, &mockEventPublisher{}, nil)
 
 	out, err := uc.Execute(context.Background(), CreatePaymentInput{
 		OrderID:     "order-3",
@@ -320,7 +320,7 @@ func TestCreatePayment_StripeFailure(t *testing.T) {
 			return "", "", errors.New("stripe unavailable")
 		},
 	}
-	uc := NewCreatePaymentUseCase(repo, sc, &mockEventPublisher{})
+	uc := NewCreatePaymentUseCase(repo, sc, &mockEventPublisher{}, nil)
 
 	out, err := uc.Execute(context.Background(), CreatePaymentInput{
 		OrderID:     "order-4",
@@ -340,7 +340,7 @@ func TestCreatePayment_RepoCreateError(t *testing.T) {
 			return errors.New("db connection lost")
 		},
 	}
-	uc := NewCreatePaymentUseCase(repo, &mockStripeClient{}, &mockEventPublisher{})
+	uc := NewCreatePaymentUseCase(repo, &mockStripeClient{}, &mockEventPublisher{}, nil)
 
 	out, err := uc.Execute(context.Background(), CreatePaymentInput{
 		OrderID:     "order-5",

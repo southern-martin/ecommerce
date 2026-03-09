@@ -3,7 +3,8 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"log"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/southern-martin/ecommerce/services/order/internal/domain"
 )
@@ -13,6 +14,7 @@ type CancelOrderUseCase struct {
 	orderRepo       domain.OrderRepository
 	sellerOrderRepo domain.SellerOrderRepository
 	publisher       domain.EventPublisher
+	productClient   ProductServiceClient
 }
 
 // NewCancelOrderUseCase creates a new CancelOrderUseCase instance.
@@ -20,11 +22,13 @@ func NewCancelOrderUseCase(
 	orderRepo domain.OrderRepository,
 	sellerOrderRepo domain.SellerOrderRepository,
 	publisher domain.EventPublisher,
+	productClient ProductServiceClient,
 ) *CancelOrderUseCase {
 	return &CancelOrderUseCase{
 		orderRepo:       orderRepo,
 		sellerOrderRepo: sellerOrderRepo,
 		publisher:       publisher,
+		productClient:   productClient,
 	}
 }
 
@@ -61,6 +65,18 @@ func (uc *CancelOrderUseCase) Execute(ctx context.Context, orderID string, buyer
 
 	order.Status = domain.OrderStatusCancelled
 
+	// Restore inventory by incrementing stock for each item.
+	if uc.productClient != nil {
+		for _, item := range order.Items {
+			if err := uc.productClient.UpdateStock(ctx, item.VariantID, int32(item.Quantity)); err != nil {
+				log.Warn().Err(err).
+					Str("variant_id", item.VariantID).
+					Int("quantity", item.Quantity).
+					Msg("failed to restore stock for cancelled order item")
+			}
+		}
+	}
+
 	// Publish order.cancelled event
 	event := domain.OrderStatusEvent{
 		OrderID:     order.ID,
@@ -69,7 +85,7 @@ func (uc *CancelOrderUseCase) Execute(ctx context.Context, orderID string, buyer
 		Status:      domain.OrderStatusCancelled,
 	}
 	if pubErr := uc.publisher.Publish(ctx, domain.EventOrderCancelled, event); pubErr != nil {
-		log.Printf("WARN: failed to publish %s event: %v", domain.EventOrderCancelled, pubErr)
+		log.Warn().Err(pubErr).Str("event", domain.EventOrderCancelled).Msg("failed to publish event")
 	}
 
 	return order, nil

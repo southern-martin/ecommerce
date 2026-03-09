@@ -30,11 +30,26 @@ type CreatePaymentOutput struct {
 	Status          string `json:"status"`
 }
 
+// OrderInfo holds minimal order data returned by the order service client.
+type OrderInfo struct {
+	ID         string
+	TotalCents int64
+	Currency   string
+	Status     string
+}
+
+// OrderServiceClient defines the interface for cross-service order calls.
+type OrderServiceClient interface {
+	GetOrder(ctx context.Context, orderID string) (*OrderInfo, error)
+	UpdateOrderStatus(ctx context.Context, orderID string, status string) error
+}
+
 // CreatePaymentUseCase handles creating payment intents.
 type CreatePaymentUseCase struct {
 	paymentRepo domain.PaymentRepository
 	stripe      stripe.StripeClient
 	publisher   domain.EventPublisher
+	orderClient OrderServiceClient
 }
 
 // NewCreatePaymentUseCase creates a new CreatePaymentUseCase.
@@ -42,11 +57,13 @@ func NewCreatePaymentUseCase(
 	paymentRepo domain.PaymentRepository,
 	stripeClient stripe.StripeClient,
 	publisher domain.EventPublisher,
+	orderClient OrderServiceClient,
 ) *CreatePaymentUseCase {
 	return &CreatePaymentUseCase{
 		paymentRepo: paymentRepo,
 		stripe:      stripeClient,
 		publisher:   publisher,
+		orderClient: orderClient,
 	}
 }
 
@@ -57,6 +74,17 @@ func (uc *CreatePaymentUseCase) Execute(ctx context.Context, input CreatePayment
 	}
 	if input.Method == "" {
 		input.Method = domain.PaymentMethodCard
+	}
+
+	// Validate order exists and amount matches via order service.
+	if uc.orderClient != nil {
+		orderInfo, err := uc.orderClient.GetOrder(ctx, input.OrderID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to validate order %s: %w", input.OrderID, err)
+		}
+		if orderInfo.TotalCents != input.AmountCents {
+			return nil, fmt.Errorf("payment amount %d does not match order total %d", input.AmountCents, orderInfo.TotalCents)
+		}
 	}
 
 	// Create payment record with pending status.
